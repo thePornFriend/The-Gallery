@@ -470,6 +470,11 @@ function createFilterCheckboxes(images) {
   const actressList = document.querySelector('.actress-list');
   const tagList = document.querySelector('.tag-list');
   const modeSelect = document.getElementById('filter-mode');
+  images.forEach(img => {
+    if (!img.dataset.studio || img.dataset.studio.trim() === '') {
+      img.dataset.studio = 'unassigned';
+    }
+  });
   if (!actressList || !tagList || !modeSelect) return;
 
   const normalize = n => /^\(.*\)$/.test(n.trim()) ? 'amateur' : n.trim();
@@ -486,15 +491,23 @@ function createFilterCheckboxes(images) {
       .split(',')
       .map(normalize)
       .filter(Boolean);
+
     const tags = (img.dataset.tag || '')
       .split(',')
       .map(t => t.trim())
       .filter(Boolean);
-    return { img, acts, tags };
+
+    const studios = (img.dataset.studio || '')
+      .split(',')
+      .map(s => s.trim())
+      .filter(Boolean);
+
+    return { img, acts, tags, studios };
   });
 
   const actressCount = countMap(imgData.map(d => d.acts));
   const tagCount = countMap(imgData.map(d => d.tags));
+  const studioCount = countMap(imgData.map(d => d.studios));
 
   function buildCheckboxGrid(container, items) {
     const sorted = [...items.keys()].sort((a, b) =>
@@ -522,20 +535,35 @@ function createFilterCheckboxes(images) {
 
   const actressCheckboxes = buildCheckboxGrid(actressList, actressCount);
   const tagCheckboxes = buildCheckboxGrid(tagList, tagCount);
-  const allCheckboxes = [...actressCheckboxes, ...tagCheckboxes];
+
+  const prodList = document.querySelector('.prod-list');
+  const studioCheckboxes = prodList
+    ? buildCheckboxGrid(prodList, studioCount)
+    : [];
+
+  const allCheckboxes = [
+    ...actressCheckboxes,
+    ...tagCheckboxes,
+    ...studioCheckboxes
+  ];
 
   const filter = () => {
     const selected = allCheckboxes.filter(cb => cb.checked).map(cb => cb.value);
     const inclusive = modeSelect.value === 'inclusive';
 
     const visibleImages = imgData
-      .filter(({ acts, tags }) =>
-        selected.length === 0
-          ? true
-          : inclusive
-          ? selected.some(v => acts.includes(v) || tags.includes(v))
-          : [...acts, ...tags].every(v => selected.includes(v))
-      )
+    .filter(({ acts, tags, studios }) =>
+      selected.length === 0
+        ? true
+        : inclusive
+          ? selected.some(v =>
+              acts.includes(v) ||
+              tags.includes(v) ||
+              studios.includes(v)
+            )
+          : [...acts, ...tags, ...studios].every(v => selected.includes(v))
+    )
+
       .map(({ img }) => img);
 
     gallery.innerHTML = '';
