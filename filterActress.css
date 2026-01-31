@@ -5,7 +5,7 @@
 }
 
 /* Container principal en flex pour 4 colonnes */
-.actress-list, .tag-list {
+.actress-list, .tag-list, .prod-list {
   display: flex;
   width: auto;
   gap: 10px;
@@ -20,7 +20,7 @@
 }
 
 /* Colonnes verticales */
-.actress-list .column, .tag-list .column {
+.actress-list .column, .tag-list .column, .prod-list .column {
   flex: 1 1 0;
   display: flex;
   flex-direction: column;
@@ -29,7 +29,7 @@
 }
 
 /* Style des labels pour garder leur largeur pleine et belles boxes */
-.actress-list label, .tag-list label {
+.actress-list label, .tag-list label, .prod-list label  {
   display: block; /* bloquant pour que chaque label prenne toute la largeur de sa colonne */
   padding: 8px 14px;
   border-radius: 16px;
@@ -47,14 +47,14 @@
 }
 
 /* Effet au survol */
-.actress-list label:hover, .tag-list label:hover {
+.actress-list label:hover, .tag-list label:hover, .prod-list label:hover {
   background-color: #e6f0ff;
   box-shadow: 0 8px 15px rgba(0, 123, 255, 0.2);
   transform: translateY(-3px);
 }
 
 /* Focus accessible */
-.actress-list label:focus-within, .tag-list label:focus-within {
+.actress-list label:focus-within, .tag-list label:focus-within, .prod-list label:focus-within {
   outline: 2px solid #007bff;
   outline-offset: 2px;
   background-color: #d0e3ff;
@@ -62,23 +62,23 @@
 }
 
 /* Checkbox cochée */
-.actress-list input[type="checkbox"]:checked , .tag-list input[type="checkbox"]:checked {
+.actress-list input[type="checkbox"]:checked , .tag-list input[type="checkbox"]:checked , .prod-list input[type="checkbox"]:checked {
   background-color: #0056b3;
   border-color: #004080;
   box-shadow: 0 0 8px 1px rgba(0, 86, 179, 0.6);
 }
 
 /* Pour la scrollbar semi-transparente (optionnel) */
-.actress-list::-webkit-scrollbar, .tag-list::-webkit-scrollbar {
+.actress-list::-webkit-scrollbar, .tag-list::-webkit-scrollbar, .prod-list::-webkit-scrollbar {
   width: 8px;
 }
 
-.actress-list::-webkit-scrollbar-thumb, .tag-list::-webkit-scrollbar-thumb {
+.actress-list::-webkit-scrollbar-thumb, .tag-list::-webkit-scrollbar-thumb, .prod-list::-webkit-scrollbar-thumb {
   background-color: rgba(0, 0, 0, 0.2);
   border-radius: 4px;
 }
 
-.actress-list::-webkit-scrollbar-track, .tag-list::-webkit-scrollbar-track {
+.actress-list::-webkit-scrollbar-track, .tag-list::-webkit-scrollbar-track, .prod-list::-webkit-scrollbar-track {
   background: transparent;
 }
 
@@ -86,22 +86,22 @@
 /* Scrollbar custom semi-transparente */
 
 /* Chrome, Edge, Safari */
-.actress-list::-webkit-scrollbar, .tag-list::-webkit-scrollbar  {
+.actress-list::-webkit-scrollbar, .tag-list::-webkit-scrollbar, .prod-list::-webkit-scrollbar  {
   width: 8px;
 }
 
-.actress-list::-webkit-scrollbar-track, .tag-list::-webkit-scrollbar-track {
+.actress-list::-webkit-scrollbar-track, .tag-list::-webkit-scrollbar-track, .prod-list::-webkit-scrollbar-track  {
   background: transparent;
 }
 
-.actress-list::-webkit-scrollbar-thumb, .tag-list::-webkit-scrollbar-thumb {
+.actress-list::-webkit-scrollbar-thumb, .tag-list::-webkit-scrollbar-thumb, .prod-list::-webkit-scrollbar-thumb  {
   background-color: rgba(0, 123, 255, 0.4);
   border-radius: 4px;
   border: 1px solid rgba(0,0,0,0.1);
 }
 
 /* Firefox */
-.actress-list, .tag-list {
+.actress-list, .tag-list, .prod-list {
   scrollbar-width: thin;
   scrollbar-color: rgba(0, 123, 255, 0.4) transparent;
 }
