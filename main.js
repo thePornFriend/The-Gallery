@@ -66,6 +66,101 @@ function handleDuplicateImages(images) {
     });
   }
 
+// Extraction de data depuis liens ImageKit
+function extractDataFromURL(img) {
+  const src = img.src;
+
+  // Étape 1 : vérifier le domaine
+  if (!src.startsWith("https://ik.imagekit.io/")) return;
+
+  try {
+    const url = new URL(src);
+    const pathParts = url.pathname.split("/").filter(Boolean);
+
+    // Étape 2 : récupérer dossier + nom fichier
+    // ex: /adamtnfr/105/999_14110464-name_Alyx%20Star-Studio_Blacked-l.jpg
+    const folder = pathParts[pathParts.length - 2];
+    const file = pathParts[pathParts.length - 1];
+
+    const blocks = file.split("-");
+
+    // --- GALLERY ---
+    let galleryParts = [];
+
+    const folderClean = folder === "0" ? "0" : String(parseInt(folder, 10));
+    galleryParts.push(folderClean);
+
+    const firstBlock = blocks[0];
+    const nums = firstBlock.match(/\d+/g);
+
+    if (nums) {
+      nums.forEach(n => {
+        galleryParts.push(n === "0" ? "0" : String(parseInt(n, 10)));
+      });
+    }
+
+    if (!img.dataset.gallery) {
+      img.dataset.gallery = galleryParts.join("-");
+      const sec = parseInt(img.dataset.gallerySecondary, 10);
+      if (!isNaN(sec)) {
+        img.dataset.gallery += "-" + sec;
+      }
+    }
+
+    // --- AUTRES BLOCS ---
+    blocks.slice(1).forEach(block => {
+
+      if (/^\d+$/.test(block)) return;
+
+      const parts = block.split("_");
+      const key = parts[0]?.toLowerCase();
+      const value = parts.slice(1).join("_");
+
+      if (!value) return;
+
+      if (key === "name" && !img.dataset.actress) {
+        img.dataset.actress = decodeURIComponent(value).trim();
+      }
+
+      if (key === "studio" && !img.dataset.studio) {
+      img.dataset.studio = decodeURIComponent(value).trim();
+    }
+
+      // --- Orientation (nouvelle règle basée sur préfixe) ---
+      if (!img.dataset.orientation) {
+        const match = file.match(/-(p|l|s|o)(\d+)?(?=\.|$)/i);
+
+        if (match) {
+          const map = {
+            p: "portrait",
+            l: "landscape",
+            s: "square",
+            o: "other"
+          };
+          img.dataset.orientation = map[match[1].toLowerCase()];
+        }
+      }
+    });
+    if (!img.dataset.orientation) {
+      img.dataset.orientation = "landscape";
+    }
+
+  } catch (e) {
+    console.warn("Erreur parsing URL:", src);
+  }
+}
+
+
+// Application globale AVANT tout traitement
+function autoPopulateDatasets(images) {
+  images.forEach(img => {
+    // Ne remplit que si vide
+    if (!img.dataset.gallery || !img.dataset.actress) {
+      extractDataFromURL(img);
+    }
+  });
+}
+
 // --- Zoom, Drag, Reset + Lightbox avec navigation et blocage du scroll ---
 function enableZoomDrag() {
   const style = document.createElement("style");
@@ -655,11 +750,14 @@ function enableTagBackgroundChange() {
 
     gallery.innerHTML = "";
 
-    groups.forEach((imgs, prefix) => {
+      [...groups.entries()]
+        .sort((a, b) => a[0] - b[0])
+        .forEach(([prefix, imgs]) => {
       const groupDiv = document.createElement("div");
       groupDiv.classList.add("group");
       groupDiv.dataset.group = prefix;
-      buildGalleryLayout(imgs, groupDiv);
+      const sortedGroup = sortImages(imgs);
+      buildGalleryLayout(sortedGroup, groupDiv);
       gallery.appendChild(groupDiv);
     });
   }
@@ -798,6 +896,7 @@ function enableTagBackgroundChange() {
   // --- Exécution ---
   const sortedImages = 
   sortImages(galleryImages);
+  autoPopulateDatasets(sortedImages);
   applyLazyLoading(sortedImages);
   createFilterCheckboxes(sortedImages);
   enableCollapsibleFilters(); 
