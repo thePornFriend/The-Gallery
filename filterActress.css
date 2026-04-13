@@ -4,8 +4,102 @@
   margin : 2vh;
 }
 
+/* --- GALLERY : layout en colonnes flex dynamiques --- */
+
+.gallery-list {
+  display: flex;
+  gap: 15px;
+
+  max-height: none;
+  overflow: visible;
+}
+
+/* Colonnes */
+.gallery-list > * {
+  flex: 1;
+  min-width: 0;
+
+  max-height: 200px;
+  overflow-y: auto;
+  padding: 5px;
+
+  position: relative;
+  z-index: 0;
+
+  transition: flex 0.3s ease;
+
+  /* isolation du rendu */
+  contain: layout paint;
+}
+
+/* Colonne survolée : s’agrandit */
+.gallery-list > *:hover {
+  flex: 3;
+  z-index: 2;
+}
+
+/* Colonnes non survolées : se compressent */
+.gallery-list:hover > *:not(:hover) {
+  flex: 0.7;
+}
+
+/* Scrollbar par colonne */
+.gallery-list > *::-webkit-scrollbar {
+  width: 6px;
+}
+
+.gallery-list > *::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.gallery-list > *::-webkit-scrollbar-thumb {
+  background: rgba(0, 123, 255, 0.4);
+  border-radius: 4px;
+}
+
+/* --- HOVER LABEL (effet local uniquement) --- */
+
+.gallery-list label {
+  position: relative;
+  display: block;
+  margin: 0;
+
+  transition: background-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.gallery-list label:hover {
+  background-color: #e6f0ff;
+  box-shadow: 0 8px 15px rgba(0, 123, 255, 0.2);
+}
+
+/* --- GALLERY : comportement plié/déplié --- */
+
+/* cache les sous-listes */
+.gallery-list dl dd {
+  display: none;
+  margin-left: 100px;
+}
+
+/* affiche au survol */
+.gallery-list dl:hover > dd {
+  display: block;
+}
+
+/* reset marges dl pour alignement */
+.gallery-list dl {
+  display: block;
+  margin: 0;
+}
+
+.gallery-list dt > label {
+  font-weight: 600;
+}
+
+
+/**************************************************************************************************************************************/ 
+
 /* Container principal en flex pour 4 colonnes */
-.actress-list, .tag-list, .prod-list {
+.actress-list,  .tag-list, .prod-list {
   display: flex;
   width: auto;
   gap: 10px;
@@ -13,6 +107,9 @@
   overflow-y: auto;
   padding: 10px;
   margin-bottom: 3vh;
+}
+
+.actress-list, .tag-list, .prod-list {
    /* ajout du masque dégradé en bas */
   -webkit-mask-image: linear-gradient(to bottom, rgba(0,0,0,1) 75%, rgba(0,0,0,0));
   mask-image: linear-gradient(to bottom, rgba(0,0,0,1) 75%, rgba(0,0,0,0));
@@ -29,7 +126,7 @@
 }
 
 /* Style des labels pour garder leur largeur pleine et belles boxes */
-.actress-list label, .tag-list label, .prod-list label  {
+.actress-list label, .gallery-list label, .tag-list label, .prod-list label  {
   display: block; /* bloquant pour que chaque label prenne toute la largeur de sa colonne */
   padding: 8px 14px;
   border-radius: 16px;
@@ -47,14 +144,14 @@
 }
 
 /* Effet au survol */
-.actress-list label:hover, .tag-list label:hover, .prod-list label:hover {
+.actress-list label:hover, .gallery-list label:hover, .tag-list label:hover, .prod-list label:hover {
   background-color: #e6f0ff;
   box-shadow: 0 8px 15px rgba(0, 123, 255, 0.2);
   transform: translateY(-3px);
 }
 
 /* Focus accessible */
-.actress-list label:focus-within, .tag-list label:focus-within, .prod-list label:focus-within {
+.actress-list label:focus-within, .gallery-list label:focus-within, .tag-list label:focus-within, .prod-list label:focus-within {
   outline: 2px solid #007bff;
   outline-offset: 2px;
   background-color: #d0e3ff;
@@ -62,23 +159,23 @@
 }
 
 /* Checkbox cochée */
-.actress-list input[type="checkbox"]:checked , .tag-list input[type="checkbox"]:checked , .prod-list input[type="checkbox"]:checked {
+.actress-list input[type="checkbox"]:checked , .gallery-list input[type="checkbox"]:checked , .tag-list input[type="checkbox"]:checked , .prod-list input[type="checkbox"]:checked {
   background-color: #0056b3;
   border-color: #004080;
   box-shadow: 0 0 8px 1px rgba(0, 86, 179, 0.6);
 }
 
 /* Pour la scrollbar semi-transparente (optionnel) */
-.actress-list::-webkit-scrollbar, .tag-list::-webkit-scrollbar, .prod-list::-webkit-scrollbar {
+.actress-list::-webkit-scrollbar, .gallery-list::-webkit-scrollbar, .tag-list::-webkit-scrollbar, .prod-list::-webkit-scrollbar {
   width: 8px;
 }
 
-.actress-list::-webkit-scrollbar-thumb, .tag-list::-webkit-scrollbar-thumb, .prod-list::-webkit-scrollbar-thumb {
+.actress-list::-webkit-scrollbar-thumb, .gallery-list::-webkit-scrollbar-thumb, .tag-list::-webkit-scrollbar-thumb, .prod-list::-webkit-scrollbar-thumb {
   background-color: rgba(0, 0, 0, 0.2);
   border-radius: 4px;
 }
 
-.actress-list::-webkit-scrollbar-track, .tag-list::-webkit-scrollbar-track, .prod-list::-webkit-scrollbar-track {
+.actress-list::-webkit-scrollbar-track, .gallery-list::-webkit-scrollbar-track, .tag-list::-webkit-scrollbar-track, .prod-list::-webkit-scrollbar-track {
   background: transparent;
 }
 
@@ -86,22 +183,22 @@
 /* Scrollbar custom semi-transparente */
 
 /* Chrome, Edge, Safari */
-.actress-list::-webkit-scrollbar, .tag-list::-webkit-scrollbar, .prod-list::-webkit-scrollbar  {
+.actress-list::-webkit-scrollbar, .gallery-list::-webkit-scrollbar, .tag-list::-webkit-scrollbar, .prod-list::-webkit-scrollbar  {
   width: 8px;
 }
 
-.actress-list::-webkit-scrollbar-track, .tag-list::-webkit-scrollbar-track, .prod-list::-webkit-scrollbar-track  {
+.actress-list::-webkit-scrollbar-track, .gallery-list::-webkit-scrollbar-track, .tag-list::-webkit-scrollbar-track, .prod-list::-webkit-scrollbar-track  {
   background: transparent;
 }
 
-.actress-list::-webkit-scrollbar-thumb, .tag-list::-webkit-scrollbar-thumb, .prod-list::-webkit-scrollbar-thumb  {
+.actress-list::-webkit-scrollbar-thumb, .gallery-list::-webkit-scrollbar-thumb, .tag-list::-webkit-scrollbar-thumb, .prod-list::-webkit-scrollbar-thumb  {
   background-color: rgba(0, 123, 255, 0.4);
   border-radius: 4px;
   border: 1px solid rgba(0,0,0,0.1);
 }
 
 /* Firefox */
-.actress-list, .tag-list, .prod-list {
+.actress-list, .gallery-list .tag-list, .prod-list {
   scrollbar-width: thin;
   scrollbar-color: rgba(0, 123, 255, 0.4) transparent;
 }
