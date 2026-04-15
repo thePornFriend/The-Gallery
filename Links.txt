@@ -1,11 +1,10 @@
                                                           IMAGES DEFECTUEUSES
-
-<img data-actress="Keisha Grey" data-orientation="portrait" data-gallery="1-02" data-studio="Tushy, Vixen Group" src="https://static-eu-cdn.eporner.com/gallery/jm/zE/8Es9nNyzEjm/24828291-image-25.jpg">
-
-<img data-actress="Carter Cruise" data-orientation="portrait" data-gallery="1-2" data-studio="Vixen, Vixen Group" src="https://static-eu-cdn.eporner.com/gallery/GS/hX/FckfrH1hXGS/29696050-carter-cruise-my-boss-always-comes-8.jpg">
-
-<!-- Prochainement : see "imageKit" notes below
-
+*******************************************************************************************************************************************************************
+- <img data-actress="Keisha Grey" data-orientation="portrait" data-gallery="1-02" data-studio="Tushy, Vixen Group" src="https://static-eu-cdn.eporner.com/gallery/jm/zE/8Es9nNyzEjm/24828291-image-25.jpg">
+- <img data-actress="Carter Cruise" data-orientation="portrait" data-gallery="1-2" data-studio="Vixen, Vixen Group" src="https://static-eu-cdn.eporner.com/gallery/GS/hX/FckfrH1hXGS/29696050-carter-cruise-my-boss-always-comes-8.jpg">
+*******************************************************************************************************************************************************************
+<!-- Prochainement
+Dead link images : Do not create image container + Notify a list (!caution! images with too much "?reload" sometimes dosen't work anymore)
 
 
 FILTRE VERSION POUR GPT 
