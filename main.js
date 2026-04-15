@@ -3,19 +3,6 @@ document.addEventListener("DOMContentLoaded", () => {
   const gallery = document.getElementById("gallery");
   const galleryImages = Array.from(gallery.querySelectorAll("img"));
 
-  const deadImages = [];
-
-  function detectDeadImages(images) {
-    images.forEach(img => {
-      img.addEventListener("error", () => {
-        deadImages.push(img);
-
-        img.dataset.dead = "true";
-        img.remove();
-      });
-    });
-  }
-
 // --- Détection et gestion des doublons (à activé de temps en temps) ---
 function handleDuplicateImages(images) {
   const srcMap = new Map();
@@ -875,29 +862,6 @@ function enableTagBackgroundChange() {
     container.appendChild(galleryLine);
   }
 
-function displayDeadImages() {
-  let container = document.getElementById("dead-images-container");
-
-  if (!container) {
-    container = document.createElement("div");
-    container.id = "dead-images-container";
-    container.style.marginTop = "50px";
-    container.style.padding = "20px";
-    container.style.background = "#111";
-    container.style.color = "#fff";
-    container.style.fontFamily = "monospace";
-    document.body.appendChild(container);
-  }
-
-  container.innerHTML = "<h3>Images avec lien mort</h3>";
-
-  deadImages.forEach(img => {
-    const code = document.createElement("div");
-    code.textContent = img.outerHTML;
-    container.appendChild(code);
-  });
-}
-
   // --- Vérification et rechargement ---
   function retryUnloadedImages(images) {
     let intervalId;
@@ -932,16 +896,13 @@ function displayDeadImages() {
   // --- Exécution ---
   const sortedImages = 
   sortImages(galleryImages);
-  detectDeadImages(sortedImages);
   autoPopulateDatasets(sortedImages);
   applyLazyLoading(sortedImages);
   createFilterCheckboxes(sortedImages);
   enableCollapsibleFilters(); 
   enableTagBackgroundChange();
-  const validImages = sortedImages.filter(img => img.dataset.dead !== "true");
+  groupImagesByPrefix(sortedImages);
+  enableZoomDrag();
+  retryUnloadedImages(sortedImages);
 
-groupImagesByPrefix(validImages);
-enableZoomDrag();
-retryUnloadedImages(validImages);
-setInterval(displayDeadImages, 5000);
 });
