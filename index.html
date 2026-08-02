@@ -183,102 +183,44 @@ body {
 </style>
 </head>
 <body>
-  <div class="filter">
-    <div class="filter-sections">
-      <div class="actress-section">
-        <h3>Actresses</h3>
-        <div class="actress-list"></div>
-      </div>
-      <div class="gallery-section">
-        <h3>Gallery</h3>
-        <div class="gallery-list">
-          <div><label><input type="checkbox">Posters "0"</label></div>
-          <dl><!--Explicit-->
-            <dt><label><input type="checkbox">Nakes & Sex : "1 → 99", "120"</label></dt>
-            <dd><!--Portraits-->
-              <dl>
-                <dt><label><input type="checkbox">Portraits "1 → 4"</label></dt>
-                <dd><label><input type="checkbox">Close Up "1"</label></dd>
-                <dd>
-                  <dl>
-                    <dt><label><input type="checkbox">Standing "2"</label></dt>
-                    <dd><label><input type="checkbox">Knee Level "2-11"</label></dd>
-                    <dd><label><input type="checkbox">Whole "2-15 → 2-99"</label></dd>
-                  </dl>
-                </dd>
-                <dd><label><input type="checkbox">Sitting "3"</label></dd>
-                <dd><label><input type="checkbox">Laying "4"</label></dd>
-              </dl>
-            </dd>
-            <dd>
-              <dl>
-                <dt><label><input type="checkbox">Lesbian : "5"</label></dt>
-                <dd><label><input type="checkbox">Kisses "5-xxx"</label></dd>
-                <dd><label><input type="checkbox">Breast Worship "5-yyy"</label></dd>
-                <dd><label><input type="checkbox">Linking Pussy "5-zzz"</label></dd>
-              </dl>
-            </dd>
-            <dd><label><input type="checkbox">Dildos "6"</label></dd>
-            <dd><!--Men-->
-              <dl>
-                <dt><label><input type="checkbox">With Men "7 → 9"</label></dt>
-                <dd>
-                  <dl>
-                    <dt><label><input type="checkbox">Dick treat "7"</label></dt>
-                    <dd><label><input type="checkbox">Random Nudity "7-000"</label></dd>
-                    <dd><label><input type="checkbox">Searching for Attention "7-100"</label></dd>
-                    <dd><label><input type="checkbox">HandJob "7-200"</label></dd>
-                    <dd><label><input type="checkbox"><i>unassigned yet</i> "7-300"</label></dd>
-                    <dd><label><input type="checkbox">BoobJob "7-400"</label></dd>
-                    <dd><label><input type="checkbox">FeetJob "7-400"</label></dd>
-                    <dd><label><input type="checkbox">BlowJob "7-600 → 7-700"</label></dd>
-                    <dd><label><input type="checkbox">RimJob "7-800 → 7-900"</label></dd>
-                  </dl>
-                </dd>
-                <dd><label><input type="checkbox">Sexual Intercourse "8"</label></dd>
-                <dd><label><input type="checkbox">Cum "9"</label></dd>
-              </dl>
-            </dd>
-            <dd><!--Noface-->
-              <dl>
-                <dt><label><input type="checkbox">NoFace "10 → 12"</label></dt>
-                <dd><label><input type="checkbox">Whole Body "10"</label></dd>
-                <dd><label><input type="checkbox">Breast "11"</label></dd>
-                <dd><label><input type="checkbox">Pussy "12"</label></dd>
-                <dd><label><input type="checkbox">Ass Hole "13"</label></dd>
-                <dd><label><input type="checkbox">Other "14"</label></dd>
-              </dl>
-            </dd>
-            <dd><label><input type="checkbox">Unclassified "99"</label></dd>
-            <dd><label><input type="checkbox">Funny "120"</label></dd>
-          </dl>
-          <!--Dressed-->
-          <dl>
-            <dt><label><input type="checkbox">Dressed : "100 → 110"</label></dt>
-            <dd><label><input type="checkbox">Random"100"</label></dd>
-            <dd><label><input type="checkbox">Bikini "105"</label></dd>
-            <dd><label><input type="checkbox">Lingerie "110"</label></dd>
-          </dl>
-        </div>
-      </div>
-      <div class="tag-section">
-        <h3>Tags</h3>
-        <div class="tag-list"></div>
-      </div>
-      <div class="prod-section">
-        <h3>Productions & Studios</h3>
-        <div class="prod-list"></div>
-      </div>
+ <div class="filter">
+  <div class="filter-sections">
+   <div class="actress-section">
+    <h3>Actresses</h3>
+    <div class="actress-list"></div>
+   </div>
+   <div class="gallery-list">
+    <h3>Gallery Sections</h3>
+    <div class="gallery-search-wrapper">
+     <input
+      type="text"
+      id="gallery-search-input"
+      class="gallery-search-input"
+      placeholder="Rechercher un numéro de galerie (ex : 7, 8-4, 105-2)…"
+      autocomplete="off"
+     >
+     <div id="gallery-suggestions" class="gallery-suggestions"></div>
     </div>
-
-    <div class="filter-mode">
-      <label for="filter-mode">Filter-Mode :</label>
-      <select id="filter-mode">
-        <option value="inclusive">Every appearance</option>
-        <option value="exclusive">Only selected filters</option>
-      </select>
-    </div>
+    <div id="gallery-labels" class="gallery-labels"></div>
+   </div>
+   <div class="tag-section">
+    <h3>Tags</h3>
+    <div class="tag-list"></div>
+   </div>
+   <div class="prod-section">
+    <h3>Productions & Studios</h3>
+    <div class="prod-list"></div>
+   </div>
   </div>
+
+  <div class="filter-mode">
+   <label for="filter-mode">Filter-Mode :</label>
+   <select id="filter-mode">
+    <option value="inclusive">Every appearance</option>
+    <option value="exclusive">Only selected filters</option>
+   </select>
+  </div>
+ </div>
   <div class="gallery" id="gallery">
     <!--                                                Imagekit Notes
     Why : certaine bonnes images peuevnt être supprimé d'internet donc c'est pour les garder mais il y a une limite de stockage donc mettre seuelement 
