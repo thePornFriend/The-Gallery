@@ -1,7 +1,11 @@
 document.addEventListener("DOMContentLoaded", () => {
 
-  const gallery = document.getElementById("gallery");
+const gallery = document.getElementById("gallery");
   const galleryImages = Array.from(gallery.querySelectorAll("img"));
+
+  // --- État du filtre "Gallery" (recherche par data-gallery) ---
+  let selectedGalleryValues = new Set();
+  let triggerFilter = () => {};
 
 // --- Détection et gestion des doublons (à activé de temps en temps) ---
 function handleDuplicateImages(images) {
@@ -150,13 +154,245 @@ function extractDataFromURL(img) {
   }
 }
 
+// === Parsing du nouveau format combiné data-1 / data-2 ===
+
+function looksLikeDate(block) {
+  const b = block.trim();
+  if (/^\d{4}$/.test(b)) return true;                          // "2022"
+  if (/^\d{1,2}\s+[a-zà-ÿ]+\s+\d{4}$/i.test(b)) return true;    // "16 june 2022"
+  if (/^[a-zà-ÿ]+\s+\d{4}$/i.test(b)) return true;              // "june 2022"
+  return false;
+}
+
+function parseActressField(raw) {
+  return raw.split(',').map(part => {
+    const trimmed = part.trim();
+    const excluded = trimmed.startsWith('(-)');
+    const name = unescapeDash((excluded ? trimmed.slice(3) : trimmed).trim());
+    return { name, excluded };
+  }).filter(a => a.name);
+}
+
+// Découpe "top-level" : ignore les tirets situés à l'intérieur de parenthèses
+// (protège "(-)" et tout contenu type "(X-Art)")
+function splitTopLevel(raw, sep) {
+  const blocks = [];
+  let depth = 0;
+  let current = '';
+  for (const ch of raw) {
+    if (ch === '(') depth++;
+    else if (ch === ')') depth = Math.max(0, depth - 1);
+    if (ch === sep && depth === 0) {
+      blocks.push(current);
+      current = '';
+    } else {
+      current += ch;
+    }
+  }
+  blocks.push(current);
+  return blocks.map(b => b.trim()).filter(Boolean);
+}
+
+// Remplace le jeton d'échappement &dash (sans point-virgule, pour ne pas être
+// interprété comme une entité HTML) par un vrai tiret, une fois le découpage
+// en blocs terminé — permet d'écrire un "-" littéral dans un titre, un studio,
+// un tag... sans qu'il soit pris pour un séparateur de data.
+function unescapeDash(s) {
+  return typeof s === 'string' ? s.replace(/&dash/g, '-') : s;
+}
+
+function parseData1(raw) {
+  if (!raw) return null;
+  const blocks = splitTopLevel(raw, '-');
+  const data = { actresses: [], studio: '', series: '', date: '', title: '', subtitle: '' };
+  const remaining = [];
+
+  const actressPrefix = /^(name_|n_)/i;
+  const studioPrefix  = /^(studio_|st_)/i;
+  const seriesPrefix  = /^(series_|se_|°)/i;
+  const datePrefix    = /^(date_|d_|y_)/i;
+  const titlePrefix   = /^(title_|t_)/i;
+
+  let actressFound = false, studioFound = false;
+
+  blocks.forEach((block, i) => {
+    if (actressPrefix.test(block)) {
+      data.actresses = parseActressField(block.replace(actressPrefix, ''));
+      actressFound = true;
+    } else if (studioPrefix.test(block)) {
+      data.studio = block.replace(studioPrefix, '').trim();
+      studioFound = true;
+    } else if (seriesPrefix.test(block)) {
+      data.series = block.replace(seriesPrefix, '').trim();
+    } else if (datePrefix.test(block)) {
+      data.date = block.replace(datePrefix, '').trim();
+    } else if (titlePrefix.test(block)) {
+      remaining.push({ i, block: block.replace(titlePrefix, '').trim(), forcedTitle: true });
+    } else {
+      remaining.push({ i, block, forcedTitle: false });
+    }
+  });
+
+  // Position 0 sans préfixe = actrices
+  if (!actressFound && remaining.length && remaining[0].i === 0) {
+    data.actresses = parseActressField(remaining.shift().block);
+  }
+  // Position 1 sans préfixe = studio
+  if (!studioFound && remaining.length && remaining[0].i === 1) {
+    data.studio = remaining.shift().block;
+  }
+
+  // Ce qui reste : date détectée par motif, sinon titre
+  const leftover = [];
+  remaining.forEach(r => {
+    if (r.forcedTitle) {
+      leftover.push(r.block);
+    } else if (!data.date && looksLikeDate(r.block)) {
+      data.date = r.block;
+    } else {
+      leftover.push(r.block);
+    }
+  });
+
+if (leftover.length) {
+    const titleFull = leftover.join('-');
+    const [title, subtitle] = titleFull.split('_');
+    data.title = title.trim();
+    data.subtitle = subtitle ? subtitle.trim() : '';
+  }
+
+  data.studio = unescapeDash(data.studio);
+  data.series = unescapeDash(data.series);
+  data.date = unescapeDash(data.date);
+  data.title = unescapeDash(data.title);
+  data.subtitle = unescapeDash(data.subtitle);
+
+  return data;
+}
+
+function parseData2(raw) {
+  if (!raw) return null;
+  const blocks = raw.split('-').map(b => b.trim()).filter(Boolean);
+  const data = { gallery: '', orientation: '', tag: '' };
+
+  const galleryPrefix     = /^(gallery_|g_)/i;
+  const orientationPrefix = /^(orientation_|o_)/i;
+  const tagPrefix         = /^(tag_|#_)/i;
+  const orientationMap = { p: 'portrait', portrait: 'portrait', l: 'landscape', landscape: 'landscape', s: 'square', square: 'square' };
+
+  let galleryFound = false, orientationFound = false;
+  const remaining = [];
+
+  blocks.forEach((block, i) => {
+    if (galleryPrefix.test(block)) {
+      data.gallery = block.replace(galleryPrefix, '').replace(/_/g, '-').trim();
+      galleryFound = true;
+    } else if (orientationPrefix.test(block)) {
+      const v = block.replace(orientationPrefix, '').trim().toLowerCase();
+      data.orientation = orientationMap[v] || v;
+      orientationFound = true;
+    } else if (tagPrefix.test(block)) {
+      data.tag = block.replace(tagPrefix, '').trim();
+    } else {
+      remaining.push({ i, block });
+    }
+  });
+
+  if (!galleryFound && remaining.length && remaining[0].i === 0) {
+    data.gallery = remaining.shift().block.replace(/_/g, '-');
+  }
+if (!orientationFound && remaining.length && remaining[0].i === 1) {
+    const v = remaining.shift().block.trim().toLowerCase();
+    data.orientation = orientationMap[v] || v;
+  }
+  if (remaining.length) {
+    data.tag = remaining.map(r => r.block).join('-');
+  }
+
+  data.gallery = unescapeDash(data.gallery);
+  data.tag = unescapeDash(data.tag);
+
+  return data;
+}
+
+// Applique data-1 / data-2 sur une image (ne touche pas aux datasets déjà remplis à la main)
+function applyCombinedData(img) {
+  const raw1 = img.getAttribute('data-1');
+  const raw2 = img.getAttribute('data-2');
+
+  if (raw1) {
+    const parsed1 = parseData1(raw1);
+    if (parsed1) {
+      // Toutes les actrices de la collection (pour "Features")
+      img.dataset.collectionActresses = parsed1.actresses.map(a => a.name).join(', ');
+      // Actrices visibles sur CETTE image (celles sans (-)) -> pour les filtres/checkbox
+      const visible = parsed1.actresses.filter(a => !a.excluded).map(a => a.name);
+      if (!img.dataset.actress) {
+        img.dataset.actress = (visible.length ? visible : parsed1.actresses.map(a => a.name)).join(', ');
+      }
+      if (!img.dataset.studio && parsed1.studio) img.dataset.studio = parsed1.studio;
+      if (!img.dataset.series && parsed1.series) img.dataset.series = parsed1.series;
+      if (!img.dataset.date && parsed1.date) img.dataset.date = parsed1.date;
+      if (!img.dataset.title && parsed1.title) img.dataset.title = parsed1.title;
+      if (!img.dataset.subtitle && parsed1.subtitle) img.dataset.subtitle = parsed1.subtitle;
+    }
+  }
+
+  if (raw2) {
+    const parsed2 = parseData2(raw2);
+    if (parsed2) {
+      if (!img.dataset.gallery && parsed2.gallery) img.dataset.gallery = parsed2.gallery;
+      if (!img.dataset.orientation && parsed2.orientation) img.dataset.orientation = parsed2.orientation;
+      if (!img.dataset.tag && parsed2.tag) img.dataset.tag = parsed2.tag;
+    }
+  }
+}
+
+// Regroupe les images en collections (uniquement celles utilisant le nouveau format)
+function buildCollections(images) {
+  const collections = new Map();
+
+  images.forEach(img => {
+    if (!img.dataset.title && !img.dataset.collectionActresses) return; // pas de collection ici
+
+    const actressKey = (img.dataset.collectionActresses || img.dataset.actress || '')
+      .split(',').map(n => n.trim().toLowerCase()).filter(Boolean).sort().join('|');
+    const key = [actressKey, img.dataset.studio || '', img.dataset.series || '', img.dataset.date || '', img.dataset.title || ''].join('::');
+
+    if (!collections.has(key)) {
+      collections.set(key, {
+        title: img.dataset.title || '',
+        subtitle: img.dataset.subtitle || '',
+        series: img.dataset.series || '',
+        studio: img.dataset.studio || '',
+        date: img.dataset.date || '',
+        actresses: new Set(),
+        tags: new Set(),
+        images: []
+      });
+    }
+
+const col = collections.get(key);
+    (img.dataset.collectionActresses || img.dataset.actress || '')
+      .split(',').map(n => n.trim().replace(/[()]/g, '')).filter(Boolean).forEach(n => col.actresses.add(n));
+    (img.dataset.tag || '').split(',').map(t => t.trim()).filter(Boolean).forEach(t => col.tags.add(t));
+    col.images.push(img);
+  });
+
+  collections.forEach(col => {
+    col.images = sortImages(col.images);
+    col.images.forEach(i => { i._collection = col; });
+  });
+
+  return collections;
+}
 
 // Application globale AVANT tout traitement
 function autoPopulateDatasets(images) {
   images.forEach(img => {
-    // Ne remplit que si vide
+    applyCombinedData(img); // priorité au nouveau format data-1 / data-2
     if (!img.dataset.gallery || !img.dataset.actress) {
-      extractDataFromURL(img);
+      extractDataFromURL(img); // ancien système en secours
     }
   });
 }
@@ -337,13 +573,30 @@ function enableZoomDrag() {
       background: rgba(0,0,0,0.9);
       justify-content: center;
       align-items: center;
-      flex-direction: column;
       z-index: 1000;
     }
     .lightbox.visible { display: flex; }
-    .lightbox img {
-      max-width: 90%;
-      max-height: 85%;
+    .lightbox-main {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 60vw;
+      max-width: 900px;
+      flex-shrink: 0;
+    }
+    .lightbox-stage {
+      width: 100%;
+      height: 75vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .lightbox-stage img {
+      max-width: 100%;
+      max-height: 100%;
+      width: auto;
+      height: auto;
+      object-fit: contain;
       transition: transform 0.3s ease;
       cursor: zoom-out;
       user-select: none;
@@ -356,9 +609,6 @@ function enableZoomDrag() {
       text-align: center;
     }
     .lightbox-arrow {
-      position: absolute;
-      top: 50%;
-      transform: translateY(-50%);
       font-size: 48px;
       color: white;
       cursor: pointer;
@@ -366,64 +616,164 @@ function enableZoomDrag() {
       padding: 20px;
       background: rgba(0,0,0,0.3);
       border-radius: 10px;
+      flex-shrink: 0;
     }
     .lightbox-arrow:hover { background: rgba(255,255,255,0.2); }
-    .lightbox-arrow.left { left: 20px; }
-    .lightbox-arrow.right { right: 20px; }
+    .lightbox-collection {
+      display: none;
+      width: 260px;
+      margin-left: 30px;
+      color: white;
+      font-family: sans-serif;
+      font-size: 15px;
+      line-height: 1.5;
+    }
+    .lightbox-collection.visible { display: block; }
+    .collection-title { font-size: 18px; font-weight: 600; margin-bottom: 8px; }
+    .collection-meta { opacity: 0.8; margin-bottom: 14px; }
+    .collection-features, .collection-tags, .collection-count { margin-bottom: 10px; }
+    .collection-preview {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      margin-top: 16px;
+    }
+.collection-preview-img {
+      width: 180px;
+      height: 180px;
+      object-fit: cover;
+      cursor: pointer;
+      border-radius: 4px;
+    }
+    .collection-arrow { font-size: 24px; cursor: pointer; user-select: none; }
+    .collection-preview-caption { text-align: center; font-size: 12px; opacity: 0.7; margin-top: 6px; }
   `;
   document.head.appendChild(style);
 
   const lightbox = document.createElement("div");
   lightbox.className = "lightbox";
-  lightbox.innerHTML = `
+lightbox.innerHTML = `
     <span class="lightbox-arrow left">&#10094;</span>
-    <img src="" alt="">
+    <div class="lightbox-main">
+      <div class="lightbox-stage">
+        <img src="" alt="">
+      </div>
+      <div class="lightbox-desc"></div>
+    </div>
     <span class="lightbox-arrow right">&#10095;</span>
-    <div class="lightbox-desc"></div>
+    <div class="lightbox-collection">
+      <div class="collection-title"></div>
+      <div class="collection-meta"></div>
+      <div class="collection-features"></div>
+      <div class="collection-tags"></div>
+      <div class="collection-count"></div>
+      <div class="collection-preview">
+        <span class="collection-arrow left">&#10094;</span>
+        <img class="collection-preview-img" src="" alt="">
+        <span class="collection-arrow right">&#10095;</span>
+      </div>
+      <div class="collection-preview-caption"></div>
+    </div>
   `;
   document.body.appendChild(lightbox);
 
-  const lightboxImg = lightbox.querySelector("img");
+  const lightboxImg = lightbox.querySelector(".lightbox-main img");
   const descBox = lightbox.querySelector(".lightbox-desc");
   const leftArrow = lightbox.querySelector(".lightbox-arrow.left");
   const rightArrow = lightbox.querySelector(".lightbox-arrow.right");
 
+  const collectionPanel = lightbox.querySelector(".lightbox-collection");
+  const collectionTitle = lightbox.querySelector(".collection-title");
+  const collectionMeta = lightbox.querySelector(".collection-meta");
+  const collectionFeatures = lightbox.querySelector(".collection-features");
+  const collectionTags = lightbox.querySelector(".collection-tags");
+  const collectionCount = lightbox.querySelector(".collection-count");
+  const collectionPreviewImg = lightbox.querySelector(".collection-preview-img");
+  const collectionPreviewCaption = lightbox.querySelector(".collection-preview-caption");
+  const collectionArrowLeft = lightbox.querySelector(".collection-arrow.left");
+  const collectionArrowRight = lightbox.querySelector(".collection-arrow.right");
+
   let currentIndex = -1;
   let allImages = [];
+  let currentCollection = null;
+  let collectionPreviewIndex = 0;
 
-  // Nettoie et trie les noms d'actrices
   function cleanActressNames(raw) {
     if (!raw) return [];
     const names = raw
       .split(",")
       .map(n => n.trim().replace(/[()]/g, ""))
       .map(n => (n.toLowerCase() === "amateur" ? "unknown" : n));
-    // place "unknown" en dernier
     names.sort((a, b) => (a === "unknown" ? 1 : b === "unknown" ? -1 : 0));
     return names;
   }
 
-  // Génère la description
-function generateDescription(img) {
-  const galleryId = img.dataset.gallery || "—";
-  let actresses = (img.dataset.actress || img.alt || "")
-    .split(",")
-    .map(a => a.trim().replace(/[()]/g, ""))
-    .filter(Boolean)
-    .map(a => a.toLowerCase() === "amateur" ? "unknown" : a);
+  function joinWithAmpersand(list) {
+    if (!list.length) return "unknown";
+    if (list.length === 1) return list[0];
+    return `${list.slice(0, -1).join(", ")} & ${list[list.length - 1]}`;
+  }
 
-  // unknown toujours à la fin
-  actresses.sort((a, b) => (a === "unknown") - (b === "unknown"));
+  function generateDescription(img) {
+    const galleryId = img.dataset.gallery || "—";
+    const actresses = cleanActressNames(img.dataset.actress || img.alt || "");
+    return `Image n° : ${galleryId}<br>${joinWithAmpersand(actresses)}`;
+  }
 
-  const last = actresses.pop();
-  const actressText = actresses.length
-    ? `${actresses.join(", ")} & ${last}`
-    : last || "unknown";
+  function updateCollectionPanel(img) {
+    const col = img._collection;
+    if (!col) {
+      currentCollection = null;
+      collectionPanel.classList.remove("visible");
+      return;
+    }
 
-  return `Image n° : ${galleryId}<br>${actressText}`;
-}
+    if (col !== currentCollection) {
+      currentCollection = col;
+      collectionPreviewIndex = 0;
+    }
 
+    const titleLine = col.series ? `${col.title} (${col.series})` : col.title;
+    collectionTitle.innerHTML = col.subtitle ? `${titleLine} : ${col.subtitle}` : titleLine;
+    collectionMeta.textContent = [col.studio, col.date].filter(Boolean).join(", ");
+    collectionFeatures.innerHTML = `Features : ${joinWithAmpersand([...col.actresses])}`;
+    collectionTags.innerHTML = `Tags : ${[...col.tags].join(", ") || "—"}`;
+    collectionCount.textContent = `Images : ${col.images.length}`;
 
+    collectionPanel.classList.add("visible");
+    showCollectionPreview();
+  }
+
+  function showCollectionPreview() {
+    if (!currentCollection) return;
+    const imgs = currentCollection.images;
+    if (collectionPreviewIndex < 0) collectionPreviewIndex = imgs.length - 1;
+    if (collectionPreviewIndex >= imgs.length) collectionPreviewIndex = 0;
+    const previewImg = imgs[collectionPreviewIndex];
+    collectionPreviewImg.src = previewImg.src;
+    collectionPreviewCaption.textContent = `Image n° : ${previewImg.dataset.gallery || "—"}`;
+  }
+
+  collectionArrowLeft.addEventListener("click", e => {
+    e.stopPropagation();
+    collectionPreviewIndex--;
+    showCollectionPreview();
+  });
+
+  collectionArrowRight.addEventListener("click", e => {
+    e.stopPropagation();
+    collectionPreviewIndex++;
+    showCollectionPreview();
+  });
+
+  collectionPreviewImg.addEventListener("click", e => {
+    e.stopPropagation();
+    if (!currentCollection) return;
+    const target = currentCollection.images[collectionPreviewIndex];
+    const idx = allImages.indexOf(target);
+    if (idx !== -1) showImage(idx);
+  });
 
   function showImage(index) {
     if (index < 0) index = allImages.length - 1;
@@ -432,51 +782,39 @@ function generateDescription(img) {
     const img = allImages[currentIndex];
     lightboxImg.src = img.src;
     descBox.innerHTML = generateDescription(img);
+    updateCollectionPanel(img);
   }
 
-function openLightbox(clickedImage) {
-  const allImages = Array.from(document.querySelectorAll(".img-container img"));
-  currentIndex = allImages.indexOf(clickedImage);
-
-  if (currentIndex !== -1) {
-    showImage(currentIndex); // réutilise ta fonction existante
-    lightbox.style.display = "flex";
-    document.body.style.overflow = "hidden";
+  function openLightbox(clickedImage) {
+    allImages = Array.from(document.querySelectorAll(".img-container img"));
+    currentIndex = allImages.indexOf(clickedImage);
+    if (currentIndex !== -1) {
+      showImage(currentIndex);
+      lightbox.classList.add("visible");
+      document.body.style.overflow = "hidden";
+    }
   }
-}
-
-
 
   function closeLightbox() {
-    lightbox.style.display = "none";
+    lightbox.classList.remove("visible");
     document.body.style.overflow = "";
   }
 
-  leftArrow.addEventListener("click", e => {
-    e.stopPropagation();
-    showImage(currentIndex - 1);
-  });
-
-  rightArrow.addEventListener("click", e => {
-    e.stopPropagation();
-    showImage(currentIndex + 1);
-  });
+  leftArrow.addEventListener("click", e => { e.stopPropagation(); showImage(currentIndex - 1); });
+  rightArrow.addEventListener("click", e => { e.stopPropagation(); showImage(currentIndex + 1); });
 
   window.addEventListener("keydown", e => {
-    if (lightbox.style.display !== "flex") return;
+    if (!lightbox.classList.contains("visible")) return;
     e.preventDefault();
     if (e.key === "ArrowLeft") showImage(currentIndex - 1);
     if (e.key === "ArrowRight") showImage(currentIndex + 1);
     if (e.key === "Escape") closeLightbox();
   });
 
-  lightbox.addEventListener("click", e => {
-    if (e.target === lightbox) closeLightbox();
-  });
+  lightbox.addEventListener("click", e => { if (e.target === lightbox) closeLightbox(); });
 
-  document.querySelectorAll(".img-container").forEach((container, idx) => {
+  document.querySelectorAll(".img-container").forEach((container) => {
     const img = container.querySelector("img");
-
     const zoomInput = document.createElement("input");
     zoomInput.type = "range";
     zoomInput.min = 1;
@@ -485,8 +823,6 @@ function openLightbox(clickedImage) {
     zoomInput.value = 1;
     zoomInput.classList.add("zoom-bar");
     container.appendChild(zoomInput);
-
-    allImages.push(img);
 
     let scale = 1, offsetX = 0, offsetY = 0;
     let isDragging = false, startX, startY;
@@ -528,7 +864,6 @@ function openLightbox(clickedImage) {
 
     container.addEventListener("dblclick", () => {
       if (scale === 1 && offsetX === 0 && offsetY === 0) {
-        const img = container.querySelector("img");
         openLightbox(img);
       } else {
         scale = 1;
@@ -540,8 +875,6 @@ function openLightbox(clickedImage) {
     });
   });
 }
-
-
 
   // --- Tri des images ---
   function sortImages(images) {
@@ -642,13 +975,13 @@ function createFilterCheckboxes(images) {
     ...studioCheckboxes
   ];
 
-  const filter = () => {
+const filter = () => {
     const selected = allCheckboxes.filter(cb => cb.checked).map(cb => cb.value);
     const inclusive = modeSelect.value === 'inclusive';
 
     const visibleImages = imgData
-    .filter(({ acts, tags, studios }) =>
-      selected.length === 0
+    .filter(({ acts, tags, studios, img }) => {
+      const passesCheckboxFilter = selected.length === 0
         ? true
         : inclusive
           ? selected.some(v =>
@@ -656,9 +989,13 @@ function createFilterCheckboxes(images) {
               tags.includes(v) ||
               studios.includes(v)
             )
-          : [...acts, ...tags, ...studios].every(v => selected.includes(v))
-    )
+          : [...acts, ...tags, ...studios].every(v => selected.includes(v));
 
+      const passesGalleryFilter = selectedGalleryValues.size === 0
+        || selectedGalleryValues.has(img.dataset.gallery);
+
+      return passesCheckboxFilter && passesGalleryFilter;
+    })
       .map(({ img }) => img);
 
     gallery.innerHTML = '';
@@ -669,7 +1006,86 @@ function createFilterCheckboxes(images) {
   allCheckboxes.forEach(cb => cb.addEventListener('change', filter));
   modeSelect.addEventListener('change', filter);
 
+  triggerFilter = filter;
   filter();
+}
+
+function initGallerySearchFilter(images) {
+  const input = document.getElementById('gallery-search-input');
+  const suggestionsBox = document.getElementById('gallery-suggestions');
+  const labelsBox = document.getElementById('gallery-labels');
+  if (!input || !suggestionsBox || !labelsBox) return;
+
+  const galleryValues = [...new Set(images.map(img => img.dataset.gallery).filter(Boolean))];
+
+  const compareGallery = (a, b) => {
+    const aNums = a.split('-').map(s => parseInt(s, 10) || 0);
+    const bNums = b.split('-').map(s => parseInt(s, 10) || 0);
+    const len = Math.max(aNums.length, bNums.length);
+    for (let i = 0; i < len; i++) {
+      const numA = aNums[i] ?? 0;
+      const numB = bNums[i] ?? 0;
+      if (numA !== numB) return numA - numB;
+    }
+    return 0;
+  };
+
+  galleryValues.sort(compareGallery);
+
+  const renderLabels = () => {
+    labelsBox.innerHTML = '';
+    [...selectedGalleryValues].sort(compareGallery).forEach(value => {
+      const label = document.createElement('span');
+      label.className = 'gallery-label';
+      label.innerHTML = `${value} <button type="button" aria-label="Retirer">&times;</button>`;
+      label.querySelector('button').addEventListener('click', () => {
+        selectedGalleryValues.delete(value);
+        renderLabels();
+        triggerFilter();
+      });
+      labelsBox.appendChild(label);
+    });
+  };
+
+  const renderSuggestions = (query) => {
+    suggestionsBox.innerHTML = '';
+    if (!query) {
+      suggestionsBox.style.display = 'none';
+      return;
+    }
+    const matches = galleryValues
+      .filter(v => v.startsWith(query) && !selectedGalleryValues.has(v))
+      .slice(0, 30); // limite d'affichage, modifiable
+
+    if (matches.length === 0) {
+      suggestionsBox.style.display = 'none';
+      return;
+    }
+
+    matches.forEach(value => {
+      const item = document.createElement('div');
+      item.className = 'gallery-suggestion-item';
+      item.textContent = value;
+      item.addEventListener('click', () => {
+        selectedGalleryValues.add(value);
+        input.value = '';
+        suggestionsBox.innerHTML = '';
+        suggestionsBox.style.display = 'none';
+        renderLabels();
+        triggerFilter();
+      });
+      suggestionsBox.appendChild(item);
+    });
+    suggestionsBox.style.display = 'block';
+  };
+
+  input.addEventListener('input', () => renderSuggestions(input.value.trim()));
+  input.addEventListener('focus', () => renderSuggestions(input.value.trim()));
+  document.addEventListener('click', (e) => {
+    if (!suggestionsBox.contains(e.target) && e.target !== input) {
+      suggestionsBox.style.display = 'none';
+    }
+  });
 }
 
 function enableCollapsibleFilters() {
@@ -893,12 +1309,13 @@ function enableTagBackgroundChange() {
     }, 4 * 60 * 1000);
   }
 
-  // --- Exécution ---
-  const sortedImages = 
+const sortedImages = 
   sortImages(galleryImages);
   autoPopulateDatasets(sortedImages);
+  buildCollections(sortedImages);
   applyLazyLoading(sortedImages);
   createFilterCheckboxes(sortedImages);
+  initGallerySearchFilter(sortedImages);
   enableCollapsibleFilters(); 
   enableTagBackgroundChange();
   groupImagesByPrefix(sortedImages);
