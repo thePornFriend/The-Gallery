@@ -168,8 +168,11 @@ function parseActressField(raw) {
   return raw.split(',').map(part => {
     const trimmed = part.trim();
     const excluded = trimmed.startsWith('(-)');
-    const name = unescapeDash((excluded ? trimmed.slice(3) : trimmed).trim());
-    return { name, excluded };
+    const cropped  = trimmed.startsWith('(+)');
+    const name = unescapeDash(
+      (excluded || cropped ? trimmed.slice(3) : trimmed).trim()
+    );
+    return { name, excluded, cropped };
   }).filter(a => a.name);
 }
 
@@ -329,6 +332,11 @@ function applyCombinedData(img) {
       const visible = parsed1.actresses.filter(a => !a.excluded).map(a => a.name);
       if (!img.dataset.actress) {
         img.dataset.actress = (visible.length ? visible : parsed1.actresses.map(a => a.name)).join(', ');
+      }
+      // Actrices partiellement visibles (+) -> pour la description "(cropped)"
+      const cropped = parsed1.actresses.filter(a => a.cropped).map(a => a.name);
+      if (cropped.length && !img.dataset.croppedActresses) {
+        img.dataset.croppedActresses = cropped.join(', ');
       }
       if (!img.dataset.studio && parsed1.studio) img.dataset.studio = parsed1.studio;
       if (!img.dataset.series && parsed1.series) img.dataset.series = parsed1.series;
@@ -564,93 +572,6 @@ function enableZoomDrag() {
   });
 }
 function enableZoomDrag() {
-  const style = document.createElement("style");
-  style.textContent = `
-    .lightbox {
-      display: none;
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,0.9);
-      justify-content: center;
-      align-items: center;
-      z-index: 1000;
-    }
-    .lightbox.visible { display: flex; }
-    .lightbox-main {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      width: 60vw;
-      max-width: 900px;
-      flex-shrink: 0;
-    }
-    .lightbox-stage {
-      width: 100%;
-      height: 75vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-    .lightbox-stage img {
-      max-width: 100%;
-      max-height: 100%;
-      width: auto;
-      height: auto;
-      object-fit: contain;
-      transition: transform 0.3s ease;
-      cursor: zoom-out;
-      user-select: none;
-    }
-    .lightbox-desc {
-      color: white;
-      font-family: sans-serif;
-      font-size: 16px;
-      margin-top: 10px;
-      text-align: center;
-    }
-    .lightbox-arrow {
-      font-size: 48px;
-      color: white;
-      cursor: pointer;
-      user-select: none;
-      padding: 20px;
-      background: rgba(0,0,0,0.3);
-      border-radius: 10px;
-      flex-shrink: 0;
-    }
-    .lightbox-arrow:hover { background: rgba(255,255,255,0.2); }
-    .lightbox-collection {
-      display: none;
-      width: 260px;
-      margin-left: 30px;
-      color: white;
-      font-family: sans-serif;
-      font-size: 15px;
-      line-height: 1.5;
-    }
-    .lightbox-collection.visible { display: block; }
-    .collection-title { font-size: 18px; font-weight: 600; margin-bottom: 8px; }
-    .collection-meta { opacity: 0.8; margin-bottom: 14px; }
-    .collection-features, .collection-tags, .collection-count { margin-bottom: 10px; }
-    .collection-preview {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 10px;
-      margin-top: 16px;
-    }
-.collection-preview-img {
-      width: 180px;
-      height: 180px;
-      object-fit: cover;
-      cursor: pointer;
-      border-radius: 4px;
-    }
-    .collection-arrow { font-size: 24px; cursor: pointer; user-select: none; }
-    .collection-preview-caption { text-align: center; font-size: 12px; opacity: 0.7; margin-top: 6px; }
-  `;
-  document.head.appendChild(style);
-
   const lightbox = document.createElement("div");
   lightbox.className = "lightbox";
 lightbox.innerHTML = `
@@ -718,7 +639,13 @@ lightbox.innerHTML = `
   function generateDescription(img) {
     const galleryId = img.dataset.gallery || "—";
     const actresses = cleanActressNames(img.dataset.actress || img.alt || "");
-    return `Image n° : ${galleryId}<br>${joinWithAmpersand(actresses)}`;
+    const cropped = new Set(
+      cleanActressNames(img.dataset.croppedActresses || "").map(n => n.toLowerCase())
+    );
+    const labeled = actresses.map(n =>
+      cropped.has(n.toLowerCase()) ? `${n} (<i>cropped</i>)` : n
+    );
+    return `Image n° : ${galleryId}<br>${joinWithAmpersand(labeled)}`;
   }
 
   function updateCollectionPanel(img) {
