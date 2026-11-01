@@ -2,17 +2,6 @@
    AMATEUR — raccourci + pulse du toggle
    ========================================================================== */
 
-/* Le label "Amateur" (agrégat) est visuellement distinct */
-.actress-list-main .amateur-all-label {
-  background-color: rgba(120, 165, 250, 0.55);
-  font-weight: 600;
-  border: 1px dashed rgba(0, 90, 200, 0.35);
-}
-
-.actress-list-main .amateur-all-label:hover {
-  background-color: rgba(120, 165, 250, 0.75);
-}
-
 /* Pulse du toggle pour inciter à aller plus loin */
 .actress-toggle.pulse-hint {
   color: #fba7d6;
@@ -89,6 +78,9 @@
 .actress-slider > .actress-list-main {
   position: relative;
   width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  padding-right: 12px; /* Laisse la place à la barre de défilement */
   transition: transform 0.4s ease;
 }
 
@@ -98,10 +90,14 @@
   top: 0;
   left: 0;
   width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  padding-right: 12px; /* Laisse la place à la barre de défilement */
   transform: translateX(100%);
   transition: transform 0.4s ease;
 }
 
+/* Animations */
 .actress-section.more-active .actress-list-main {
   transform: translateX(-100%);
 }
@@ -109,6 +105,28 @@
 .actress-section.more-active .actress-list-more {
   transform: translateX(0);
 }
+
+/* Le pulse sur le bouton */
+.actress-toggle.pulse-hint {
+  color: #fba7d6;
+  background: rgba(255, 255, 255, 0.4);
+  animation: pulseHintRight 1.1s ease-in-out infinite;
+}
+
+.actress-section.more-active .actress-toggle.pulse-hint {
+  animation-name: pulseHintLeft;
+}
+
+@keyframes pulseHintRight {
+  0%, 100% { transform: translateY(-50%) translateX(0); }
+  50%      { transform: translateY(-50%) translateX(7px); }
+}
+
+@keyframes pulseHintLeft {
+  0%, 100% { transform: translateY(-50%) translateX(0); }
+  50%      { transform: translateY(-50%) translateX(-7px); }
+}
+
 
 /* ==========================================================================
    RESET & BODY
