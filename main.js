@@ -25,7 +25,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // --- Groupes de studios ---
   const STUDIO_GROUPS = {
-    'Aylo (aka. MindGeek' : ['Brazzers', 'Digital Playground', 'Letsdoit', 'Mofos', 'Reality Kings', 'Twistys'],
+    'Aylo (aka. MindGeek)' : ['Brazzers', 'Digital Playground', 'Letsdoit', 'Mofos', 'Reality Kings', 'Twistys'],
     'Vixen Media Group': ['Blacked', 'Deeper', 'MILFY', 'Slayed', 'Tushy', 'Vixen','Wifey'],
     'MetArt Network':    ['MetArt', 'SexArt', 'Straplez', 'Viv Thomas', 'Domai', 'TLE|The Life Erotic', 'Stunning 18'],
     'Nubiles Porn': ['Bratty Sis', 'Cheating Sis', 'Cum Swapping Sis', 'Family Swap', 'Moms Teach Sex', 'My Family Pies', 'Step Siblings Caught'],
