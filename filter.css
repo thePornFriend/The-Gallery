@@ -49,12 +49,18 @@
   width: 100%;
   overflow: hidden;
   transition: transform 0.4s ease;
+  height: 220px;   /* hauteur fixe */
 }
 
 .actress-slider > .actress-list {
   flex: 0 0 100%;
-  min-width: 0;
+  width: 100%;
+  min-width: 100%;
+  max-width: 100%;
   box-sizing: border-box;
+  /* Hauteur stable pour que le panneau 2 ne soit pas écrasé */
+  height: 220px; /* 200px max-height + 20px padding */
+  max-height: 220px;
 }
 
 .actress-section.more-active .actress-slider {
