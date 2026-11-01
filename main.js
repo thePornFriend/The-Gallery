@@ -934,30 +934,31 @@ function matchesColor(img) {
   }
 
   // --- Grille checkbox générique (actrices, tags) ---
-  function buildCheckboxGrid(container, items) {
-    const capitalize = s => s.charAt(0).toUpperCase() + s.slice(1);
-    const sorted = [...items.keys()].sort((a, b) =>
-      a.localeCompare(b, 'fr', { sensitivity: 'base' })
-    );
-    const perCol = Math.ceil(sorted.length / 5);
-    container.innerHTML = '';
-    const checkboxes = [];
+function buildCheckboxGrid(container, items, displayName = k => k) {
+  const capitalize = s => s.charAt(0).toUpperCase() + s.slice(1);
+  const sorted = [...items.keys()].sort((a, b) =>
+    displayName(a).localeCompare(displayName(b), 'fr', { sensitivity: 'base' })
+  );
+  const perCol = Math.ceil(sorted.length / 5);
+  container.innerHTML = '';
+  const checkboxes = [];
 
-    for (let i = 0; i < 5; i++) {
-      const col = document.createElement('div');
-      col.className = 'column';
-      for (const item of sorted.slice(i * perCol, (i + 1) * perCol)) {
-        const label = document.createElement('label');
-        label.innerHTML = `<input type="checkbox" value="${item}"> ${capitalize(item)} (${items.get(item)})`;
-        const cb = label.firstChild;
-        checkboxes.push(cb);
-        col.appendChild(label);
-      }
-      container.appendChild(col);
+  for (let i = 0; i < 5; i++) {
+    const col = document.createElement('div');
+    col.className = 'column';
+    for (const item of sorted.slice(i * perCol, (i + 1) * perCol)) {
+      const label = document.createElement('label');
+      const display = capitalize(displayName(item));
+      label.innerHTML = `<input type="checkbox" value="${item}"> ${display} (${items.get(item)})`;
+      const cb = label.firstChild;
+      checkboxes.push(cb);
+      col.appendChild(label);
     }
-
-    return checkboxes;
+    container.appendChild(col);
   }
+
+  return checkboxes;
+}
 
   function buildStudioFilterGrid(container, studioCount, imgData) {
     const capitalize = s => s.charAt(0).toUpperCase() + s.slice(1);
@@ -1142,151 +1143,183 @@ function createCheckbox(value) {
   }
 
   // --- Filtres actrices, tags, studios ---
-  function createFilterCheckboxes(images) {
-    const actressList = document.querySelector('.actress-list');
-    const tagList = document.querySelector('.tag-list');
-    const modeSelect = document.getElementById('filter-mode');
+function createFilterCheckboxes(images) {
+  const mainList     = document.querySelector('.actress-list-main');
+  const moreList     = document.querySelector('.actress-list-more');
+  const tagList      = document.querySelector('.tag-list');
+  const modeSelect   = document.getElementById('filter-mode');
+  const toggleBtn    = document.querySelector('.actress-toggle');
+  const actressSec   = document.querySelector('.actress-section');
 
-    images.forEach(img => {
-      if (!img.dataset.studio || img.dataset.studio.trim() === '') {
-        img.dataset.studio = 'unassigned';
-      }
-    });
+  images.forEach(img => {
+    if (!img.dataset.studio || img.dataset.studio.trim() === '') {
+      img.dataset.studio = 'unassigned';
+    }
+  });
 
-    if (!actressList || !tagList || !modeSelect) return;
+  if (!mainList || !moreList || !tagList || !modeSelect) return;
 
-    const normalize = n => /^\(.*\)$/.test(n.trim()) ? 'amateur' : n.trim();
+  const stripParens  = n => n.replace(/^\(|\)$/g, '').trim();
+  const isAmateur    = n => /^\(.*\)$/.test(n.trim());
+  const stripPrefix  = k => k.replace(/^(main|am):/, '');
 
-    const countMap = (items) => {
-      const count = new Map();
-      items.forEach(arr => arr.forEach(v => count.set(v, (count.get(v) || 0) + 1)));
-      return count;
+  const countMap = (items) => {
+    const count = new Map();
+    items.forEach(arr => arr.forEach(v => count.set(v, (count.get(v) || 0) + 1)));
+    return count;
+  };
+
+  // ← MODIFIÉ : split main vs amateur + préfixes pour éviter les collisions
+  const imgData = images.map(img => {
+    const rawActs = (img.dataset.actress || '').split(',').map(n => n.trim()).filter(Boolean);
+    const mainActs = rawActs.filter(n => !isAmateur(n)).map(n => 'main:' + n);
+    const amateurActs = rawActs.filter(n => isAmateur(n)).map(n => 'am:' + stripParens(n));
+    const tags = (img.dataset.tag || '').split(',').map(t => t.trim()).filter(Boolean);
+    const studios = (img.dataset.studio || '').split(',').map(s => s.trim()).filter(Boolean);
+    return {
+      img,
+      acts: [...mainActs, ...amateurActs],
+      mainActs,
+      amateurActs,
+      tags,
+      studios
     };
+  });
 
-    const imgData = images.map(img => {
-      const acts = (img.dataset.actress || '').split(',').map(normalize).filter(Boolean);
-      const tags = (img.dataset.tag || '').split(',').map(t => t.trim()).filter(Boolean);
-      const studios = (img.dataset.studio || '').split(',').map(s => s.trim()).filter(Boolean);
-      return { img, acts, tags, studios };
-    });
+  const mainCount     = countMap(imgData.map(d => d.mainActs));
+  const amateurCount  = countMap(imgData.map(d => d.amateurActs));
+  const tagCount      = countMap(imgData.map(d => d.tags));
+  const studioCount   = countMap(imgData.map(d => d.studios));
 
-    const actressCount = countMap(imgData.map(d => d.acts));
-    const tagCount = countMap(imgData.map(d => d.tags));
-    const studioCount = countMap(imgData.map(d => d.studios));
+  const mainCheckboxes     = buildCheckboxGrid(mainList, mainCount, stripPrefix);
+  const amateurCheckboxes  = buildCheckboxGrid(moreList, amateurCount, stripPrefix);
+  const tagCheckboxes      = buildCheckboxGrid(tagList, tagCount);
 
-    const actressCheckboxes = buildCheckboxGrid(actressList, actressCount);
-    const tagCheckboxes = buildCheckboxGrid(tagList, tagCount);
+  const actressCheckboxes = [...mainCheckboxes, ...amateurCheckboxes];
 
-    const prodList = document.querySelector('.prod-list');
-    const studioCheckboxes = prodList
-      ? buildStudioFilterGrid(prodList, studioCount, imgData)
-      : [];
-
-    const allCheckboxes = [...actressCheckboxes, ...tagCheckboxes, ...studioCheckboxes];
-
-    // --- Co-occurrence des actrices ---
-    const normalizeActress = n =>
-      /^\(.*\)$/.test(n.trim()) ? 'amateur' : n.trim();
-
-    const rawToDisplay = new Map();
-    const rawCo         = new Map();
-    const displayToRaw  = new Map();
-    const displayCo     = new Map();
-
-    images.forEach(img => {
-      const raw = (img.dataset.collectionActresses || img.dataset.actress || '')
-        .split(',').map(n => n.trim()).filter(Boolean);
-      if (!raw.length) return;
-
-      raw.forEach(n => {
-        rawToDisplay.set(n, normalizeActress(n));
-        if (!rawCo.has(n)) rawCo.set(n, new Set());
+  // ← NOUVEAU : toggle
+  if (toggleBtn && actressSec) {
+    if (amateurCount.size === 0) {
+      toggleBtn.style.display = 'none';
+    } else {
+      toggleBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        actressSec.classList.toggle('more-active');
+        toggleBtn.textContent = actressSec.classList.contains('more-active')
+          ? '← See main actresses'
+          : 'See more actresses →';
       });
-
-      if (raw.length > 1) {
-        raw.forEach(a => raw.forEach(b => {
-          if (a !== b) rawCo.get(a).add(b);
-        }));
-      }
-    });
-
-    rawToDisplay.forEach((display, raw) => {
-      if (!displayToRaw.has(display)) displayToRaw.set(display, new Set());
-      displayToRaw.get(display).add(raw);
-    });
-
-    displayToRaw.forEach((rawSet, display) => {
-      const coSet = new Set();
-      rawSet.forEach(raw => {
-        const s = rawCo.get(raw);
-        if (!s) return;
-        s.forEach(other => {
-          const d = rawToDisplay.get(other);
-          if (d && d !== display) coSet.add(d);
-        });
-      });
-      displayCo.set(display, coSet);
-    });
-
-    const actressLabelMap = new Map();
-    actressCheckboxes.forEach(cb => {
-      const label = cb.closest('label');
-      if (label) actressLabelMap.set(cb.value, label);
-    });
-
-    const updateRelatedActresses = () => {
-      const selectedSet = new Set(
-        actressCheckboxes.filter(cb => cb.checked).map(cb => cb.value)
-      );
-
-      const related = new Set();
-      selectedSet.forEach(v => {
-        const s = displayCo.get(v);
-        if (s) s.forEach(x => related.add(x));
-      });
-
-      actressLabelMap.forEach((label, value) => {
-        const isRelated = !selectedSet.has(value) && related.has(value);
-        label.classList.toggle('related-actress', isRelated);
-      });
-    };
-
-    const filter = () => {
-      const selected = [...new Set(allCheckboxes.filter(cb => cb.checked).map(cb => cb.value))];
-      const inclusive = modeSelect.value === 'inclusive';
-
-      const visibleImages = imgData
-        .filter(({ acts, tags, studios, img }) => {
-          const passesCheckboxFilter = selected.length === 0
-            ? true
-            : inclusive
-              ? selected.some(v => acts.includes(v) || tags.includes(v) || studios.includes(v))
-              : [...acts, ...tags, ...studios].every(v => selected.includes(v));
-
-          const passesGalleryFilter = selectedGalleryValues.size === 0
-            || selectedGalleryValues.has(img.dataset.gallery);
-
-          return passesCheckboxFilter && passesGalleryFilter && matchesColor(img);
-        })
-        .map(({ img }) => img);
-
-      gallery.innerHTML = '';
-      groupImagesByPrefix(visibleImages);
-      enableZoomDrag();
-      updateRelatedActresses();
-    };
-
-    let filterTimer = null;
-    const debouncedFilter = () => {
-      clearTimeout(filterTimer);
-      filterTimer = setTimeout(filter, 0);
-    };
-    allCheckboxes.forEach(cb => cb.addEventListener('change', debouncedFilter));
-    modeSelect.addEventListener('change', debouncedFilter);
-
-    triggerFilter = filter;
-    filter();
+    }
   }
+
+  const prodList = document.querySelector('.prod-list');
+  const studioCheckboxes = prodList
+    ? buildStudioFilterGrid(prodList, studioCount, imgData)
+    : [];
+
+  const allCheckboxes = [...actressCheckboxes, ...tagCheckboxes, ...studioCheckboxes];
+
+  // --- Co-occurrence (préfixes conservés pour rester aligné aux cb.value) ---
+  const normalizeActress = n => {
+    const t = n.trim();
+    if (isAmateur(t)) return 'am:' + stripParens(t);
+    return 'main:' + t;
+  };
+
+  const rawToDisplay = new Map();
+  const rawCo         = new Map();
+  const displayToRaw  = new Map();
+  const displayCo     = new Map();
+
+  images.forEach(img => {
+    const raw = (img.dataset.collectionActresses || img.dataset.actress || '')
+      .split(',').map(n => n.trim()).filter(Boolean);
+    if (!raw.length) return;
+
+    raw.forEach(n => {
+      rawToDisplay.set(n, normalizeActress(n));
+      if (!rawCo.has(n)) rawCo.set(n, new Set());
+    });
+
+    if (raw.length > 1) {
+      raw.forEach(a => raw.forEach(b => {
+        if (a !== b) rawCo.get(a).add(b);
+      }));
+    }
+  });
+
+  rawToDisplay.forEach((display, raw) => {
+    if (!displayToRaw.has(display)) displayToRaw.set(display, new Set());
+    displayToRaw.get(display).add(raw);
+  });
+
+  displayToRaw.forEach((rawSet, display) => {
+    const coSet = new Set();
+    rawSet.forEach(raw => {
+      const s = rawCo.get(raw);
+      if (!s) return;
+      s.forEach(other => {
+        const d = rawToDisplay.get(other);
+        if (d && d !== display) coSet.add(d);
+      });
+    });
+    displayCo.set(display, coSet);
+  });
+
+  const actressLabelMap = new Map();
+  actressCheckboxes.forEach(cb => {
+    const label = cb.closest('label');
+    if (label) actressLabelMap.set(cb.value, label);
+  });
+
+  const updateRelatedActresses = () => {
+    const selectedSet = new Set(
+      actressCheckboxes.filter(cb => cb.checked).map(cb => cb.value)
+    );
+
+    const related = new Set();
+    selectedSet.forEach(v => {
+      const s = displayCo.get(v);
+      if (s) s.forEach(x => related.add(x));
+    });
+
+    actressLabelMap.forEach((label, value) => {
+      const isRelated = !selectedSet.has(value) && related.has(value);
+      label.classList.toggle('related-actress', isRelated);
+    });
+  };
+
+  const filter = () => {
+    const selected = [...new Set(allCheckboxes.filter(cb => cb.checked).map(cb => cb.value))];
+    const inclusive = modeSelect.value === 'inclusive';
+
+    const visibleImages = imgData
+      .filter(({ acts, tags, studios, img }) => {
+        const passesCheckboxFilter = selected.length === 0
+          ? true
+          : inclusive
+            ? selected.some(v => acts.includes(v) || tags.includes(v) || studios.includes(v))
+            : [...acts, ...tags, ...studios].every(v => selected.includes(v));
+
+        const passesGalleryFilter = selectedGalleryValues.size === 0
+          || selectedGalleryValues.has(img.dataset.gallery);
+
+        return passesCheckboxFilter && passesGalleryFilter && matchesColor(img);
+      })
+      .map(({ img }) => img);
+
+    gallery.innerHTML = '';
+    groupImagesByPrefix(visibleImages);
+    enableZoomDrag();
+    updateRelatedActresses();
+  };
+
+  allCheckboxes.forEach(cb => cb.addEventListener('change', filter));
+  modeSelect.addEventListener('change', filter);
+
+  triggerFilter = filter;
+  filter();
+}
 
   function initGallerySearchFilter(images) {
     const input = document.getElementById('gallery-search-input');
@@ -1361,19 +1394,25 @@ function createCheckbox(value) {
     });
   }
 
-  function enableCollapsibleFilters() {
-    document.querySelectorAll('.filter-sections h3').forEach(title => {
-      const list = title.nextElementSibling;
-      if (!list) return;
+function enableCollapsibleFilters() {
+  document.querySelectorAll('.filter-sections h3').forEach(title => {
+    let list = title.nextElementSibling;
 
-      title.style.cursor = 'pointer';
-      title.addEventListener('click', () => {
-        const isHidden = list.style.display === 'none';
-        list.style.display = isHidden ? '' : 'none';
-        title.classList.toggle('collapsed', !isHidden);
-      });
+    // Cas spécial : h3 est dans .actress-header
+    if (!list && title.parentElement?.classList.contains('actress-header')) {
+      list = title.closest('.actress-section')?.querySelector('.actress-slider');
+    }
+
+    if (!list) return;
+
+    title.style.cursor = 'pointer';
+    title.addEventListener('click', () => {
+      const isHidden = list.style.display === 'none';
+      list.style.display = isHidden ? '' : 'none';
+      title.classList.toggle('collapsed', !isHidden);
     });
-  }
+  });
+}
 
   // --- Background piloté par les tags ---
   function enableTagBackgroundChange() {
