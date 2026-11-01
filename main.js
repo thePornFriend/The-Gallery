@@ -1169,21 +1169,13 @@ function createFilterCheckboxes(images) {
     return count;
   };
 
-  // ← MODIFIÉ : split main vs amateur + préfixes pour éviter les collisions
   const imgData = images.map(img => {
     const rawActs = (img.dataset.actress || '').split(',').map(n => n.trim()).filter(Boolean);
     const mainActs = rawActs.filter(n => !isAmateur(n)).map(n => 'main:' + n);
     const amateurActs = rawActs.filter(n => isAmateur(n)).map(n => 'am:' + stripParens(n));
     const tags = (img.dataset.tag || '').split(',').map(t => t.trim()).filter(Boolean);
     const studios = (img.dataset.studio || '').split(',').map(s => s.trim()).filter(Boolean);
-    return {
-      img,
-      acts: [...mainActs, ...amateurActs],
-      mainActs,
-      amateurActs,
-      tags,
-      studios
-    };
+    return { img, acts: [...mainActs, ...amateurActs], mainActs, amateurActs, tags, studios };
   });
 
   const mainCount     = countMap(imgData.map(d => d.mainActs));
@@ -1195,9 +1187,38 @@ function createFilterCheckboxes(images) {
   const amateurCheckboxes  = buildCheckboxGrid(moreList, amateurCount, stripPrefix);
   const tagCheckboxes      = buildCheckboxGrid(tagList, tagCount);
 
+  // ← NOUVEAU : raccourci "Amateur (N)" en tête du panneau 1
+  // N = nombre d'images ayant AU MOINS une actrice entre parenthèses
+  const amateurImagesCount = imgData.filter(d => d.amateurActs.length > 0).length;
+  let amateurCb = null;
+
+  if (amateurImagesCount > 0) {
+    const firstCol = mainList.querySelector('.column');
+    if (firstCol) {
+      const label = document.createElement('label');
+      label.className = 'amateur-all-label';
+      label.innerHTML = `<input type="checkbox" value="am:__all__"> Amateur (${amateurImagesCount})`;
+      amateurCb = label.firstChild;
+      firstCol.insertBefore(label, firstCol.firstChild);
+
+      mainCheckboxes.unshift(amateurCb);
+
+      // Pulse sur le toggle : au survol OU quand la case est cochée
+      if (toggleBtn) {
+        const updatePulse = () => {
+          const isHovered = label.matches(':hover');
+          toggleBtn.classList.toggle('pulse-hint', isHovered || amateurCb.checked);
+        };
+        label.addEventListener('mouseenter', updatePulse);
+        label.addEventListener('mouseleave', updatePulse);
+        amateurCb.addEventListener('change', updatePulse);
+      }
+    }
+  }
+
   const actressCheckboxes = [...mainCheckboxes, ...amateurCheckboxes];
 
-  // ← NOUVEAU : toggle
+  // Toggle panneau 1 / panneau 2
   if (toggleBtn && actressSec) {
     if (amateurCount.size === 0) {
       toggleBtn.style.display = 'none';
@@ -1219,7 +1240,7 @@ function createFilterCheckboxes(images) {
 
   const allCheckboxes = [...actressCheckboxes, ...tagCheckboxes, ...studioCheckboxes];
 
-  // --- Co-occurrence (préfixes conservés pour rester aligné aux cb.value) ---
+  // --- Co-occurrence (am:__all__ exclu du calcul) ---
   const normalizeActress = n => {
     const t = n.trim();
     if (isAmateur(t)) return 'am:' + stripParens(t);
@@ -1235,12 +1256,10 @@ function createFilterCheckboxes(images) {
     const raw = (img.dataset.collectionActresses || img.dataset.actress || '')
       .split(',').map(n => n.trim()).filter(Boolean);
     if (!raw.length) return;
-
     raw.forEach(n => {
       rawToDisplay.set(n, normalizeActress(n));
       if (!rawCo.has(n)) rawCo.set(n, new Set());
     });
-
     if (raw.length > 1) {
       raw.forEach(a => raw.forEach(b => {
         if (a !== b) rawCo.get(a).add(b);
@@ -1274,32 +1293,49 @@ function createFilterCheckboxes(images) {
 
   const updateRelatedActresses = () => {
     const selectedSet = new Set(
-      actressCheckboxes.filter(cb => cb.checked).map(cb => cb.value)
+      actressCheckboxes.filter(cb => cb.checked && cb.value !== 'am:__all__').map(cb => cb.value)
     );
-
     const related = new Set();
     selectedSet.forEach(v => {
       const s = displayCo.get(v);
       if (s) s.forEach(x => related.add(x));
     });
-
     actressLabelMap.forEach((label, value) => {
+      if (value === 'am:__all__') return;
       const isRelated = !selectedSet.has(value) && related.has(value);
       label.classList.toggle('related-actress', isRelated);
     });
   };
 
+  // ← MODIFIÉ : gestion spéciale de am:__all__
   const filter = () => {
     const selected = [...new Set(allCheckboxes.filter(cb => cb.checked).map(cb => cb.value))];
     const inclusive = modeSelect.value === 'inclusive';
 
+    const selectedAll  = selected.includes('am:__all__');
+    const selectedRest = selected.filter(v => v !== 'am:__all__');
+
     const visibleImages = imgData
-      .filter(({ acts, tags, studios, img }) => {
-        const passesCheckboxFilter = selected.length === 0
-          ? true
-          : inclusive
-            ? selected.some(v => acts.includes(v) || tags.includes(v) || studios.includes(v))
-            : [...acts, ...tags, ...studios].every(v => selected.includes(v));
+      .filter(({ acts, tags, studios, amateurActs, img }) => {
+        let passesCheckboxFilter;
+
+        if (selected.length === 0) {
+          passesCheckboxFilter = true;
+        } else if (inclusive) {
+          const matchAll  = selectedAll && amateurActs.length > 0;
+          const matchRest = selectedRest.some(v =>
+            acts.includes(v) || tags.includes(v) || studios.includes(v)
+          );
+          passesCheckboxFilter = matchAll || matchRest;
+        } else {
+          // exclusif : chaque valeur de l'image doit être couverte par la sélection
+          const allVals = [...acts, ...tags, ...studios];
+          const allCovered = allVals.every(v =>
+            selectedRest.includes(v) || (selectedAll && v.startsWith('am:'))
+          );
+          const allReq = !selectedAll || amateurActs.length > 0;
+          passesCheckboxFilter = allReq && allCovered;
+        }
 
         const passesGalleryFilter = selectedGalleryValues.size === 0
           || selectedGalleryValues.has(img.dataset.gallery);
@@ -1398,8 +1434,8 @@ function enableCollapsibleFilters() {
   document.querySelectorAll('.filter-sections h3').forEach(title => {
     let list = title.nextElementSibling;
 
-    // Cas spécial : h3 est dans .actress-header
-    if (!list && title.parentElement?.classList.contains('actress-header')) {
+    // Cas spécial : H3 dans .actress-header → on cible le slider, pas le bouton
+    if (title.parentElement?.classList.contains('actress-header')) {
       list = title.closest('.actress-section')?.querySelector('.actress-slider');
     }
 
