@@ -1398,8 +1398,8 @@ function enableCollapsibleFilters() {
   document.querySelectorAll('.filter-sections h3').forEach(title => {
     let list = title.nextElementSibling;
 
-    // Cas spécial : H3 dans .actress-header → on cible le slider, pas le bouton
-    if (title.parentElement?.classList.contains('actress-header')) {
+    // Cas spécial : h3 est dans .actress-header
+    if (!list && title.parentElement?.classList.contains('actress-header')) {
       list = title.closest('.actress-section')?.querySelector('.actress-slider');
     }
 
