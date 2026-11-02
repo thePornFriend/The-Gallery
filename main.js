@@ -1184,20 +1184,24 @@ document.addEventListener("DOMContentLoaded", () => {
     const amateurCheckboxes = buildCheckboxGrid(moreList, amateurCount, stripPrefix);
     const tagCheckboxes     = buildCheckboxGrid(tagList, tagCount);
 
-    // --- Raccourci "Amateur (N)" en tête du panneau 1 ---
+        // --- Raccourci "Amateur (N)" en fin du panneau 1 ---
     const amateurImagesCount = imgData.filter(d => d.amateurActs.length > 0).length;
     let amateurCb = null;
 
     if (amateurImagesCount > 0) {
-      const firstCol = mainList.querySelector('.column');
-      if (firstCol) {
+      const columns = mainList.querySelectorAll('.column');
+      const lastCol = columns[columns.length - 1]; // On cible la dernière colonne
+      
+      if (lastCol) {
         const label = document.createElement('label');
         label.className = 'amateur-all-label';
         label.innerHTML = `<input type="checkbox" value="am:__all__"> Amateur (${amateurImagesCount})`;
         amateurCb = label.firstChild;
-        firstCol.insertBefore(label, firstCol.firstChild);
-        mainCheckboxes.unshift(amateurCb);
+        
+        lastCol.appendChild(label);        // Ajout à la fin de la colonne
+        mainCheckboxes.push(amateurCb);    // Ajout à la fin du tableau de checkboxes
 
+        // Pulse sur le toggle : au survol OU quand la case est cochée
         if (toggleBtn) {
           const updatePulse = () => {
             const isHovered = label.matches(':hover');
@@ -1209,7 +1213,6 @@ document.addEventListener("DOMContentLoaded", () => {
         }
       }
     }
-
     const actressCheckboxes = [...mainCheckboxes, ...amateurCheckboxes];
 
     // --- Toggle panneau 1 / panneau 2 ---
