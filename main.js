@@ -1710,9 +1710,12 @@ document.addEventListener("DOMContentLoaded", () => {
       console.log(`⚠️ ${unloaded.length} images non chargées, tentative de rechargement...`);
 
       unloaded.forEach(img => {
-        const oldSrc = img.src;
+        // 1. On sauvegarde l'URL de base sans le paramètre reload (s'il existe déjà)
+        const baseSrc = img.src.split('&reload=')[0].split('?reload=')[0];
+        
+        // 2. On applique la nouvelle URL de base + le nouveau timestamp
         img.src = "";
-        img.src = oldSrc + (oldSrc.includes("?") ? "&" : "?") + "reload=" + Date.now();
+        img.src = baseSrc + (baseSrc.includes("?") ? "&" : "?") + "reload=" + Date.now();
       });
     }
 
