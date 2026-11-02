@@ -720,6 +720,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
       });
 
+      // Double-clic pour ordinateur
       container.addEventListener("dblclick", () => {
         if (scale === 1 && offsetX === 0 && offsetY === 0) {
           openLightbox(img);
@@ -731,6 +732,29 @@ document.addEventListener("DOMContentLoaded", () => {
           updateTransform();
         }
       });
+
+      // Double-tap pour mobile (tactile)
+      let lastTap = 0;
+      container.addEventListener("touchend", (e) => {
+        if (e.target.closest('.zoom-bar')) return;
+
+        const currentTime = new Date().getTime();
+        const tapLength = currentTime - lastTap;
+        
+        if (tapLength < 300 && tapLength > 0) {
+          e.preventDefault(); // Empêche le zoom natif du navigateur
+          if (scale === 1 && offsetX === 0 && offsetY === 0) {
+            openLightbox(img);
+          } else {
+            scale = 1;
+            offsetX = 0;
+            offsetY = 0;
+            zoomInput.value = 1;
+            updateTransform();
+          }
+        }
+        lastTap = currentTime;
+      }, { passive: false });
     });
   }
 
