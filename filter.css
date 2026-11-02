@@ -188,6 +188,7 @@ body::-webkit-scrollbar {
   align-items: center;
   overflow: hidden;
   cursor: grab;
+  touch-action: manipulation; 
 }
 
 .img-container img {
