@@ -1407,6 +1407,54 @@
  <div id="lightbox" class="lightbox" onclick="closeLightbox(event)">
   <img id="lightbox-img" class="zoomable" src="" onclick="toggleZoom(event)">
  </div>
+ <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      // --- GESTION DU SCROLL ET DES FILTRES SUR MOBILE ---
+      const filterBtn = document.getElementById('mobile-filter-btn');
+      const filterModal = document.querySelector('.filter');
+      const filterOverlay = document.getElementById('filter-overlay');
+      
+      let scrollTimeout;
+      let lastScrollY = window.scrollY;
+
+      // 1. Détection du scroll
+      window.addEventListener('scroll', () => {
+        if (window.innerWidth > 768) return; // Rien sur desktop
+
+        const currentScrollY = window.scrollY;
+        
+        if (Math.abs(currentScrollY - lastScrollY) > 5) {
+          document.body.classList.add('is-scrolling');
+          clearTimeout(scrollTimeout);
+          
+          scrollTimeout = setTimeout(() => {
+            document.body.classList.remove('is-scrolling');
+          }, 200);
+        }
+        lastScrollY = currentScrollY;
+      }, { passive: true });
+
+      // 2. Ouverture des filtres
+      if (filterBtn) {
+        filterBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          filterModal.classList.add('active');
+          filterOverlay.classList.add('active');
+          document.body.classList.remove('is-scrolling');
+          document.body.style.overflow = 'hidden'; 
+        });
+      }
+
+      // 3. Fermeture des filtres
+      if (filterOverlay) {
+        filterOverlay.addEventListener('click', () => {
+          filterModal.classList.remove('active');
+          filterOverlay.classList.remove('active');
+          document.body.style.overflow = ''; 
+        });
+      }
+    });
+  </script>
  <script src="main.js"></script>
 </body>
 </html>
