@@ -1,10 +1,17 @@
 /* ==========================================================================
    MOBILE & TOUCH INTERFACE
    ========================================================================== */
+/* On cache les bandeaux et l'overlay par défaut (sur PC) */
+.scroll-band,
+.filter-overlay {
+  display: none;
+}
+
 @media (max-width: 768px) {
   
   /* --- 1. Les Bandeaux de Scroll --- */
   .scroll-band {
+    display: flex; 
     position: fixed;
     left: 0;
     width: 100%;
@@ -53,6 +60,7 @@
   /* --- 3. La Modale des Filtres (Flottante) --- */
   /* On cache l'overlay par défaut */
   .filter-overlay {
+    display: block;
     position: fixed;
     inset: 0;
     background: rgba(0, 0, 0, 0.6);
