@@ -1739,5 +1739,24 @@ document.addEventListener("DOMContentLoaded", () => {
   groupImagesByPrefix(sortedImages);
   enableZoomDrag();
   retryUnloadedImages(sortedImages);
+    // --- OUTIL DE DEBUG POUR LA CONSOLE ---
+  window.injectNewImages = function(htmlString) {
+    const temp = document.createElement('div');
+    temp.innerHTML = htmlString;
+    const newImgs = Array.from(temp.querySelectorAll('img, video'));
+    
+    // On ajoute les nouvelles balises à la galerie
+    newImgs.forEach(el => gallery.appendChild(el));
+
+    // On récupère TOUT (anciennes + nouvelles images)
+    const allImages = Array.from(gallery.querySelectorAll('img, video'));
+
+    // On recalcule les données et on redessine
+    autoPopulateDatasets(allImages);
+    groupImagesByPrefix(allImages);
+    enableZoomDrag();
+    
+    console.log(`✅ ${newImgs.length} éléments injectés et galerie redessinée !`);
+  };
 
 });
