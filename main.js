@@ -1739,24 +1739,43 @@ document.addEventListener("DOMContentLoaded", () => {
   groupImagesByPrefix(sortedImages);
   enableZoomDrag();
   retryUnloadedImages(sortedImages);
-    // --- OUTIL DE DEBUG POUR LA CONSOLE ---
+
+  
+  // --- OUTIL DE DEBUG POUR LA CONSOLE ---
   window.injectNewImages = function(htmlString) {
     const temp = document.createElement('div');
     temp.innerHTML = htmlString;
     const newImgs = Array.from(temp.querySelectorAll('img, video'));
     
-    // On ajoute les nouvelles balises à la galerie
+    // 1. Ajout au DOM
     newImgs.forEach(el => gallery.appendChild(el));
 
-    // On récupère TOUT (anciennes + nouvelles images)
+    // 2. Récupération de toutes les images (anciennes + nouvelles)
     const allImages = Array.from(gallery.querySelectorAll('img, video'));
 
-    // On recalcule les données et on redessine
+    // 3. Nettoyage des anciennes données
+    allImages.forEach(img => {
+      delete img._collection;
+      delete img._clrData;
+    });
+    
+    // 4. Nettoyage des anciens filtres dans le HTML
+    document.querySelector('.actress-list-main').innerHTML = '';
+    document.querySelector('.actress-list-more').innerHTML = '';
+    document.querySelector('.tag-list').innerHTML = '';
+    document.querySelector('.prod-list').innerHTML = '';
+    
+    // 5. Suppression de l'ancienne lightbox pour éviter les doublons
+    document.querySelectorAll('.lightbox').forEach(lb => lb.remove());
+
+    // 6. Reconstruction complète
     autoPopulateDatasets(allImages);
+    buildCollections(allImages);
+    createFilterCheckboxes(allImages);
     groupImagesByPrefix(allImages);
     enableZoomDrag();
     
-    console.log(`✅ ${newImgs.length} éléments injectés et galerie redessinée !`);
+    console.log(`✅ ${newImgs.length} éléments injectés, filtres et galerie recalculés !`);
   };
 
 });
