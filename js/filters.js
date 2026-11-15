@@ -427,8 +427,23 @@ function enableTagBackgroundChange(updateBodyBackground) {
   const neonColors = ['#FF0080', '#FF8C00', '#FFEE00', '#00FF88', '#00E5FF', '#7A00FF', '#FF00C8'];
   let neonInterval = null, neonIndex = 0;
 
-  const applyNeonColor = () => { state.currentNeonColor = neonColors[neonIndex]; neonIndex = (neonIndex + 1) % neonColors.length; updateBodyBackground(); };
-  const startNeon = () => { if (neonInterval) return; applyNeonColor(); neonInterval = setInterval(applyNeonColor, 3000); };
+    const applyNeonColor = () => { 
+    state.currentNeonColor = neonColors[neonIndex]; 
+    neonIndex = (neonIndex + 1) % neonColors.length; 
+    
+    // On met à jour la variable CSS globale avec la couleur actuelle
+    document.documentElement.style.setProperty('--neon-color', state.currentNeonColor);
+    
+    updateBodyBackground(); 
+  };
+  
+  const stopNeon = () => { 
+    if (neonInterval) { clearInterval(neonInterval); neonInterval = null; } 
+    neonIndex = 0; 
+    
+    // On retire la couleur quand on désactive le filtre
+    document.documentElement.style.setProperty('--neon-color', 'transparent');
+  };
   const stopNeon = () => { if (neonInterval) { clearInterval(neonInterval); neonInterval = null; } neonIndex = 0; };
 
   const isChecked = (val) => Array.from(tagCheckboxes).some(cb => cb.checked && cb.value.trim().toLowerCase() === val);
