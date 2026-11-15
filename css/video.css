@@ -4,7 +4,9 @@
   height: 99.5%;
   border: none;
   border-radius: 3px;
-  object-fit: cover;
+  
+  /* C'EST LA LIGNE MAGIQUE : L'iframe ignore la souris dans la grille */
+  pointer-events: none; 
 }
 
 /* Le halo néon marche aussi pour les iframes */
