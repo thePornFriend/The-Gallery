@@ -27,11 +27,9 @@ function computeColumns(images) {
     }
   }
 
-  // ▼▼▼ MODIFICATION LEFTOVERS ICI ▼▼▼
   if (leftover.length > 0) {
     cols.push({ type: 'leftover-mixed', imgs: leftover });
   }
-  // ▲▲▲ FIN DE LA MODIFICATION ▲▲▲
 
   return cols;
 }
@@ -101,9 +99,7 @@ function buildGalleryLayout(images, container = document.getElementById("gallery
   const galleryLine = createDiv("line");
 
   cols.forEach(col => {
-    // ▼▼▼ MODIFICATION LEFTOVERS ICI ▼▼▼
     if (col.type === '12-mixed' || col.type === 'leftover-mixed') {
-    // ▲▲▲ FIN DE LA MODIFICATION ▲▲▲
       const column = createDiv("column");
       column.dataset.columntype = col.type;
       let unprocessed = [...col.imgs];
@@ -127,6 +123,7 @@ function buildGalleryLayout(images, container = document.getElementById("gallery
         lineImgs.forEach(img => {
           const ic = createDiv("img-container");
           ic.dataset.orientation = img.dataset.orientation;
+          if (img.tagName.toLowerCase() === 'video') ic.dataset.isVideo = "true"; // DÉTECTION VIDÉO ICI
           ic.appendChild(img);
           lineDiv.appendChild(ic);
         });
@@ -139,6 +136,7 @@ function buildGalleryLayout(images, container = document.getElementById("gallery
       col.imgs.forEach(img => {
         const ic = createDiv("img-container");
         ic.dataset.orientation = img.dataset.orientation;
+        if (img.tagName.toLowerCase() === 'video') ic.dataset.isVideo = "true"; // DÉTECTION VIDÉO ICI
         ic.appendChild(img);
         column.appendChild(ic);
       });
