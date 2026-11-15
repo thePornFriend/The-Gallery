@@ -333,10 +333,10 @@ export function parseClr(img) {
   return data;
 }
 
-export function getImageColors(img) { return parseClr(img).colors; }
-export function getImageLuminance(img) { return parseClr(img).luminance; }
-export function hueSimilarity(h1, h2) {
+function getImageColors(img) { return parseClr(img).colors; }
+function getImageLuminance(img) { return parseClr(img).luminance; }
+function hueSimilarity(h1, h2) {
   const diff = Math.abs(h1 - h2);
   const d = Math.min(diff, 360 - diff);
   return 100 * (1 - d / 180);
-}
+} 
