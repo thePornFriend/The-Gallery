@@ -167,18 +167,27 @@ function enableZoomDrag() {
     const media = allMedia[currentIndex];
     stageBox.innerHTML = ''; 
 
-    if (media.tagName.toLowerCase() === 'video') {
+    const tag = media.tagName.toLowerCase();
+
+    if (tag === 'video') {
       const video = document.createElement('video');
       video.src = media.src;
-      video.controls = false;
+      video.controls = true;
       video.style.maxWidth = '100%';
       video.style.maxHeight = '100%';
       video.style.cursor = 'pointer';
-      video.addEventListener('click', () => {
-        if (video.paused) video.play();
-        else video.pause();
-      });
       stageBox.appendChild(video);
+    } else if (tag === 'iframe') {
+      const iframe = document.createElement('iframe');
+      iframe.src = media.src;
+      iframe.style.width = '100%';
+      iframe.style.height = '100%';
+      iframe.style.maxWidth = '900px'; // Taille max raisonnable
+      iframe.style.maxHeight = '75vh';
+      iframe.style.border = 'none';
+      iframe.setAttribute('allowfullscreen', 'true');
+      iframe.setAttribute('allow', 'autoplay; encrypted-media');
+      stageBox.appendChild(iframe);
     } else {
       const img = document.createElement('img');
       img.src = media.src;
@@ -191,7 +200,7 @@ function enableZoomDrag() {
   }
 
   function openLightbox(clickedMedia) {
-    allMedia = Array.from(document.querySelectorAll(".img-container img, .img-container video"));
+    allMedia = Array.from(document.querySelectorAll(".img-container img, .img-container video, .img-container iframe"));
     currentIndex = allMedia.indexOf(clickedMedia);
     if (currentIndex !== -1) {
       showImage(currentIndex);
@@ -204,8 +213,8 @@ function enableZoomDrag() {
     lightbox.classList.remove("visible");
     document.body.style.overflow = "";
     
-    const activeVideo = stageBox.querySelector('video');
-    if (activeVideo) {
+    const activeMedia = stageBox.firstElementChild;
+    if (activeMedia && (activeMedia.tagName.toLowerCase() === 'video' || activeMedia.tagName.toLowerCase() === 'iframe')) {
       const pipWindow = document.createElement('div');
       pipWindow.className = 'pip-window';
       
@@ -214,18 +223,22 @@ function enableZoomDrag() {
       closeBtn.innerHTML = '&times;';
       closeBtn.onclick = (e) => { e.stopPropagation(); pipWindow.remove(); };
       
-      activeVideo.controls = true;
-      activeVideo.style.pointerEvents = 'none'; // On désactive la souris sur la vidéo pour le drag
-      
-      pipWindow.appendChild(activeVideo);
+      pipWindow.appendChild(activeMedia);
       pipWindow.appendChild(closeBtn);
       
+      // On ajoute une barre de drag invisible pour les iframes
+      if (activeMedia.tagName.toLowerCase() === 'iframe') {
+        const dragHandle = document.createElement('div');
+        dragHandle.className = 'pip-drag-handle';
+        pipWindow.appendChild(dragHandle);
+      }
+
       ['tl', 'tr', 'bl', 'br'].forEach(corner => {
         const cornerDiv = document.createElement('div');
         cornerDiv.className = `pip-resize-corner pip-resize-${corner}`;
         cornerDiv.addEventListener('pointerdown', (e) => {
           e.stopPropagation();
-          initResize(e, corner, pipWindow, activeVideo);
+          initResize(e, corner, pipWindow, activeMedia);
         });
         pipWindow.appendChild(cornerDiv);
       });
@@ -239,14 +252,8 @@ function enableZoomDrag() {
       pipWindow.addEventListener('pointerdown', (e) => {
         if (e.target.closest('.pip-close') || e.target.closest('.pip-resize-corner')) return;
 
-        // Si on clique sur les contrôles natifs de la vidéo (les 40px du bas)
-        if (e.target === activeVideo) {
-            const rect = activeVideo.getBoundingClientRect();
-            if (e.clientY > rect.bottom - 40) {
-                activeVideo.style.pointerEvents = 'auto'; // On réactive pour les contrôles
-                return;
-            }
-        }
+        // Si c'est une iframe et qu'on ne clique pas sur la barre de drag invisible, on ignore
+        if (activeMedia.tagName.toLowerCase() === 'iframe' && !e.target.closest('.pip-drag-handle')) return;
 
         isDragging = true;
         startX = e.clientX;
@@ -276,16 +283,20 @@ function enableZoomDrag() {
         isDragging = false;
         pipWindow.releasePointerCapture(e.pointerId);
       });
-
-      // On réactive la souris pour la vidéo dès qu'on ne survole plus la zone de drag
-      pipWindow.addEventListener('pointerleave', () => {
-          if (!isDragging) activeVideo.style.pointerEvents = 'auto';
-      });
     }
   }
 
-  function initResize(e, corner, pipWindow, video) {
-    let aspectRatio = (video.videoWidth && video.videoHeight) ? (video.videoWidth / video.videoHeight) : (16 / 9);
+  function initResize(e, corner, pipWindow, media) {
+    let aspectRatio = 16 / 9; // Par défaut
+    
+    if (media.tagName.toLowerCase() === 'video') {
+      aspectRatio = (media.videoWidth && media.videoHeight) ? (media.videoWidth / media.videoHeight) : (16 / 9);
+    } else if (media.tagName.toLowerCase() === 'iframe') {
+      // On lit l'orientation depuis le data-2 (ex: "o_portrait" ou "o_landscape")
+      const orientation = media.dataset.orientation || 'landscape';
+      aspectRatio = (orientation === 'portrait') ? (9 / 16) : (16 / 9);
+      pipWindow.style.aspectRatio = aspectRatio;
+    }
 
     let startWidth = pipWindow.offsetWidth;
     let startHeight = pipWindow.offsetHeight;
@@ -314,7 +325,7 @@ function enableZoomDrag() {
       if (corner.includes('r')) newWidth = startWidth + dx;
       if (corner.includes('l')) newWidth = startWidth - dx;
 
-      if (newWidth < 150) newWidth = 150;
+      if (newWidth < 200) newWidth = 200; // Taille min un peu plus grande pour les iframes
       let newHeight = newWidth / aspectRatio;
 
       if (corner.includes('l')) newLeft = startLeft + (startWidth - newWidth);
@@ -349,7 +360,7 @@ function enableZoomDrag() {
   // TOUCHE ESPACE : PLAY/PAUSE SUR TOUTES LES VIDÉOS PIP
   window.addEventListener('keydown', (e) => {
     if (e.code === 'Space' && e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA') {
-      e.preventDefault(); // Empêche le défilement de la page
+      e.preventDefault(); 
       const pipVideos = document.querySelectorAll('.pip-window video');
       pipVideos.forEach(vid => {
         if (vid.paused) vid.play(); else vid.pause();
@@ -359,11 +370,11 @@ function enableZoomDrag() {
   
   lightbox.addEventListener("click", e => { if (e.target === lightbox) closeLightbox(); });
 
-  // GESTION DE LA GRILLE (Zoom pour images, clic pour vidéos)
+  // GESTION DE LA GRILLE (Zoom pour images, clic pour vidéos/iframes)
   document.querySelectorAll(".img-container").forEach((container) => {
-    const media = container.querySelector("img, video");
+    const media = container.querySelector("img, video, iframe");
     
-    if (media.tagName.toLowerCase() === 'video') {
+    if (media.tagName.toLowerCase() === 'video' || media.tagName.toLowerCase() === 'iframe') {
       container.addEventListener("dblclick", () => openLightbox(media));
       let lastTap = 0;
       container.addEventListener("touchend", (e) => {
