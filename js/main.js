@@ -56,10 +56,10 @@ document.addEventListener("DOMContentLoaded", () => {
   window.injectNewImages = function(htmlString) {
     const temp = document.createElement('div');
     temp.innerHTML = htmlString;
-    const newImgs = Array.from(temp.querySelectorAll('img, video'));
+    const newImgs = Array.from(temp.querySelectorAll('img, video, iframe'));
     newImgs.forEach(el => gallery.appendChild(el));
     
-    const allImages = Array.from(gallery.querySelectorAll('img, video'));
+    const allImages = Array.from(gallery.querySelectorAll('img, video, iframe'));
     
     allImages.forEach(img => { delete img._collection; delete img._clrData; });
     
