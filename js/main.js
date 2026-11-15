@@ -1,6 +1,8 @@
 document.addEventListener("DOMContentLoaded", () => {
   const gallery = document.getElementById("gallery");
-  const galleryImages = Array.from(gallery.querySelectorAll("img"));
+  
+  // MODIFICATION ICI : On cherche les images ET les vidéos
+  const galleryImages = Array.from(gallery.querySelectorAll("img, video"));
 
   function getOrCreateChiaroLayer() {
     let el = document.getElementById('chiaro-layer');
@@ -50,23 +52,30 @@ document.addEventListener("DOMContentLoaded", () => {
   groupImagesByPrefix(sortedImages);
   enableZoomDrag();
 
+  // MODIFICATION ICI : Prise en compte des vidéos dans l'injection console
   window.injectNewImages = function(htmlString) {
     const temp = document.createElement('div');
     temp.innerHTML = htmlString;
     const newImgs = Array.from(temp.querySelectorAll('img, video'));
     newImgs.forEach(el => gallery.appendChild(el));
+    
     const allImages = Array.from(gallery.querySelectorAll('img, video'));
+    
     allImages.forEach(img => { delete img._collection; delete img._clrData; });
+    
     document.querySelector('.actress-list-main').innerHTML = '';
     document.querySelector('.actress-list-more').innerHTML = '';
     document.querySelector('.tag-list').innerHTML = '';
     document.querySelector('.prod-list').innerHTML = '';
+    
     document.querySelectorAll('.lightbox').forEach(lb => lb.remove());
+    
     autoPopulateDatasets(allImages);
     buildCollections(allImages);
     createFilterCheckboxes(allImages);
     groupImagesByPrefix(allImages);
     enableZoomDrag();
+    
     console.log(`✅ ${newImgs.length} éléments injectés, filtres et galerie recalculés !`);
   };
 });
