@@ -208,15 +208,15 @@ function enableZoomDrag() {
     if (activeVideo) {
       const pipWindow = document.createElement('div');
       pipWindow.className = 'pip-window';
-      pipWindow.setAttribute('tabindex', '0'); 
       
       const closeBtn = document.createElement('button');
       closeBtn.className = 'pip-close';
       closeBtn.innerHTML = '&times;';
-      closeBtn.addEventListener('pointerdown', (e) => e.stopPropagation()); 
-      closeBtn.onclick = () => pipWindow.remove();
+      closeBtn.onclick = (e) => { e.stopPropagation(); pipWindow.remove(); };
       
       activeVideo.controls = true;
+      activeVideo.style.pointerEvents = 'none'; // On désactive la souris sur la vidéo pour le drag
+      
       pipWindow.appendChild(activeVideo);
       pipWindow.appendChild(closeBtn);
       
@@ -225,7 +225,7 @@ function enableZoomDrag() {
         cornerDiv.className = `pip-resize-corner pip-resize-${corner}`;
         cornerDiv.addEventListener('pointerdown', (e) => {
           e.stopPropagation();
-          initResize(e, corner, pipWindow);
+          initResize(e, corner, pipWindow, activeVideo);
         });
         pipWindow.appendChild(cornerDiv);
       });
@@ -234,14 +234,21 @@ function enableZoomDrag() {
 
       // --- LOGIQUE DE DÉPLACEMENT (DRAG) ---
       let isDragging = false;
-      let hasMoved = false;
       let startX, startY, startLeft, startTop;
 
       pipWindow.addEventListener('pointerdown', (e) => {
         if (e.target.closest('.pip-close') || e.target.closest('.pip-resize-corner')) return;
 
+        // Si on clique sur les contrôles natifs de la vidéo (les 40px du bas)
+        if (e.target === activeVideo) {
+            const rect = activeVideo.getBoundingClientRect();
+            if (e.clientY > rect.bottom - 40) {
+                activeVideo.style.pointerEvents = 'auto'; // On réactive pour les contrôles
+                return;
+            }
+        }
+
         isDragging = true;
-        hasMoved = false;
         startX = e.clientX;
         startY = e.clientY;
         const rect = pipWindow.getBoundingClientRect();
@@ -252,46 +259,32 @@ function enableZoomDrag() {
         pipWindow.style.top = `${startTop}px`;
         pipWindow.style.right = 'auto';
         pipWindow.style.bottom = 'auto';
+
+        pipWindow.setPointerCapture(e.pointerId);
       });
 
-      window.addEventListener('pointermove', (e) => {
+      pipWindow.addEventListener('pointermove', (e) => {
         if (!isDragging) return;
         const dx = e.clientX - startX;
         const dy = e.clientY - startY;
-        
-        if (Math.abs(dx) > 5 || Math.abs(dy) > 5) hasMoved = true;
-        
-        if (hasMoved) {
-          pipWindow.style.left = `${startLeft + dx}px`;
-          pipWindow.style.top = `${startTop + dy}px`;
-        }
+        pipWindow.style.left = `${startLeft + dx}px`;
+        pipWindow.style.top = `${startTop + dy}px`;
       });
 
-      window.addEventListener('pointerup', (e) => {
+      pipWindow.addEventListener('pointerup', (e) => {
         if (!isDragging) return;
         isDragging = false;
-        // Si on a cliqué sans glisser = Play/Pause
-        if (!hasMoved && !e.target.closest('.pip-close') && !e.target.closest('.pip-resize-corner')) {
-          if (activeVideo.paused) activeVideo.play();
-          else activeVideo.pause();
-        }
+        pipWindow.releasePointerCapture(e.pointerId);
       });
 
-      // --- LOGIQUE TOUCHE ESPACE ---
-      window.addEventListener('keydown', (e) => {
-        if (e.code === 'Space' || e.key === ' ') {
-          if (document.activeElement === pipWindow || pipWindow.contains(document.activeElement)) {
-            e.preventDefault(); 
-            if (activeVideo.paused) activeVideo.play();
-            else activeVideo.pause();
-          }
-        }
+      // On réactive la souris pour la vidéo dès qu'on ne survole plus la zone de drag
+      pipWindow.addEventListener('pointerleave', () => {
+          if (!isDragging) activeVideo.style.pointerEvents = 'auto';
       });
     }
   }
 
-  function initResize(e, corner, pipWindow) {
-    const video = pipWindow.querySelector('video');
+  function initResize(e, corner, pipWindow, video) {
     let aspectRatio = (video.videoWidth && video.videoHeight) ? (video.videoWidth / video.videoHeight) : (16 / 9);
 
     let startWidth = pipWindow.offsetWidth;
@@ -306,6 +299,9 @@ function enableZoomDrag() {
     pipWindow.style.top = `${startTop}px`;
     pipWindow.style.right = 'auto';
     pipWindow.style.bottom = 'auto';
+
+    const target = e.target;
+    target.setPointerCapture(e.pointerId);
 
     function onPointerMove(moveEvent) {
       let dx = moveEvent.clientX - startX;
@@ -331,12 +327,12 @@ function enableZoomDrag() {
     }
 
     function onPointerUp() {
-      window.removeEventListener('pointermove', onPointerMove);
-      window.removeEventListener('pointerup', onPointerUp);
+      target.removeEventListener('pointermove', onPointerMove);
+      target.removeEventListener('pointerup', onPointerUp);
     }
 
-    window.addEventListener('pointermove', onPointerMove);
-    window.addEventListener('pointerup', onPointerUp);
+    target.addEventListener('pointermove', onPointerMove);
+    target.addEventListener('pointerup', onPointerUp);
   }
 
   leftArrow.addEventListener("click", e => { e.stopPropagation(); showImage(currentIndex - 1); });
@@ -348,6 +344,17 @@ function enableZoomDrag() {
     if (e.key === "ArrowLeft") showImage(currentIndex - 1);
     if (e.key === "ArrowRight") showImage(currentIndex + 1);
     if (e.key === "Escape") closeLightbox();
+  });
+  
+  // TOUCHE ESPACE : PLAY/PAUSE SUR TOUTES LES VIDÉOS PIP
+  window.addEventListener('keydown', (e) => {
+    if (e.code === 'Space' && e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA') {
+      e.preventDefault(); // Empêche le défilement de la page
+      const pipVideos = document.querySelectorAll('.pip-window video');
+      pipVideos.forEach(vid => {
+        if (vid.paused) vid.play(); else vid.pause();
+      });
+    }
   });
   
   lightbox.addEventListener("click", e => { if (e.target === lightbox) closeLightbox(); });
