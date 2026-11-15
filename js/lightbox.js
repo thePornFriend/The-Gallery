@@ -25,7 +25,6 @@ function enableZoomDrag() {
   `;
   document.body.appendChild(lightbox);
 
-  // Création du conteneur PiP s'il n'existe pas
   let pipContainer = document.getElementById('pip-container');
   if (!pipContainer) {
     pipContainer = document.createElement('div');
@@ -145,12 +144,13 @@ function enableZoomDrag() {
     if (collectionPreviewIndex < 0) collectionPreviewIndex = imgs.length - 1;
     if (collectionPreviewIndex >= imgs.length) collectionPreviewIndex = 0;
     const previewImg = imgs[collectionPreviewIndex];
-    collectionPreviewImg.src = previewImg.src; // Si c'est une vidéo ça peut être bizarre, mais on garde ta logique
+    collectionPreviewImg.src = previewImg.src;
     collectionPreviewCaption.textContent = `Image n° : ${previewImg.dataset.gallery || "—"}`;
   }
 
   collectionArrowLeft.addEventListener("click", e => { e.stopPropagation(); collectionPreviewIndex--; showCollectionPreview(); });
   collectionArrowRight.addEventListener("click", e => { e.stopPropagation(); collectionPreviewIndex++; showCollectionPreview(); });
+  
   collectionPreviewImg.addEventListener("click", e => {
     e.stopPropagation();
     if (!currentCollection) return;
@@ -165,13 +165,12 @@ function enableZoomDrag() {
     currentIndex = index;
     
     const media = allMedia[currentIndex];
-    stageBox.innerHTML = ''; // On vide la scène
+    stageBox.innerHTML = ''; 
 
     if (media.tagName.toLowerCase() === 'video') {
       const video = document.createElement('video');
       video.src = media.src;
       video.controls = false;
-      video.classList.add('lightbox-video');
       video.style.maxWidth = '100%';
       video.style.maxHeight = '100%';
       video.style.cursor = 'pointer';
@@ -192,7 +191,6 @@ function enableZoomDrag() {
   }
 
   function openLightbox(clickedMedia) {
-    // On récupère TOUTES les images et vidéos de la galerie
     allMedia = Array.from(document.querySelectorAll(".img-container img, .img-container video"));
     currentIndex = allMedia.indexOf(clickedMedia);
     if (currentIndex !== -1) {
@@ -210,50 +208,40 @@ function enableZoomDrag() {
     if (activeVideo) {
       const pipWindow = document.createElement('div');
       pipWindow.className = 'pip-window';
-      
-      const dragBar = document.createElement('div');
-      dragBar.className = 'pip-drag-bar';
+      pipWindow.setAttribute('tabindex', '0'); 
       
       const closeBtn = document.createElement('button');
       closeBtn.className = 'pip-close';
       closeBtn.innerHTML = '&times;';
-      
-      // ⬇️ CORRECTION ICI : On empêche le clic du bouton de déclencher le drag
-      closeBtn.addEventListener('pointerdown', (e) => {
-        e.stopPropagation();
-      });
-      
+      closeBtn.addEventListener('pointerdown', (e) => e.stopPropagation()); 
       closeBtn.onclick = () => pipWindow.remove();
       
       activeVideo.controls = true;
-      dragBar.appendChild(closeBtn);
-      pipWindow.appendChild(dragBar);
       pipWindow.appendChild(activeVideo);
+      pipWindow.appendChild(closeBtn);
       
-      // Création des 4 coins
-      const corners = ['tl', 'tr', 'bl', 'br'];
-      corners.forEach(corner => {
+      ['tl', 'tr', 'bl', 'br'].forEach(corner => {
         const cornerDiv = document.createElement('div');
         cornerDiv.className = `pip-resize-corner pip-resize-${corner}`;
-        pipWindow.appendChild(cornerDiv);
-        
         cornerDiv.addEventListener('pointerdown', (e) => {
           e.stopPropagation();
-          startResize(e, corner, pipWindow, cornerDiv);
+          initResize(e, corner, pipWindow);
         });
+        pipWindow.appendChild(cornerDiv);
       });
 
       pipContainer.appendChild(pipWindow);
 
       // --- LOGIQUE DE DÉPLACEMENT (DRAG) ---
       let isDragging = false;
+      let hasMoved = false;
       let startX, startY, startLeft, startTop;
 
-      dragBar.addEventListener('pointerdown', (e) => {
-        // Si le clic vient du bouton fermer, on ne fait rien
-        if (e.target.closest('.pip-close')) return;
+      pipWindow.addEventListener('pointerdown', (e) => {
+        if (e.target.closest('.pip-close') || e.target.closest('.pip-resize-corner')) return;
 
         isDragging = true;
+        hasMoved = false;
         startX = e.clientX;
         startY = e.clientY;
         const rect = pipWindow.getBoundingClientRect();
@@ -264,69 +252,77 @@ function enableZoomDrag() {
         pipWindow.style.top = `${startTop}px`;
         pipWindow.style.right = 'auto';
         pipWindow.style.bottom = 'auto';
-        
-        dragBar.setPointerCapture(e.pointerId);
       });
 
-      dragBar.addEventListener('pointermove', (e) => {
+      window.addEventListener('pointermove', (e) => {
         if (!isDragging) return;
         const dx = e.clientX - startX;
         const dy = e.clientY - startY;
-        pipWindow.style.left = `${startLeft + dx}px`;
-        pipWindow.style.top = `${startTop + dy}px`;
+        
+        if (Math.abs(dx) > 5 || Math.abs(dy) > 5) hasMoved = true;
+        
+        if (hasMoved) {
+          pipWindow.style.left = `${startLeft + dx}px`;
+          pipWindow.style.top = `${startTop + dy}px`;
+        }
       });
 
-      dragBar.addEventListener('pointerup', (e) => {
+      window.addEventListener('pointerup', (e) => {
+        if (!isDragging) return;
         isDragging = false;
-        dragBar.releasePointerCapture(e.pointerId);
+        // Si on a cliqué sans glisser = Play/Pause
+        if (!hasMoved && !e.target.closest('.pip-close') && !e.target.closest('.pip-resize-corner')) {
+          if (activeVideo.paused) activeVideo.play();
+          else activeVideo.pause();
+        }
+      });
+
+      // --- LOGIQUE TOUCHE ESPACE ---
+      window.addEventListener('keydown', (e) => {
+        if (e.code === 'Space' || e.key === ' ') {
+          if (document.activeElement === pipWindow || pipWindow.contains(document.activeElement)) {
+            e.preventDefault(); 
+            if (activeVideo.paused) activeVideo.play();
+            else activeVideo.pause();
+          }
+        }
       });
     }
   }
 
-  // --- NOUVELLE FONCTION POUR LE REDIMENSIONNEMENT (À METTRE JUSTE EN DESSOUS DE closeLightbox) ---
-  function startResize(e, corner, pipWindow, cornerDiv) {
-    let isResizing = true;
+  function initResize(e, corner, pipWindow) {
+    const video = pipWindow.querySelector('video');
+    let aspectRatio = (video.videoWidth && video.videoHeight) ? (video.videoWidth / video.videoHeight) : (16 / 9);
+
     let startWidth = pipWindow.offsetWidth;
     let startHeight = pipWindow.offsetHeight;
     const rect = pipWindow.getBoundingClientRect();
-    let startLeftResize = rect.left;
-    let startTopResize = rect.top;
-    let startXResize = e.clientX;
-    let startYResize = e.clientY;
-    
-    const video = pipWindow.querySelector('video');
-    let aspectRatio = video.videoWidth && video.videoHeight ? (video.videoWidth / video.videoHeight) : (16 / 9);
-    
-    pipWindow.style.left = `${startLeftResize}px`;
-    pipWindow.style.top = `${startTopResize}px`;
+    let startLeft = rect.left;
+    let startTop = rect.top;
+    let startX = e.clientX;
+    let startY = e.clientY;
+
+    pipWindow.style.left = `${startLeft}px`;
+    pipWindow.style.top = `${startTop}px`;
     pipWindow.style.right = 'auto';
     pipWindow.style.bottom = 'auto';
 
-    cornerDiv.setPointerCapture(e.pointerId);
-
-    cornerDiv.addEventListener('pointermove', onPointerMove);
-    cornerDiv.addEventListener('pointerup', onPointerUp, { once: true });
-
     function onPointerMove(moveEvent) {
-      if (!isResizing) return;
-      
-      let dx = moveEvent.clientX - startXResize;
-      let dy = moveEvent.clientY - startYResize;
-      
+      let dx = moveEvent.clientX - startX;
+      let dy = moveEvent.clientY - startY;
+
       let newWidth = startWidth;
-      let newHeight = startHeight;
-      let newLeft = startLeftResize;
-      let newTop = startTopResize;
+      let newLeft = startLeft;
+      let newTop = startTop;
 
       if (corner.includes('r')) newWidth = startWidth + dx;
       if (corner.includes('l')) newWidth = startWidth - dx;
-      
-      if (newWidth < 150) newWidth = 150; // Taille minimum
 
-      newHeight = newWidth / aspectRatio;
+      if (newWidth < 150) newWidth = 150;
+      let newHeight = newWidth / aspectRatio;
 
-      if (corner.includes('l')) newLeft = startLeftResize + (startWidth - newWidth);
-      if (corner.includes('t')) newTop = startTopResize + (startHeight - newHeight);
+      if (corner.includes('l')) newLeft = startLeft + (startWidth - newWidth);
+      if (corner.includes('t')) newTop = startTop + (startHeight - newHeight);
 
       pipWindow.style.width = `${newWidth}px`;
       pipWindow.style.height = `${newHeight}px`;
@@ -335,10 +331,14 @@ function enableZoomDrag() {
     }
 
     function onPointerUp() {
-      isResizing = false;
-      cornerDiv.removeEventListener('pointermove', onPointerMove);
+      window.removeEventListener('pointermove', onPointerMove);
+      window.removeEventListener('pointerup', onPointerUp);
     }
+
+    window.addEventListener('pointermove', onPointerMove);
+    window.addEventListener('pointerup', onPointerUp);
   }
+
   leftArrow.addEventListener("click", e => { e.stopPropagation(); showImage(currentIndex - 1); });
   rightArrow.addEventListener("click", e => { e.stopPropagation(); showImage(currentIndex + 1); });
   
@@ -356,7 +356,6 @@ function enableZoomDrag() {
   document.querySelectorAll(".img-container").forEach((container) => {
     const media = container.querySelector("img, video");
     
-    // Si c'est une vidéo, pas de zoom, juste l'ouverture
     if (media.tagName.toLowerCase() === 'video') {
       container.addEventListener("dblclick", () => openLightbox(media));
       let lastTap = 0;
@@ -369,7 +368,6 @@ function enableZoomDrag() {
       return; 
     }
 
-    // Logique de zoom conservée pour les images
     const zoomInput = document.createElement("input");
     zoomInput.type = "range";
     zoomInput.min = 1;
