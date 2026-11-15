@@ -1,4 +1,4 @@
-export function sortImages(images) {
+function sortImages(images) {
   return images.sort((a, b) => {
     const aData = a.getAttribute("data-gallery") || "";
     const bData = b.getAttribute("data-gallery") || "";
@@ -14,7 +14,7 @@ export function sortImages(images) {
   });
 }
 
-export function looksLikeDate(block) {
+function looksLikeDate(block) {
   const b = block.trim();
   if (/^\d{4}$/.test(b)) return true;
   if (/^\d{1,2}\s+[a-zà-ÿ]+\s+\d{4}$/i.test(b)) return true;
@@ -22,7 +22,7 @@ export function looksLikeDate(block) {
   return false;
 }
 
-export function parseActressField(raw) {
+function parseActressField(raw) {
   return raw.split(',').map(part => {
     const trimmed = part.trim();
     const excluded = trimmed.startsWith('(-)');
@@ -32,7 +32,7 @@ export function parseActressField(raw) {
   }).filter(a => a.name);
 }
 
-export function splitTopLevel(raw, sep) {
+function splitTopLevel(raw, sep) {
   const blocks = [];
   let depth = 0;
   let current = '';
@@ -50,11 +50,11 @@ export function splitTopLevel(raw, sep) {
   return blocks.map(b => b.trim()).filter(Boolean);
 }
 
-export function unescapeDash(s) {
+function unescapeDash(s) {
   return typeof s === 'string' ? s.replace(/&dash/g, '-') : s;
 }
 
-export function parseData1(raw) {
+function parseData1(raw) {
   if (!raw) return null;
   const blocks = splitTopLevel(raw, '-');
   const data = { actresses: [], studio: '', series: '', date: '', title: '', subtitle: '' };
@@ -120,7 +120,7 @@ export function parseData1(raw) {
   return data;
 }
 
-export function parseData2(raw) {
+function parseData2(raw) {
   if (!raw) return null;
   const blocks = raw.split('-').map(b => b.trim()).filter(Boolean);
   const data = { gallery: '', orientation: '', tag: '' };
@@ -165,7 +165,7 @@ export function parseData2(raw) {
   return data;
 }
 
-export function applyCombinedData(img) {
+function applyCombinedData(img) {
   const raw1 = img.getAttribute('data-1');
   const raw2 = img.getAttribute('data-2');
 
@@ -199,7 +199,7 @@ export function applyCombinedData(img) {
   }
 }
 
-export function buildCollections(images) {
+function buildCollections(images) {
   const collections = new Map();
   images.forEach(img => {
     if (!img.dataset.title && !img.dataset.collectionActresses) return;
@@ -221,7 +221,7 @@ export function buildCollections(images) {
   return collections;
 }
 
-export function autoPopulateDatasets(images) {
+function autoPopulateDatasets(images) {
   images.forEach(img => {
     applyCombinedData(img);
     if (!img.dataset.gallery || !img.dataset.actress) {
@@ -230,7 +230,7 @@ export function autoPopulateDatasets(images) {
   });
 }
 
-export function extractDataFromURL(img) {
+function extractDataFromURL(img) {
   const src = img.src;
   if (!src.startsWith("https://ik.imagekit.io/")) return;
   try {
@@ -280,7 +280,7 @@ export function extractDataFromURL(img) {
   }
 }
 
-export function applyLazyLoading(images) {
+function applyLazyLoading(images) {
   images.forEach(img => {
     img.loading = "lazy";
     if (!img.alt || img.alt.trim() === '') {
@@ -289,7 +289,7 @@ export function applyLazyLoading(images) {
   });
 }
 
-export function hexToHsl(hex) {
+function hexToHsl(hex) {
   let h = hex.replace('#', '');
   if (h.length === 3) h = h.split('').map(c => c + c).join('');
   const r = parseInt(h.slice(0, 2), 16) / 255;
@@ -310,7 +310,7 @@ export function hexToHsl(hex) {
   return { h: hue, s, l, chroma };
 }
 
-export function parseClr(img) {
+function parseClr(img) {
   if (img._clrData) return img._clrData;
   const raw = (img.dataset.clr || '').trim();
   const data = { colors: [], hexes: [], luminance: null };
