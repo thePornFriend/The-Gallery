@@ -1,0 +1,111 @@
+/* --- GALERIE --- */
+.gallery {
+  overflow-x: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.group {
+  overflow-y: auto;
+  scroll-behavior: smooth;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.group::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+}
+
+.column {
+  display: flex;
+  flex-direction: column;
+}
+
+.line {
+  display: flex;
+}
+
+.line.portrait-line,
+.line.landscape-line {
+  display: flex;
+}
+
+/* --- CONTENEURS IMAGES (grille + zoom) --- */
+.img-container {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+  cursor: grab;
+  touch-action: manipulation; 
+}
+
+.img-container img {
+  width: 99.5%;
+  height: 99.5%;
+  object-fit: cover;
+  display: block;
+  border-radius: 3px;
+}
+
+.img-container[data-orientation="landscape"] {
+  width: calc(99.5vw / 3.2);
+  height: calc((99.5vw / 3.2) * 2 / 3);
+}
+
+.img-container[data-orientation="portrait"] {
+  width: calc((99.5vw / 3.2) * 2 / 3);
+  height: calc(99.5vw / 3.2);
+}
+
+/* Barre de zoom */
+.zoom-bar {
+  position: absolute;
+  bottom: 30px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: none;
+  width: 40%;
+  height: 3px;
+  background: rgba(255, 255, 255, 0.326);
+  -webkit-appearance: none;
+  appearance: none;
+  border-radius: 10px;
+  outline: none;
+}
+
+.zoom-bar::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 20px;
+  height: 10px;
+  background: #ffffffba;
+  border-radius: 30%;
+  cursor: pointer;
+  border: 1px solid #fffdfd00;
+}
+
+.zoom-bar::-moz-range-thumb {
+  width: 20px;
+  height: 10px;
+  background: #ffffffba;
+  border-radius: 30%;
+  cursor: pointer;
+  border: 1px solid #fffdfd00;
+}
+
+.img-container:hover .zoom-bar {
+  display: block;
+}
+
+/* Colonne de restes (mixte incomplète) */
+.column[data-columntype="leftover-mixed"] {
+  width: calc((99.5vw / 3.2) * 2);
+  overflow: hidden;
+}
+.column[data-columntype="leftover-mixed"] .line {
+  display: flex;
+  justify-content: flex-start;
+}
