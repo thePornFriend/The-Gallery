@@ -1,6 +1,4 @@
-import { sortImages } from './utils.js';
-
-export function computeColumns(images) {
+function computeColumns(images) {
   const cols = [];
   let remaining = [...images];
   let leftover = [];
@@ -38,7 +36,7 @@ export function computeColumns(images) {
   return cols;
 }
 
-export function hasVisibleIncompleteColumns(images) {
+function hasVisibleIncompleteColumns(images) {
   const cols = computeColumns(images);
   const L_W = 99.5 / 3.2 / 100;
   const P_W = L_W * 2 / 3;
@@ -52,7 +50,7 @@ export function hasVisibleIncompleteColumns(images) {
   return false;
 }
 
-export function groupImagesByPrefix(images) {
+function groupImagesByPrefix(images) {
   const gallery = document.getElementById("gallery");
   const prefixGroups = new Map();
 
@@ -91,7 +89,7 @@ export function groupImagesByPrefix(images) {
   });
 }
 
-export function buildGalleryLayout(images, container = document.getElementById("gallery")) {
+function buildGalleryLayout(images, container = document.getElementById("gallery")) {
   const createDiv = className => {
     const div = document.createElement("div");
     div.className = className;
