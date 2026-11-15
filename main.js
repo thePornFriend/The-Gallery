@@ -1,9 +1,3 @@
-import { state } from './state.js';
-import { sortImages, autoPopulateDatasets, buildCollections, applyLazyLoading } from './utils.js';
-import { groupImagesByPrefix } from './layout.js';
-import { enableZoomDrag } from './lightbox.js';
-import { createFilterCheckboxes, initGallerySearchFilter, initColorFilter, enableCollapsibleFilters, enableTagBackgroundChange } from './filters.js';
-
 document.addEventListener("DOMContentLoaded", () => {
   const gallery = document.getElementById("gallery");
   const galleryImages = Array.from(gallery.querySelectorAll("img"));
