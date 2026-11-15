@@ -202,7 +202,7 @@ function enableZoomDrag() {
     }
   }
 
-   function closeLightbox() {
+  function closeLightbox() {
     lightbox.classList.remove("visible");
     document.body.style.overflow = "";
     
@@ -217,17 +217,32 @@ function enableZoomDrag() {
       const closeBtn = document.createElement('button');
       closeBtn.className = 'pip-close';
       closeBtn.innerHTML = '&times;';
+      
+      // ⬇️ CORRECTION ICI : On empêche le clic du bouton de déclencher le drag
+      closeBtn.addEventListener('pointerdown', (e) => {
+        e.stopPropagation();
+      });
+      
       closeBtn.onclick = () => pipWindow.remove();
       
-      const resizeHandle = document.createElement('div');
-      resizeHandle.className = 'pip-resize-handle';
-      
       activeVideo.controls = true;
-      
       dragBar.appendChild(closeBtn);
       pipWindow.appendChild(dragBar);
       pipWindow.appendChild(activeVideo);
-      pipWindow.appendChild(resizeHandle);
+      
+      // Création des 4 coins
+      const corners = ['tl', 'tr', 'bl', 'br'];
+      corners.forEach(corner => {
+        const cornerDiv = document.createElement('div');
+        cornerDiv.className = `pip-resize-corner pip-resize-${corner}`;
+        pipWindow.appendChild(cornerDiv);
+        
+        cornerDiv.addEventListener('pointerdown', (e) => {
+          e.stopPropagation();
+          startResize(e, corner, pipWindow, cornerDiv);
+        });
+      });
+
       pipContainer.appendChild(pipWindow);
 
       // --- LOGIQUE DE DÉPLACEMENT (DRAG) ---
@@ -235,6 +250,9 @@ function enableZoomDrag() {
       let startX, startY, startLeft, startTop;
 
       dragBar.addEventListener('pointerdown', (e) => {
+        // Si le clic vient du bouton fermer, on ne fait rien
+        if (e.target.closest('.pip-close')) return;
+
         isDragging = true;
         startX = e.clientX;
         startY = e.clientY;
@@ -242,7 +260,6 @@ function enableZoomDrag() {
         startLeft = rect.left;
         startTop = rect.top;
         
-        // On passe en left/top pour faciliter le calcul
         pipWindow.style.left = `${startLeft}px`;
         pipWindow.style.top = `${startTop}px`;
         pipWindow.style.right = 'auto';
@@ -263,47 +280,65 @@ function enableZoomDrag() {
         isDragging = false;
         dragBar.releasePointerCapture(e.pointerId);
       });
-
-      // --- LOGIQUE DE REDIMENSIONNEMENT (RESIZE) ---
-      let isResizing = false;
-      let startWidth, startXResize, aspectRatio = 16 / 9; // Ratio par défaut
-
-      // On récupère les vraies dimensions de la vidéo pour bloquer le ratio
-      if (activeVideo.videoWidth && activeVideo.videoHeight) {
-        aspectRatio = activeVideo.videoWidth / activeVideo.videoHeight;
-        pipWindow.style.aspectRatio = aspectRatio;
-      } else {
-        activeVideo.addEventListener('loadedmetadata', () => {
-          aspectRatio = activeVideo.videoWidth / activeVideo.videoHeight;
-          pipWindow.style.aspectRatio = aspectRatio;
-        });
-      }
-
-      resizeHandle.addEventListener('pointerdown', (e) => {
-        e.stopPropagation();
-        isResizing = true;
-        startWidth = pipWindow.offsetWidth;
-        startXResize = e.clientX;
-        resizeHandle.setPointerCapture(e.pointerId);
-      });
-
-      resizeHandle.addEventListener('pointermove', (e) => {
-        if (!isResizing) return;
-        const dx = e.clientX - startXResize;
-        const newWidth = Math.max(150, startWidth + dx); // Empêche de réduire trop
-        const newHeight = newWidth / aspectRatio; // Calcul mathématique du ratio
-        
-        pipWindow.style.width = `${newWidth}px`;
-        pipWindow.style.height = `${newHeight}px`;
-      });
-
-      resizeHandle.addEventListener('pointerup', (e) => {
-        isResizing = false;
-        resizeHandle.releasePointerCapture(e.pointerId);
-      });
     }
   }
 
+  // --- NOUVELLE FONCTION POUR LE REDIMENSIONNEMENT (À METTRE JUSTE EN DESSOUS DE closeLightbox) ---
+  function startResize(e, corner, pipWindow, cornerDiv) {
+    let isResizing = true;
+    let startWidth = pipWindow.offsetWidth;
+    let startHeight = pipWindow.offsetHeight;
+    const rect = pipWindow.getBoundingClientRect();
+    let startLeftResize = rect.left;
+    let startTopResize = rect.top;
+    let startXResize = e.clientX;
+    let startYResize = e.clientY;
+    
+    const video = pipWindow.querySelector('video');
+    let aspectRatio = video.videoWidth && video.videoHeight ? (video.videoWidth / video.videoHeight) : (16 / 9);
+    
+    pipWindow.style.left = `${startLeftResize}px`;
+    pipWindow.style.top = `${startTopResize}px`;
+    pipWindow.style.right = 'auto';
+    pipWindow.style.bottom = 'auto';
+
+    cornerDiv.setPointerCapture(e.pointerId);
+
+    cornerDiv.addEventListener('pointermove', onPointerMove);
+    cornerDiv.addEventListener('pointerup', onPointerUp, { once: true });
+
+    function onPointerMove(moveEvent) {
+      if (!isResizing) return;
+      
+      let dx = moveEvent.clientX - startXResize;
+      let dy = moveEvent.clientY - startYResize;
+      
+      let newWidth = startWidth;
+      let newHeight = startHeight;
+      let newLeft = startLeftResize;
+      let newTop = startTopResize;
+
+      if (corner.includes('r')) newWidth = startWidth + dx;
+      if (corner.includes('l')) newWidth = startWidth - dx;
+      
+      if (newWidth < 150) newWidth = 150; // Taille minimum
+
+      newHeight = newWidth / aspectRatio;
+
+      if (corner.includes('l')) newLeft = startLeftResize + (startWidth - newWidth);
+      if (corner.includes('t')) newTop = startTopResize + (startHeight - newHeight);
+
+      pipWindow.style.width = `${newWidth}px`;
+      pipWindow.style.height = `${newHeight}px`;
+      pipWindow.style.left = `${newLeft}px`;
+      pipWindow.style.top = `${newTop}px`;
+    }
+
+    function onPointerUp() {
+      isResizing = false;
+      cornerDiv.removeEventListener('pointermove', onPointerMove);
+    }
+  }
   leftArrow.addEventListener("click", e => { e.stopPropagation(); showImage(currentIndex - 1); });
   rightArrow.addEventListener("click", e => { e.stopPropagation(); showImage(currentIndex + 1); });
   
