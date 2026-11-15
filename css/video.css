@@ -1,4 +1,4 @@
-/* --- VIDÉOS DANS LA GALERIE --- */
+/* --- VIDÉOS DANS LA GRILLE --- */
 .img-container video {
   width: 99.5%;
   height: 99.5%;
@@ -31,12 +31,12 @@
 #pip-container {
   position: fixed;
   inset: 0;
-  pointer-events: none; /* Laisse passer les clics vers le site */
-  z-index: 1500;
+  pointer-events: none;
+  z-index: 1500; 
 }
 
 .pip-window {
-  position: absolute; /* Changé de fixed à absolute pour le drag */
+  position: absolute;
   bottom: 20px;
   right: 20px;
   width: 280px;
@@ -45,50 +45,38 @@
   border-radius: 8px;
   overflow: hidden;
   box-shadow: 0 4px 15px rgba(0,0,0,0.5);
-  display: flex;
-  flex-direction: column;
-  pointer-events: auto; /* Réactive les clics sur la vidéo */
-}
-
-/* La barre pour déplacer la fenêtre */
-.pip-drag-bar {
-  height: 24px;
-  background: rgba(30, 30, 30, 0.9);
-  cursor: grab;
-  width: 100%;
-  display: flex;
-  justify-content: flex-end;
-  align-items: center;
-  padding-right: 5px;
-  box-sizing: border-box;
-  touch-action: none; /* Empêche le scroll sur mobile pendant le drag */
-  z-index: 20;
-}
-
-.pip-drag-bar:active {
-  cursor: grabbing;
+  pointer-events: auto;
+  user-select: none; /* Empêche de sélectionner du texte en glissant */
+  border: none;
+  outline: none;
 }
 
 .pip-window video {
   width: 100%;
   height: 100%;
-  object-fit: contain; /* Ne déforme jamais la vidéo */
+  object-fit: contain;
   display: block;
-  flex: 1;
+  outline: none;
 }
 
+/* Le bouton de fermeture flottant */
 .pip-close {
-  background: none;
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: rgba(0,0,0,0.6);
   color: white;
   border: none;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
   cursor: pointer;
-  font-size: 20px;
-  line-height: 1;
-  padding: 0 4px;
+  z-index: 40;
   display: flex;
   align-items: center;
   justify-content: center;
-  opacity: 0; /* Caché par défaut */
+  font-size: 16px;
+  opacity: 0;
   transition: opacity 0.2s ease;
 }
 
@@ -96,15 +84,16 @@
   opacity: 1; /* Apparaît au survol */
 }
 
-/* La poignée en bas à droite pour redimensionner */
-.pip-resize-handle {
+/* --- LES 4 COINS POUR REDIMENSIONNER --- */
+.pip-resize-corner {
   position: absolute;
-  bottom: 0;
-  right: 0;
   width: 20px;
   height: 20px;
-  cursor: se-resize;
-  z-index: 20;
+  z-index: 30;
   touch-action: none;
-  background: linear-gradient(135deg, transparent 50%, rgba(255, 255, 255, 0.5) 50%);
 }
+
+.pip-resize-tl { top: 0; left: 0; cursor: nwse-resize; }
+.pip-resize-tr { top: 0; right: 0; cursor: nesw-resize; }
+.pip-resize-bl { bottom: 0; left: 0; cursor: nesw-resize; }
+.pip-resize-br { bottom: 0; right: 0; cursor: nwse-resize; }
