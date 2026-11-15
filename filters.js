@@ -1,9 +1,4 @@
-import { state } from './state.js';
-import { hueSimilarity, getImageColors, getImageLuminance } from './utils.js';
-import { groupImagesByPrefix } from './layout.js';
-import { enableZoomDrag } from './lightbox.js';
-
-export function buildCheckboxGrid(container, items, displayName = k => k) {
+function buildCheckboxGrid(container, items, displayName = k => k) {
   const capitalize = s => s.charAt(0).toUpperCase() + s.slice(1);
   const sorted = [...items.keys()].sort((a, b) => displayName(a).localeCompare(displayName(b), 'fr', { sensitivity: 'base' }));
   const perCol = Math.ceil(sorted.length / 5);
@@ -26,7 +21,7 @@ export function buildCheckboxGrid(container, items, displayName = k => k) {
   return checkboxes;
 }
 
-export function buildStudioFilterGrid(container, studioCount, imgData) {
+function buildStudioFilterGrid(container, studioCount, imgData) {
   const capitalize = s => s.charAt(0).toUpperCase() + s.slice(1);
   const studioToGroup = {}, groupCounts = {};
   
@@ -150,7 +145,7 @@ export function buildStudioFilterGrid(container, studioCount, imgData) {
   return allStudios.map(s => checkboxRegistry.get(s)[0]);
 }
 
-export function createFilterCheckboxes(images) {
+function createFilterCheckboxes(images) {
   const mainList = document.querySelector('.actress-list-main');
   const moreList = document.querySelector('.actress-list-more');
   const tagList = document.querySelector('.tag-list');
@@ -349,7 +344,7 @@ export function createFilterCheckboxes(images) {
   filter();
 }
 
-export function initGallerySearchFilter(images) {
+function initGallerySearchFilter(images) {
   const input = document.getElementById('gallery-search-input');
   const suggestionsBox = document.getElementById('gallery-suggestions');
   const labelsBox = document.getElementById('gallery-labels');
@@ -410,7 +405,7 @@ export function initGallerySearchFilter(images) {
   document.addEventListener('click', (e) => { if (!suggestionsBox.contains(e.target) && e.target !== input) suggestionsBox.style.display = 'none'; });
 }
 
-export function enableCollapsibleFilters() {
+function enableCollapsibleFilters() {
   document.querySelectorAll('.filter-sections h3').forEach(title => {
     let list = title.nextElementSibling;
     if (title.closest('.actress-header')) list = title.closest('.actress-section')?.querySelector('.actress-slider');
@@ -424,7 +419,7 @@ export function enableCollapsibleFilters() {
   });
 }
 
-export function enableTagBackgroundChange(updateBodyBackground) {
+function enableTagBackgroundChange(updateBodyBackground) {
   const tagCheckboxes = document.querySelectorAll('.tag-list input[type="checkbox"]');
   if (!tagCheckboxes.length) return;
 
@@ -455,7 +450,7 @@ export function enableTagBackgroundChange(updateBodyBackground) {
   updateFromTags();
 }
 
-export function initColorFilter(updateBodyBackground) {
+function initColorFilter(updateBodyBackground) {
   const sections = document.querySelector('.filter-sections');
   if (!sections) return;
 
