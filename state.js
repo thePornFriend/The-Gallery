@@ -1,4 +1,4 @@
-export const state = {
+const state = {
   selectedGalleryValues: new Set(),
   colorFilter: { active: false, colorActive: false, hue: 0, lumActive: false, luminance: 0.5, minSimilarity: 90 },
   triggerFilter: () => {},
