@@ -99,13 +99,3 @@
 .img-container:hover .zoom-bar {
   display: block;
 }
-
-/* Colonne de restes (mixte incomplète) */
-.column[data-columntype="leftover-mixed"] {
-  width: calc((99.5vw / 3.2) * 2);
-  overflow: hidden;
-}
-.column[data-columntype="leftover-mixed"] .line {
-  display: flex;
-  justify-content: flex-start;
-}
