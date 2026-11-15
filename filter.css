@@ -987,3 +987,13 @@ body::-webkit-scrollbar {
   background: rgba(255, 255, 255, 0.18);                    /* ← NOUVEAU */
   border-color: rgba(255, 255, 255, 0.35);                  /* ← NOUVEAU */
 }
+
+/* Colonne de restes (mixte incomplète) */
+.column[data-columntype="leftover-mixed"] {
+  width: calc((99.5vw / 3.2) * 2); /* Largeur de 2 paysages */
+  overflow: hidden;
+}
+.column[data-columntype="leftover-mixed"] .line {
+  display: flex;
+  justify-content: flex-start;
+}
