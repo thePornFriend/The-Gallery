@@ -202,27 +202,105 @@ function enableZoomDrag() {
     }
   }
 
-  function closeLightbox() {
+   function closeLightbox() {
     lightbox.classList.remove("visible");
     document.body.style.overflow = "";
     
-    // GESTION DU PIP : Si la scène actuelle contient une vidéo
     const activeVideo = stageBox.querySelector('video');
     if (activeVideo) {
       const pipWindow = document.createElement('div');
       pipWindow.className = 'pip-window';
+      
+      const dragBar = document.createElement('div');
+      dragBar.className = 'pip-drag-bar';
       
       const closeBtn = document.createElement('button');
       closeBtn.className = 'pip-close';
       closeBtn.innerHTML = '&times;';
       closeBtn.onclick = () => pipWindow.remove();
       
-      // On active les contrôles natifs pour le PiP et on déplace la vidéo
-      activeVideo.controls = true;
-      pipWindow.appendChild(activeVideo);
-      pipWindow.appendChild(closeBtn);
+      const resizeHandle = document.createElement('div');
+      resizeHandle.className = 'pip-resize-handle';
       
-      pipContainer.prepend(pipWindow);
+      activeVideo.controls = true;
+      
+      dragBar.appendChild(closeBtn);
+      pipWindow.appendChild(dragBar);
+      pipWindow.appendChild(activeVideo);
+      pipWindow.appendChild(resizeHandle);
+      pipContainer.appendChild(pipWindow);
+
+      // --- LOGIQUE DE DÉPLACEMENT (DRAG) ---
+      let isDragging = false;
+      let startX, startY, startLeft, startTop;
+
+      dragBar.addEventListener('pointerdown', (e) => {
+        isDragging = true;
+        startX = e.clientX;
+        startY = e.clientY;
+        const rect = pipWindow.getBoundingClientRect();
+        startLeft = rect.left;
+        startTop = rect.top;
+        
+        // On passe en left/top pour faciliter le calcul
+        pipWindow.style.left = `${startLeft}px`;
+        pipWindow.style.top = `${startTop}px`;
+        pipWindow.style.right = 'auto';
+        pipWindow.style.bottom = 'auto';
+        
+        dragBar.setPointerCapture(e.pointerId);
+      });
+
+      dragBar.addEventListener('pointermove', (e) => {
+        if (!isDragging) return;
+        const dx = e.clientX - startX;
+        const dy = e.clientY - startY;
+        pipWindow.style.left = `${startLeft + dx}px`;
+        pipWindow.style.top = `${startTop + dy}px`;
+      });
+
+      dragBar.addEventListener('pointerup', (e) => {
+        isDragging = false;
+        dragBar.releasePointerCapture(e.pointerId);
+      });
+
+      // --- LOGIQUE DE REDIMENSIONNEMENT (RESIZE) ---
+      let isResizing = false;
+      let startWidth, startXResize, aspectRatio = 16 / 9; // Ratio par défaut
+
+      // On récupère les vraies dimensions de la vidéo pour bloquer le ratio
+      if (activeVideo.videoWidth && activeVideo.videoHeight) {
+        aspectRatio = activeVideo.videoWidth / activeVideo.videoHeight;
+        pipWindow.style.aspectRatio = aspectRatio;
+      } else {
+        activeVideo.addEventListener('loadedmetadata', () => {
+          aspectRatio = activeVideo.videoWidth / activeVideo.videoHeight;
+          pipWindow.style.aspectRatio = aspectRatio;
+        });
+      }
+
+      resizeHandle.addEventListener('pointerdown', (e) => {
+        e.stopPropagation();
+        isResizing = true;
+        startWidth = pipWindow.offsetWidth;
+        startXResize = e.clientX;
+        resizeHandle.setPointerCapture(e.pointerId);
+      });
+
+      resizeHandle.addEventListener('pointermove', (e) => {
+        if (!isResizing) return;
+        const dx = e.clientX - startXResize;
+        const newWidth = Math.max(150, startWidth + dx); // Empêche de réduire trop
+        const newHeight = newWidth / aspectRatio; // Calcul mathématique du ratio
+        
+        pipWindow.style.width = `${newWidth}px`;
+        pipWindow.style.height = `${newHeight}px`;
+      });
+
+      resizeHandle.addEventListener('pointerup', (e) => {
+        isResizing = false;
+        resizeHandle.releasePointerCapture(e.pointerId);
+      });
     }
   }
 
