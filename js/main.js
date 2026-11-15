@@ -2,7 +2,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const gallery = document.getElementById("gallery");
   
   // MODIFICATION ICI : On cherche les images ET les vidéos
-  const galleryImages = Array.from(gallery.querySelectorAll("img, video"));
+  const galleryImages = Array.from(gallery.querySelectorAll("img, video, iframe"));
 
   function getOrCreateChiaroLayer() {
     let el = document.getElementById('chiaro-layer');
