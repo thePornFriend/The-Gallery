@@ -48,10 +48,15 @@ function hasVisibleIncompleteColumns(images) {
   return false;
 }
 
-function groupImagesByPrefix(images) {
+function groupImagesByPrefix(mediaItems) {
   const gallery = document.getElementById("gallery");
-  const prefixGroups = new Map();
+  
+  // 1. SÉPARATION : On isole les images et les vidéos
+  const images = mediaItems.filter(el => el.tagName.toLowerCase() !== 'video');
+  const videos = mediaItems.filter(el => el.tagName.toLowerCase() === 'video');
 
+  // 2. LOGIQUE POUR LES IMAGES (Ta logique actuelle)
+  const prefixGroups = new Map();
   images.forEach(img => {
     const data = img.getAttribute("data-gallery") || "";
     const prefix = parseInt(data.split("-")[0], 10) || 0;
@@ -78,6 +83,8 @@ function groupImagesByPrefix(images) {
   }
 
   gallery.innerHTML = "";
+  
+  // 3. AFFICHAGE DES GROUPES D'IMAGES
   batches.forEach(({ images: imgs, prefixes }) => {
     const groupDiv = document.createElement("div");
     groupDiv.classList.add("group");
@@ -85,6 +92,15 @@ function groupImagesByPrefix(images) {
     buildGalleryLayout(imgs, groupDiv);
     gallery.appendChild(groupDiv);
   });
+
+  // 4. AFFICHAGE DU GROUPE VIDÉO (Toujours à la fin)
+  if (videos.length > 0) {
+    const videoGroupDiv = document.createElement("div");
+    videoGroupDiv.classList.add("group");
+    videoGroupDiv.dataset.group = "videos"; // Un ID spécial pour identifier le groupe vidéo
+    buildGalleryLayout(videos, videoGroupDiv);
+    gallery.appendChild(videoGroupDiv);
+  }
 }
 
 function buildGalleryLayout(images, container = document.getElementById("gallery")) {
