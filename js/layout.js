@@ -30,7 +30,6 @@ function computeColumns(images) {
   if (leftover.length > 0) {
     cols.push({ type: 'leftover-mixed', imgs: leftover });
   }
-
   return cols;
 }
 
@@ -51,11 +50,18 @@ function hasVisibleIncompleteColumns(images) {
 function groupImagesByPrefix(mediaItems) {
   const gallery = document.getElementById("gallery");
   
-  // 1. SÉPARATION : On isole les images et les vidéos
-  const images = mediaItems.filter(el => el.tagName.toLowerCase() !== 'video');
-  const videos = mediaItems.filter(el => el.tagName.toLowerCase() === 'video');
+  // 1. On sépare les images des vidéos ET des iframes
+  const images = mediaItems.filter(el => {
+    const tag = el.tagName.toLowerCase();
+    return tag !== 'video' && tag !== 'iframe';
+  });
+  
+  const videos = mediaItems.filter(el => {
+    const tag = el.tagName.toLowerCase();
+    return tag === 'video' || tag === 'iframe';
+  });
 
-  // 2. LOGIQUE POUR LES IMAGES (Ta logique actuelle)
+  // 2. On fait le tri habituel UNIQUEMENT pour les images
   const prefixGroups = new Map();
   images.forEach(img => {
     const data = img.getAttribute("data-gallery") || "";
@@ -84,7 +90,7 @@ function groupImagesByPrefix(mediaItems) {
 
   gallery.innerHTML = "";
   
-  // 3. AFFICHAGE DES GROUPES D'IMAGES
+  // 3. On affiche les groupes d'images
   batches.forEach(({ images: imgs, prefixes }) => {
     const groupDiv = document.createElement("div");
     groupDiv.classList.add("group");
@@ -93,23 +99,18 @@ function groupImagesByPrefix(mediaItems) {
     gallery.appendChild(groupDiv);
   });
 
-  // 4. AFFICHAGE DU GROUPE VIDÉO (Toujours à la fin)
+  // 4. On affiche le groupe Vidéo/Iframe à la toute fin
   if (videos.length > 0) {
     const videoGroupDiv = document.createElement("div");
     videoGroupDiv.classList.add("group");
-    videoGroupDiv.dataset.group = "videos"; // Un ID spécial pour identifier le groupe vidéo
+    videoGroupDiv.dataset.group = "videos"; 
     buildGalleryLayout(videos, videoGroupDiv);
     gallery.appendChild(videoGroupDiv);
   }
 }
 
 function buildGalleryLayout(images, container = document.getElementById("gallery")) {
-  const createDiv = className => {
-    const div = document.createElement("div");
-    div.className = className;
-    return div;
-  };
-
+  const createDiv = className => { const div = document.createElement("div"); div.className = className; return div; };
   const cols = computeColumns(images);
   container.innerHTML = "";
   const galleryLine = createDiv("line");
@@ -125,13 +126,9 @@ function buildGalleryLayout(images, container = document.getElementById("gallery
         const type = first.dataset.orientation;
         const maxCount = type === "portrait" ? 3 : 2;
         const lineImgs = [];
-
         let count = 0;
         for (let img of unprocessed) {
-          if (img.dataset.orientation === type && count < maxCount) {
-            lineImgs.push(img);
-            count++;
-          }
+          if (img.dataset.orientation === type && count < maxCount) { lineImgs.push(img); count++; }
         }
         unprocessed = unprocessed.filter(img => !lineImgs.includes(img));
 
@@ -139,7 +136,11 @@ function buildGalleryLayout(images, container = document.getElementById("gallery
         lineImgs.forEach(img => {
           const ic = createDiv("img-container");
           ic.dataset.orientation = img.dataset.orientation;
-          if (img.tagName.toLowerCase() === 'video') ic.dataset.isVideo = "true"; // DÉTECTION VIDÉO ICI
+          
+          // Détection vidéo OU iframe
+          const tag = img.tagName.toLowerCase();
+          if (tag === 'video' || tag === 'iframe') ic.dataset.isVideo = "true";
+          
           ic.appendChild(img);
           lineDiv.appendChild(ic);
         });
@@ -152,13 +153,16 @@ function buildGalleryLayout(images, container = document.getElementById("gallery
       col.imgs.forEach(img => {
         const ic = createDiv("img-container");
         ic.dataset.orientation = img.dataset.orientation;
-        if (img.tagName.toLowerCase() === 'video') ic.dataset.isVideo = "true"; // DÉTECTION VIDÉO ICI
+        
+        // Détection vidéo OU iframe
+        const tag = img.tagName.toLowerCase();
+        if (tag === 'video' || tag === 'iframe') ic.dataset.isVideo = "true";
+        
         ic.appendChild(img);
         column.appendChild(ic);
       });
       galleryLine.appendChild(column);
     }
   });
-
   container.appendChild(galleryLine);
 }
