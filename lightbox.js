@@ -1,7 +1,4 @@
-import { state } from './state.js';
-import { parseClr, hexToHsl } from './utils.js';
-
-export function enableZoomDrag() {
+function enableZoomDrag() {
   const lightbox = document.createElement("div");
   lightbox.className = "lightbox";
   lightbox.innerHTML = `
