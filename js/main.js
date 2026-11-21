@@ -144,4 +144,4 @@ document.addEventListener("DOMContentLoaded", async () => {
   loadGalleryFromTxt();
 });
 
-console.log("main=version multifiles");
+console.log("main=version multifiles 2");
