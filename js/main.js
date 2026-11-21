@@ -10,7 +10,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   // ==========================================
   async function loadGalleryFromTxt() {
     // Liste de tes fichiers txt
-    const txtFiles = ['0007.txt', '120.txt'];
+    const txtFiles = ['007.txt', '120.txt'];
     
     let allHtmlStrings = [];
 
