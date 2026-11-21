@@ -27,8 +27,11 @@ function computeColumns(images) {
     }
   }
 
-  // RETOUR À LA NORMALE : une colonne par image restante
-  leftover.forEach(img => cols.push({ type: 'last', imgs: [img] }));
+  // NOUVELLE LOGIQUE : On met TOUS les restes dans une seule colonne "leftover-mixed"
+  if (leftover.length > 0) {
+    cols.push({ type: 'leftover-mixed', imgs: leftover });
+  }
+  
   return cols;
 }
 
@@ -38,7 +41,7 @@ function hasVisibleIncompleteColumns(images) {
   const P_W = L_W * 2 / 3;
   let x = 0;
   for (const col of cols) {
-    if (col.type === 'last') return x < 1;
+    if (col.type === 'leftover-mixed') return x < 1;
     if (col.type === '4P')         x += P_W;
     else if (col.type === '6L')    x += L_W;
     else if (col.type === '12-mixed') x += 2 * L_W;
@@ -49,7 +52,7 @@ function hasVisibleIncompleteColumns(images) {
 function groupImagesByPrefix(mediaItems) {
   const gallery = document.getElementById("gallery");
   
-  // On garde la séparation des vidéos et iframes
+  // 1. On sépare les images des vidéos ET des iframes
   const images = mediaItems.filter(el => {
     const tag = el.tagName.toLowerCase();
     return tag !== 'video' && tag !== 'iframe';
@@ -60,6 +63,7 @@ function groupImagesByPrefix(mediaItems) {
     return tag === 'video' || tag === 'iframe';
   });
 
+  // 2. On fait le tri habituel UNIQUEMENT pour les images
   const prefixGroups = new Map();
   images.forEach(img => {
     const data = img.getAttribute("data-gallery") || "";
@@ -88,6 +92,7 @@ function groupImagesByPrefix(mediaItems) {
 
   gallery.innerHTML = "";
   
+  // 3. On affiche les groupes d'images
   batches.forEach(({ images: imgs, prefixes }) => {
     const groupDiv = document.createElement("div");
     groupDiv.classList.add("group");
@@ -96,6 +101,7 @@ function groupImagesByPrefix(mediaItems) {
     gallery.appendChild(groupDiv);
   });
 
+  // 4. On affiche le groupe Vidéo/Iframe à la toute fin
   if (videos.length > 0) {
     const videoGroupDiv = document.createElement("div");
     videoGroupDiv.classList.add("group");
@@ -112,7 +118,6 @@ function buildGalleryLayout(images, container = document.getElementById("gallery
   const galleryLine = createDiv("line");
 
   cols.forEach(col => {
-    // On revient à la condition d'origine
     if (col.type === '12-mixed') {
       const column = createDiv("column");
       column.dataset.columntype = col.type;
@@ -133,27 +138,64 @@ function buildGalleryLayout(images, container = document.getElementById("gallery
         lineImgs.forEach(img => {
           const ic = createDiv("img-container");
           ic.dataset.orientation = img.dataset.orientation;
-          
           const tag = img.tagName.toLowerCase();
           if (tag === 'video' || tag === 'iframe') ic.dataset.isVideo = "true";
-          
           ic.appendChild(img);
           lineDiv.appendChild(ic);
         });
         column.appendChild(lineDiv);
       }
       galleryLine.appendChild(column);
-    } else {
+    } 
+    else if (col.type === 'leftover-mixed') {
       const column = createDiv("column");
-      // On revient au nom "last-columntype"
-      column.dataset.columntype = col.type === 'last' ? 'last-columntype' : col.type;
+      column.dataset.columntype = "leftover-mixed";
+
+      // 1. On sépare les P et les L
+      const leftoversP = col.imgs.filter(img => img.dataset.orientation === "portrait");
+      const leftoversL = col.imgs.filter(img => img.dataset.orientation !== "portrait");
+
+      // 2. On empile les lignes de 3 Portraits
+      for (let i = 0; i < leftoversP.length; i += 3) {
+        const chunk = leftoversP.slice(i, i + 3);
+        const lineDiv = createDiv("line portrait-line");
+        chunk.forEach(img => {
+          const ic = createDiv("img-container");
+          ic.dataset.orientation = img.dataset.orientation;
+          const tag = img.tagName.toLowerCase();
+          if (tag === 'video' || tag === 'iframe') ic.dataset.isVideo = "true";
+          ic.appendChild(img);
+          lineDiv.appendChild(ic);
+        });
+        column.appendChild(lineDiv);
+      }
+
+      // 3. On empile les lignes de 2 Paysages
+      for (let i = 0; i < leftoversL.length; i += 2) {
+        const chunk = leftoversL.slice(i, i + 2);
+        const lineDiv = createDiv("line landscape-line");
+        chunk.forEach(img => {
+          const ic = createDiv("img-container");
+          ic.dataset.orientation = img.dataset.orientation;
+          const tag = img.tagName.toLowerCase();
+          if (tag === 'video' || tag === 'iframe') ic.dataset.isVideo = "true";
+          ic.appendChild(img);
+          lineDiv.appendChild(ic);
+        });
+        column.appendChild(lineDiv);
+      }
+
+      galleryLine.appendChild(column);
+    } 
+    else {
+      // Colonnes complètes classiques (4P, 6L)
+      const column = createDiv("column");
+      column.dataset.columntype = col.type;
       col.imgs.forEach(img => {
         const ic = createDiv("img-container");
         ic.dataset.orientation = img.dataset.orientation;
-        
         const tag = img.tagName.toLowerCase();
         if (tag === 'video' || tag === 'iframe') ic.dataset.isVideo = "true";
-        
         ic.appendChild(img);
         column.appendChild(ic);
       });
@@ -162,3 +204,5 @@ function buildGalleryLayout(images, container = document.getElementById("gallery
   });
   container.appendChild(galleryLine);
 }
+
+console.log("layout= nouvelle logique de fin de groupe");
