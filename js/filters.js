@@ -605,4 +605,4 @@ function initColorFilter(updateBodyBackground) {
   [active, hue, lumActive, lumSlider, sim].forEach(el => el.addEventListener('input', update));
 }
 
-console.log("filters= version Russian Puppet 2");
+console.log("filters= version Russian Puppet 3");
