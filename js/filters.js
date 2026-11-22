@@ -22,127 +22,188 @@ function buildCheckboxGrid(container, items, displayName = k => k) {
 }
 
 function buildStudioFilterGrid(container, studioCount, imgData) {
-  const capitalize = s => s.charAt(0).toUpperCase() + s.slice(1);
-  const studioToGroup = {}, groupCounts = {};
-  
-  Object.entries(state.STUDIO_GROUPS).forEach(([groupName, members]) => {
-    const memberSet = new Set(members.map(m => m.toLowerCase()));
-    let count = 0;
-    imgData.forEach(({ studios }) => { if (studios.some(s => memberSet.has(s.toLowerCase()))) count++; });
-    groupCounts[groupName] = count;
-  });
-  Object.entries(state.STUDIO_GROUPS).forEach(([groupName, members]) => { members.forEach(m => { studioToGroup[m.toLowerCase()] = groupName; }); });
-
-  const allStudios = [...studioCount.keys()].sort((a, b) => a.localeCompare(b, 'fr', { sensitivity: 'base' }));
-  const checkboxRegistry = new Map();
-  let syncingStudioSiblings = false;
-
-  function createCheckbox(value) {
-    const cb = document.createElement('input');
-    cb.type = 'checkbox';
-    cb.value = value;
-    if (!checkboxRegistry.has(value)) checkboxRegistry.set(value, []);
-    checkboxRegistry.get(value).push(cb);
-
-    cb.addEventListener('change', () => {
-      if (syncingStudioSiblings) return;
-      const siblings = checkboxRegistry.get(value);
-      const master = siblings[0];
-      syncingStudioSiblings = true;
-      try {
-        siblings.forEach(s => { if (s !== cb) s.checked = cb.checked; });
-        if (cb !== master) master.dispatchEvent(new Event('change'));
-        else siblings.forEach(s => { if (s !== cb) s.dispatchEvent(new Event('change')); });
-      } finally { syncingStudioSiblings = false; }
+    const capitalize = s => s.charAt(0).toUpperCase() + s.slice(1);
+    const hierarchy = new Map();
+    const groupCounts = {};
+    
+    const allStudios = [...studioCount.keys()].sort((a, b) => a.localeCompare(b, 'fr', { sensitivity: 'base' }));
+    
+    // 1. Initialiser tous les studios
+    allStudios.forEach(s => hierarchy.set(s, { id: s, parent: null, children: [], cbs: [] }));
+    
+    // 2. Construire l'arbre (qui est enfant de qui)
+    Object.entries(state.STUDIO_GROUPS).forEach(([groupName, members]) => {
+        if (!hierarchy.has(groupName)) hierarchy.set(groupName, { id: groupName, parent: null, children: [], cbs: [] });
+        
+        members.forEach(member => {
+            if (!hierarchy.has(member)) hierarchy.set(member, { id: member, parent: null, children: [], cbs: [] });
+            
+            // On lie l'enfant au parent
+            hierarchy.get(member).parent = groupName;
+            hierarchy.get(groupName).children.push(member);
+        });
+        
+        // Compter les images pour le parent
+        const memberSet = new Set(members.map(m => m.toLowerCase()));
+        let count = 0;
+        imgData.forEach(({ studios }) => { if (studios.some(s => memberSet.has(s.toLowerCase()))) count++; });
+        groupCounts[groupName] = count;
     });
-    return cb;
-  }
 
-  const createColumn = () => { const col = document.createElement('div'); col.className = 'column'; return col; };
-  container.innerHTML = '';
-
-  const globalList = document.createElement('div');
-  globalList.className = 'prod-global-list';
-  const NUM_COLS = 4;
-  const globalColumns = Array.from({ length: NUM_COLS }, createColumn);
-  globalColumns.forEach(col => globalList.appendChild(col));
-  const perCol = Math.ceil(allStudios.length / NUM_COLS);
-
-  allStudios.forEach((studioName, idx) => {
-    const colIndex = Math.min(Math.floor(idx / perCol), NUM_COLS - 1);
-    const col = globalColumns[colIndex];
-    const label = document.createElement('label');
-    const cb = createCheckbox(studioName);
-    label.appendChild(cb);
-    label.appendChild(document.createTextNode(` ${capitalize(studioName)} (${studioCount.get(studioName)})`));
-    col.appendChild(label);
-  });
-  container.appendChild(globalList);
-
-  const separator = document.createElement('hr');
-  separator.className = 'prod-separator';
-  container.appendChild(separator);
-
-  const groupedList = document.createElement('div');
-  groupedList.className = 'prod-grouped-list';
-  const groups = {};
-
-  allStudios.forEach(name => {
-    const g = studioToGroup[name.toLowerCase()];
-    if (g) {
-      if (!groups[g]) groups[g] = [];
-      groups[g].push(name);
+    // 3. Créer une checkbox avec écouteur intelligent
+    function createCheckbox(value) {
+        const cb = document.createElement('input');
+        cb.type = 'checkbox';
+        cb.value = value;
+        if (hierarchy.has(value)) hierarchy.get(value).cbs.push(cb);
+        
+        cb.addEventListener('change', () => {
+            if (cb._ignoreNextEvent) { cb._ignoreNextEvent = false; return; }
+            handleChange(value, cb);
+        });
+        return cb;
     }
-  });
 
-  const groupEntries = Object.entries(groups).sort((a, b) => a[0].localeCompare(b[0], 'fr', { sensitivity: 'base' }));
+    // 4. Propager le clic vers le HAUT et le BAS
+    function handleChange(nodeId, cb) {
+        const node = hierarchy.get(nodeId);
+        if (!node) return;
 
-  groupEntries.forEach(([groupName, members]) => {
-    const groupDiv = document.createElement('div');
-    groupDiv.className = 'prod-group';
+        // Synchroniser les autres instances identiques (ex: pilule dans Aylo et titre du groupe)
+        node.cbs.forEach(inst => {
+            if (inst !== cb) {
+                inst._ignoreNextEvent = true;
+                inst.checked = cb.checked;
+                inst.indeterminate = cb.indeterminate;
+            }
+        });
 
-    const header = document.createElement('label');
-    header.className = 'prod-group-header';
-    const parentCb = document.createElement('input');
-    parentCb.type = 'checkbox';
-    header.appendChild(parentCb);
-    header.appendChild(document.createTextNode(` ${groupName} (${groupCounts[groupName] || 0})`));
-    groupDiv.appendChild(header);
+        // Si c'est un parent, on propage vers le BAS (ses enfants)
+        if (node.children.length > 0 && !cb.indeterminate) {
+            propagateDown(nodeId, cb.checked);
+        }
 
-    const itemsDiv = document.createElement('div');
-    itemsDiv.className = 'prod-group-items';
-    const childCbs = [];
+        // On propage vers le HAUT (vers son parent, ex: Aylo)
+        if (node.parent) {
+            updateState(node.parent);
+        }
+    }
 
-    members.sort((a, b) => a.localeCompare(b, 'fr', { sensitivity: 'base' }));
-    members.forEach(studioName => {
-      const label = document.createElement('label');
-      const cb = createCheckbox(studioName);
-      label.appendChild(cb);
-      label.appendChild(document.createTextNode(` ${capitalize(studioName)} (${studioCount.get(studioName)})`));
-      itemsDiv.appendChild(label);
-      childCbs.push(cb);
+    function propagateDown(nodeId, state) {
+        const node = hierarchy.get(nodeId);
+        if (!node) return;
+        node.cbs.forEach(cb => {
+            cb._ignoreNextEvent = true;
+            cb.checked = state;
+            cb.indeterminate = false;
+        });
+        node.children.forEach(childId => propagateDown(childId, state));
+    }
+
+    // 5. Mettre à jour l'état d'un parent (Coché / Décoché / Indeterminate)
+    function updateState(nodeId) {
+        const node = hierarchy.get(nodeId);
+        if (!node) return;
+
+        if (node.children.length > 0) {
+            let checkedCount = 0, indeterminateCount = 0, validChildren = 0;
+            
+            node.children.forEach(childId => {
+                const childNode = hierarchy.get(childId);
+                if (childNode.cbs.length > 0) {
+                    validChildren++;
+                    if (childNode.cbs[0].checked) checkedCount++;
+                    if (childNode.cbs[0].indeterminate) indeterminateCount++;
+                }
+            });
+
+            let newChecked = false, newIndeterminate = false;
+            if (checkedCount === 0 && indeterminateCount === 0) { newChecked = false; newIndeterminate = false; }
+            else if (checkedCount === validChildren) { newChecked = true; newIndeterminate = false; }
+            else { newChecked = false; newIndeterminate = true; }
+
+            node.cbs.forEach(cb => {
+                cb._ignoreNextEvent = true;
+                cb.checked = newChecked;
+                cb.indeterminate = newIndeterminate;
+            });
+        }
+
+        // On remonte encore plus haut s'il y a un "super parent"
+        if (node.parent) updateState(node.parent);
+    }
+
+    // --- RENDU VISUEL ---
+    container.innerHTML = '';
+    
+    // Liste globale
+    const globalList = document.createElement('div');
+    globalList.className = 'prod-global-list';
+    const NUM_COLS = 4;
+    const globalColumns = Array.from({ length: NUM_COLS }, () => { const d = document.createElement('div'); d.className = 'column'; return d; });
+    globalColumns.forEach(col => globalList.appendChild(col));
+    const perCol = Math.ceil(allStudios.length / NUM_COLS);
+
+    allStudios.forEach((studioName, idx) => {
+        const colIndex = Math.min(Math.floor(idx / perCol), NUM_COLS - 1);
+        const label = document.createElement('label');
+        const cb = createCheckbox(studioName);
+        label.appendChild(cb);
+        label.appendChild(document.createTextNode(` ${capitalize(studioName)} (${studioCount.get(studioName)})`));
+        globalColumns[colIndex].appendChild(label);
+    });
+    container.appendChild(globalList);
+
+    const separator = document.createElement('hr');
+    separator.className = 'prod-separator';
+    container.appendChild(separator);
+
+    // Liste groupée
+    const groupedList = document.createElement('div');
+    groupedList.className = 'prod-grouped-list';
+    
+    const groups = {};
+    allStudios.forEach(name => {
+        const g = hierarchy.get(name)?.parent;
+        if (g) {
+            if (!groups[g]) groups[g] = [];
+            groups[g].push(name);
+        }
     });
 
-    const syncParent = () => {
-      const checked = childCbs.filter(c => c.checked).length;
-      if (checked === 0) { parentCb.checked = false; parentCb.indeterminate = false; }
-      else if (checked === childCbs.length) { parentCb.checked = true; parentCb.indeterminate = false; }
-      else { parentCb.checked = false; parentCb.indeterminate = true; }
-    };
+    const groupEntries = Object.entries(groups).sort((a, b) => a[0].localeCompare(b[0], 'fr', { sensitivity: 'base' }));
 
-    parentCb.addEventListener('change', () => {
-      const target = parentCb.checked;
-      childCbs.forEach(c => { c.checked = target; c.dispatchEvent(new Event('change')); });
-      syncParent();
+    groupEntries.forEach(([groupName, members]) => {
+        const groupDiv = document.createElement('div');
+        groupDiv.className = 'prod-group';
+
+        const header = document.createElement('label');
+        header.className = 'prod-group-header';
+        const parentCb = createCheckbox(groupName);
+        header.appendChild(parentCb);
+        header.appendChild(document.createTextNode(` ${groupName} (${groupCounts[groupName] || 0})`));
+        groupDiv.appendChild(header);
+
+        const itemsDiv = document.createElement('div');
+        itemsDiv.className = 'prod-group-items';
+
+        members.sort((a, b) => a.localeCompare(b, 'fr', { sensitivity: 'base' }));
+        members.forEach(studioName => {
+            const label = document.createElement('label');
+            const cb = createCheckbox(studioName);
+            label.appendChild(cb);
+            label.appendChild(document.createTextNode(` ${capitalize(studioName)} (${studioCount.get(studioName)})`));
+            itemsDiv.appendChild(label);
+        });
+
+        groupDiv.appendChild(itemsDiv);
+        groupedList.appendChild(groupDiv);
     });
-    childCbs.forEach(c => c.addEventListener('change', syncParent));
 
-    groupDiv.appendChild(itemsDiv);
-    groupedList.appendChild(groupDiv);
-  });
+    container.appendChild(groupedList);
 
-  container.appendChild(groupedList);
-  return allStudios.map(s => checkboxRegistry.get(s)[0]);
+    // On retourne TOUTES les checkboxes (y compris les parents) pour le filtre
+    return Array.from(container.querySelectorAll('input[type="checkbox"]'));
 }
 
 function createFilterCheckboxes(images) {
@@ -535,6 +596,8 @@ function initColorFilter(updateBodyBackground) {
     updateBodyBackground();
 
     clearTimeout(timer);
+
+    console.log("filter=version pouppée russe");
     timer = setTimeout(() => state.triggerFilter(), 150);
   };
   [active, hue, lumActive, lumSlider, sim].forEach(el => el.addEventListener('input', update));
