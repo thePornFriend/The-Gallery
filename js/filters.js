@@ -37,7 +37,7 @@ function buildStudioFilterGrid(container, studioCount, imgData) {
     // Initialiser tous les studios
     allStudios.forEach(s => hierarchy.set(s, { id: s, parent: null, children: [], cbs: [] }));
     
-    // Construire l'arbre (qui est enfant de qui)
+    // Construire l'arbre
     Object.entries(state.STUDIO_GROUPS).forEach(([groupName, members]) => {
         if (!hierarchy.has(groupName)) hierarchy.set(groupName, { id: groupName, parent: null, children: [], cbs: [] });
         
@@ -54,7 +54,9 @@ function buildStudioFilterGrid(container, studioCount, imgData) {
         groupCounts[groupName] = count;
     });
 
-    // Créer une checkbox avec écouteur intelligent
+    // Sauvegarde de la hiérarchie pour le filtre
+    state.studioHierarchy = hierarchy;
+
     function createCheckbox(value) {
         const cb = document.createElement('input');
         cb.type = 'checkbox';
@@ -68,7 +70,6 @@ function buildStudioFilterGrid(container, studioCount, imgData) {
         return cb;
     }
 
-    // Propager le clic vers le HAUT et le BAS
     function handleChange(nodeId, cb) {
         const node = hierarchy.get(nodeId);
         if (!node) return;
@@ -132,7 +133,6 @@ function buildStudioFilterGrid(container, studioCount, imgData) {
         if (node.parent) updateState(node.parent);
     }
 
-    // RENDU VISUEL
     container.innerHTML = '';
     
     // Liste globale
@@ -148,7 +148,7 @@ function buildStudioFilterGrid(container, studioCount, imgData) {
         const label = document.createElement('label');
         const cb = createCheckbox(studioName);
         label.appendChild(cb);
-        label.appendChild(document.createTextNode(` ${capitalize(studioName)} (${studioCount.get(studioName)})`));
+        label.appendChild(document.createTextNode(` ${capitalize(studioName)} (${studioCount.get(studioName) || 0})`));
         globalColumns[colIndex].appendChild(label);
     });
     container.appendChild(globalList);
@@ -157,12 +157,12 @@ function buildStudioFilterGrid(container, studioCount, imgData) {
     separator.className = 'prod-separator';
     container.appendChild(separator);
 
-    // Liste groupée
+    // Liste groupée (CORRIGÉ : on itère sur TOUTE la hiérarchie pour avoir les parents sans images)
     const groupedList = document.createElement('div');
     groupedList.className = 'prod-grouped-list';
     
     const groups = {};
-    allStudios.forEach(name => {
+    Array.from(hierarchy.keys()).forEach(name => {
         const g = hierarchy.get(name)?.parent;
         if (g) {
             if (!groups[g]) groups[g] = [];
@@ -191,7 +191,7 @@ function buildStudioFilterGrid(container, studioCount, imgData) {
             const label = document.createElement('label');
             const cb = createCheckbox(studioName);
             label.appendChild(cb);
-            label.appendChild(document.createTextNode(` ${capitalize(studioName)} (${studioCount.get(studioName)})`));
+            label.appendChild(document.createTextNode(` ${capitalize(studioName)} (${studioCount.get(studioName) || 0})`));
             itemsDiv.appendChild(label);
         });
 
@@ -354,16 +354,47 @@ function createFilterCheckboxes(images) {
     const selectedAll = selected.includes('am:__all__');
     const selectedRest = selected.filter(v => v !== 'am:__all__');
 
+    // Helpers pour gérer les studios parents/enfants
+    const isCoveredByParent = (val) => {
+        if (!state.studioHierarchy || !state.studioHierarchy.has(val)) return false;
+        let parent = state.studioHierarchy.get(val).parent;
+        while (parent) {
+            if (selectedRest.includes(parent)) return true;
+            parent = state.studioHierarchy.get(parent)?.parent;
+        }
+        return false;
+    };
+
+    const isGroupMatch = (val, studiosArr) => {
+        if (!state.studioHierarchy || !state.studioHierarchy.has(val)) return false;
+        const node = state.studioHierarchy.get(val);
+        const checkChildren = (n) => {
+            if (n.children.some(c => studiosArr.includes(c))) return true;
+            return n.children.some(c => state.studioHierarchy.has(c) && checkChildren(state.studioHierarchy.get(c)));
+        };
+        return checkChildren(node);
+    };
+
     const visibleImages = imgData.filter(({ acts, tags, studios, amateurActs, img }) => {
       let passesCheckboxFilter;
       if (selected.length === 0) passesCheckboxFilter = true;
       else if (inclusive) {
         const matchAll = selectedAll && amateurActs.length > 0;
-        const matchRest = selectedRest.some(v => acts.includes(v) || tags.includes(v) || studios.includes(v));
+        const matchRest = selectedRest.some(v => {
+            if (acts.includes(v) || tags.includes(v)) return true;
+            if (studios.includes(v)) return true;
+            if (isGroupMatch(v, studios)) return true;
+            return false;
+        });
         passesCheckboxFilter = matchAll || matchRest;
       } else {
         const allVals = [...acts, ...tags, ...studios];
-        const allCovered = allVals.every(v => selectedRest.includes(v) || (selectedAll && v.startsWith('am:')));
+        const allCovered = allVals.every(v => {
+            if (selectedRest.includes(v)) return true;
+            if (selectedAll && v.startsWith('am:')) return true;
+            if (isCoveredByParent(v)) return true;
+            return false;
+        });
         const allReq = !selectedAll || amateurActs.length > 0;
         passesCheckboxFilter = allReq && allCovered;
       }
@@ -605,4 +636,4 @@ function initColorFilter(updateBodyBackground) {
   [active, hue, lumActive, lumSlider, sim].forEach(el => el.addEventListener('input', update));
 }
 
-console.log("filters= version Russian Puppet 3");
+console.log("filters= version Russian Puppet 4");
