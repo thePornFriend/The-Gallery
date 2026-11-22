@@ -99,3 +99,118 @@
 .modal-content { padding: 20px; max-width: 80%; border-radius: 8px; text-align: center; }
 .thumbs { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-top: 10px; }
 .duplicate-thumb { width: 80px; height: 80px; object-fit: cover; cursor: pointer; border: 2px solid transparent; }
+/* ==========================================
+   SCENES MODAL (Lightbox studios/actrices)
+   ========================================== */
+.scenes-modal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.85);
+    z-index: 3000; /* Au dessus de tout */
+    justify-content: center;
+    align-items: center;
+    backdrop-filter: blur(4px);
+}
+
+.scenes-modal.visible {
+    display: flex;
+}
+
+.scenes-modal-content {
+    width: 90vw;
+    max-width: 1200px;
+    height: 85vh;
+    background: #1a1a1a;
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    color: white;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.scenes-modal-header {
+    padding: 15px 20px;
+    border-bottom: 1px solid #333;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #222;
+}
+
+.scenes-modal-header h2 {
+    margin: 0;
+    font-size: 1.2rem;
+}
+
+.scenes-close-btn {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 2rem;
+    cursor: pointer;
+    line-height: 1;
+}
+
+.scenes-close-btn:hover {
+    color: #fba3dc;
+}
+
+.scenes-list {
+    padding: 20px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
+}
+
+.scene-item {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.scene-title {
+    font-size: 1rem;
+    color: #ddd;
+}
+
+.scene-title strong {
+    color: #4CAF50; /* Vert pour la date */
+    margin-right: 10px;
+}
+
+.scene-title span {
+    color: #999;
+    font-style: italic;
+    font-size: 0.9rem;
+    margin-left: 10px;
+}
+
+/* La fameuse galerie horizontale scrollable */
+.scene-gallery {
+    display: flex;
+    gap: 10px;
+    overflow-x: auto;
+    padding-bottom: 10px;
+    scrollbar-width: thin;
+    scrollbar-color: #555 transparent;
+}
+
+.scene-gallery::-webkit-scrollbar {
+    height: 8px;
+}
+.scene-gallery::-webkit-scrollbar-thumb {
+    background-color: #555;
+    border-radius: 4px;
+}
+
+.scene-thumb {
+    height: 150px;
+    min-width: 200px;
+    object-fit: cover;
+    border-radius: 6px;
+    background: #000;
+}
