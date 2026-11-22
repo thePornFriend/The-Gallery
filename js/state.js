@@ -7,7 +7,7 @@ const state = {
   neonController: null,
   CHIARO_YELLOW: '#7A6500',
   STUDIO_GROUPS: {
-    'Aylo (aka. MindGeek)' : ['Brazzers', 'Digital Playground', 'Letsdoit Channels', 'Mofos', 'Reality Kings', 'Twistys', 'Sweetheart Video', 'Sweet Sinner', 'Family Sinners'],
+    'Aylo (aka. MindGeek)' : ['Brazzers', 'Digital Playground', 'Family Sinners', 'Letsdoit Channels', 'Mofos', 'Reality Kings', 'Sweetheart Video', 'Sweet Sinner', 'SexyHub', 'Twistys'],
     'Adult Time' : ['21Naturals', 'Girlsway', 'Lez Be Bad', 'Joymii'],
     'Euphoria' : ['Angels Love', 'Nancy Love', 'Sensual Love', 'Ultra Films', 'WowGirls'],
     'Letsdoit Channels' : ['A Girl Knows', 'Her Limit', 'Horny Hostel', 'Latina Milf', 'Letsdoit', 'The White Boxxx'],
@@ -15,6 +15,7 @@ const state = {
     'Mile High Media' : ['EroticaX', 'HardX'],
     'New Sensations' : ['Hotwife XXX', 'Family XXX' ],
     'Nubiles Porn': ['Bratty Sis', 'Cheating Sis', 'Cum Swapping Sis', 'Family Swap', 'Moms Teach Sex', 'My Family Pies', 'Step Siblings Caught'],
+    'SexyHub' : ['Lesbea', 'Massage Rooms'], 
     'Vixen Media Group': ['Blacked', 'Deeper', 'MILFY', 'Slayed', 'Tushy', 'Vixen','Wifey']
   }
 };
