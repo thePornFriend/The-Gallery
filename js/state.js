@@ -10,7 +10,7 @@ const state = {
     'Aylo (aka. MindGeek)' : ['Brazzers', 'Digital Playground', 'Letsdoit Channels', 'Mofos', 'Reality Kings', 'Twistys', 'Sweetheart Video', 'Sweet Sinner', 'Family Sinners'],
     'Adult Time' : ['21Naturals', 'Girlsway', 'Lez Be Bad', 'Joymii'],
     'Euphoria' : ['Angels Love', 'Nancy Love', 'Sensual Love', 'Ultra Films', 'WowGirls'],
-    'Letsdoit Channels' : ['A Girl Knows', 'Her Limit', 'Horny Hostel', 'Latina Milf', 'The White Boxxx'],
+    'Letsdoit Channels' : ['A Girl Knows', 'Her Limit', 'Horny Hostel', 'Latina Milf', 'Letsdoit', 'The White Boxxx'],
     'MetArt Network' : ['Domai', 'Eternal Desire', 'MetArt', 'MetArt X', 'SexArt', 'Straplez', 'Stunning 18', 'TLE|The Life Erotic', 'Viv Thomas'],
     'Mile High Media' : ['EroticaX', 'HardX'],
     'New Sensations' : ['Hotwife XXX', 'Family XXX' ],
