@@ -202,7 +202,6 @@ function buildStudioFilterGrid(container, studioCount, imgData) {
 
     container.appendChild(groupedList);
 
-    // On retourne TOUTES les checkboxes (y compris les parents) pour le filtre
     return Array.from(container.querySelectorAll('input[type="checkbox"]'));
 }
 
@@ -601,5 +600,4 @@ function initColorFilter(updateBodyBackground) {
   [active, hue, lumActive, lumSlider, sim].forEach(el => el.addEventListener('input', update));
 }
 
-
-console.log("filters= version Russian Puppet");
+console.log("filters= version Russian Puppet 2");
