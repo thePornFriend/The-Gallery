@@ -7,7 +7,8 @@ const state = {
   neonController: null,
   CHIARO_YELLOW: '#7A6500',
   STUDIO_GROUPS: {
-    'Aylo (aka. MindGeek)' : ['Brazzers', 'Digital Playground', 'Family Sinners', 'Letsdoit Channels', 'Mofos', 'Reality Kings', 'Sweetheart Video', 'Sweet Sinner', 'SexyHub', 'Twistys'],
+    'Aylo (aka. MindGeek)' : ['Brazzers', 'Digital Playground', 'Letsdoit Channels', 'Mofos', 'Reality Kings', 'SexyHub', 'Twistys', 'Adult Mobile'],
+    'Adult Mobile' : ['Sweetheart Video', 'Sweet Sinner', 'Family Sinners',],
     'Adult Time' : ['21Naturals', 'Girlsway', 'Lez Be Bad', 'Joymii'],
     'Cherry Pimps' : ['Petite'],
     'Euphoria' : ['Angels Love', 'Nancy Love', 'Sensual Love', 'Ultra Films', 'WowGirls'],
