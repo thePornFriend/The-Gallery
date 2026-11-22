@@ -596,9 +596,10 @@ function initColorFilter(updateBodyBackground) {
     updateBodyBackground();
 
     clearTimeout(timer);
-
-    console.log("filter=version pouppée russe");
     timer = setTimeout(() => state.triggerFilter(), 150);
   };
   [active, hue, lumActive, lumSlider, sim].forEach(el => el.addEventListener('input', update));
 }
+
+
+console.log("filters= version Russian Puppet");
