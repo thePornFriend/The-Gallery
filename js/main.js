@@ -10,7 +10,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   // ==========================================
   async function loadGalleryFromTxt() {
     // Liste de tes fichiers txt
-    const txtFiles = ['007.txt', 'Angela White.txt', '120.txt'];
+    const txtFiles = ['007.txt', 'updating.txt', '120.txt'];
     
     let allHtmlStrings = [];
 
@@ -144,4 +144,4 @@ document.addEventListener("DOMContentLoaded", async () => {
   loadGalleryFromTxt();
 });
 
-console.log("main=version angela white");
+console.log("main=version updatin file");
