@@ -9,7 +9,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         // 1. On liste tes fichiers et on les télécharge une bonne fois pour toute
         const txtFiles = ['0.txt', '001.txt', '002.txt', '003.txt', '004.txt', '005.txt', '006.txt', '007.txt', '008.txt', '009.txt', '010.txt', '011.txt', '012.txt', '013.txt', '099.txt', '100.txt', '105.txt', '110.txt', '120.txt', 'video.txt'];
-        const txtLookup = {}; // Dictionnaire : "url_image" -> ["0.txt", "120.txt"]
+        const txtLookup = {}; 
 
         for (const file of txtFiles) {
             try {
@@ -28,10 +28,10 @@ document.addEventListener("DOMContentLoaded", () => {
             } catch (e) {}
         }
 
-        // 2. Récupération des données du DOM
+        // 2. Récupération de TOUS les médias du DOM
         const allMedia = Array.from(document.querySelectorAll('#gallery img, #gallery video, #gallery iframe'));
         
-        // --- VÉRIFICATION 1 : DOUBLONS ---
+        // --- VÉRIFICATION 1 : DOUBLONS (Tous les médias) ---
         const domCounts = {};
         allMedia.forEach(el => {
             const src = (el.getAttribute('src') || '').split('?')[0].trim();
@@ -49,28 +49,31 @@ document.addEventListener("DOMContentLoaded", () => {
                 return {
                     "Image": src.split('/').pop(),
                     "Occurrences": domCounts[src],
-                    "Fichier(s) .txt d'origine": txtLookup[src] ? txtLookup[src].join(' + ') : "❌ Non trouvé dans les .txt (HTML ?)"
+                    "Fichier(s) .txt d'origine": txtLookup[src] ? txtLookup[src].join(' + ') : "❌ Non trouvé (HTML ?)"
                 };
             });
             console.table(dupResults);
         }
 
-        // --- VÉRIFICATION 2 : DONNÉES MANQUANTES (Orientation / Galerie) ---
-        console.log("%c🕵️‍♂️ VÉRIFICATION DES DATA-ORIENTATION ET DATA-GALLERY...", "color: #00BCD4; font-weight: bold;");
+        // --- VÉRIFICATION 2 : DONNÉES MANQUANTES (IMAGES UNIQUEMENT) ---
+        console.log("%c🕵️‍♂️ VÉRIFICATION DES DATA-ORIENTATION ET DATA-GALLERY (Images uniquement)...", "color: #00BCD4; font-weight: bold;");
         
-        const missingData = allMedia.filter(el => {
+        // On filtre pour ne garder QUE les balises <img>
+        const onlyImages = allMedia.filter(el => el.tagName.toLowerCase() === 'img');
+        
+        const missingData = onlyImages.filter(el => {
             const hasOrientation = el.dataset.orientation && el.dataset.orientation.trim() !== '';
             const hasGallery = el.dataset.gallery && el.dataset.gallery.trim() !== '';
             return !hasOrientation || !hasGallery;
         });
 
         if (missingData.length > 0) {
-            console.log(`%c⚠️ ${missingData.length} élément(s) sans data-orientation ou data-gallery :`, "color: #FF9800; font-weight: bold;");
+            console.log(`%c⚠️ ${missingData.length} image(s) sans data-orientation ou data-gallery :`, "color: #FF9800; font-weight: bold;");
             
             const missingResults = missingData.map(el => {
                 const src = (el.getAttribute('src') || '').split('?')[0].trim();
                 return {
-                    "Image/Vidéo": src.split('/').pop() || "Lien vide",
+                    "Image": src.split('/').pop() || "Lien vide",
                     "Fichier .txt": txtLookup[src] ? txtLookup[src].join(' + ') : "❌ Non trouvé (HTML ?)",
                     "Orientation": el.dataset.orientation || "❌",
                     "Galerie": el.dataset.gallery || "❌",
@@ -79,7 +82,7 @@ document.addEventListener("DOMContentLoaded", () => {
             });
             console.table(missingResults);
         } else {
-            console.log("%c✅ Tous les éléments ont une orientation et une galerie valides.", "color: #4CAF50; font-weight: bold;");
+            console.log("%c✅ Toutes les images ont une orientation et une galerie valides.", "color: #4CAF50; font-weight: bold;");
         }
 
         console.log("%c🏁 Scan complet terminé.", "color: #9E9E9E; font-style: italic;");
