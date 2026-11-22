@@ -16,7 +16,8 @@ const state = {
     'New Sensations' : ['Hotwife XXX', 'Family XXX' ],
     'Nubiles Porn': ['Bratty Sis', 'Cheating Sis', 'Cum Swapping Sis', 'Family Swap', 'Moms Teach Sex', 'My Family Pies', 'Step Siblings Caught'],
     'SexyHub' : ['Lesbea', 'Massage Rooms'], 
-    'Vixen Media Group': ['Blacked', 'Deeper', 'MILFY', 'Slayed', 'Tushy', 'Vixen','Wifey']
+    'Vixen Media Group': ['Blacked', 'Deeper', 'MILFY', 'Slayed', 'Tushy', 'Vixen','Wifey'],
+    'VR Bangers Network' : ['VR Conk',],
   }
 };
 
