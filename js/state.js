@@ -9,6 +9,7 @@ const state = {
   STUDIO_GROUPS: {
     'Aylo (aka. MindGeek)' : ['Brazzers', 'Digital Playground', 'Family Sinners', 'Letsdoit Channels', 'Mofos', 'Reality Kings', 'Sweetheart Video', 'Sweet Sinner', 'SexyHub', 'Twistys'],
     'Adult Time' : ['21Naturals', 'Girlsway', 'Lez Be Bad', 'Joymii'],
+    'Cherry Pimps' : ['Petite'],
     'Euphoria' : ['Angels Love', 'Nancy Love', 'Sensual Love', 'Ultra Films', 'WowGirls'],
     'Letsdoit Channels' : ['A Girl Knows', 'Her Limit', 'Horny Hostel', 'Latina Milf', 'Letsdoit', 'The White Boxxx'],
     'MetArt Network' : ['Domai', 'Eternal Desire', 'MetArt', 'MetArt X', 'SexArt', 'Straplez', 'Stunning 18', 'TLE|The Life Erotic', 'Viv Thomas'],
