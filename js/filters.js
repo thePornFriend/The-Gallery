@@ -1,6 +1,32 @@
 // ==========================================
 // 1. GRILLE DE CHECKBOXES (Actrices, Tags)
 // ==========================================
+function buildCheckboxGrid(container, items, displayName = k => k) {
+  const capitalize = s => s.charAt(0).toUpperCase() + s.slice(1);
+  const sorted = [...items.keys()].sort((a, b) => displayName(a).localeCompare(displayName(b), 'fr', { sensitivity: 'base' }));
+  const perCol = Math.ceil(sorted.length / 5);
+  container.innerHTML = '';
+  const checkboxes = [];
+
+  for (let i = 0; i < 5; i++) {
+    const col = document.createElement('div');
+    col.className = 'column';
+    for (const item of sorted.slice(i * perCol, (i + 1) * perCol)) {
+      const label = document.createElement('label');
+      const display = capitalize(displayName(item));
+      label.innerHTML = `<input type="checkbox" value="${item}"> ${display} (${items.get(item)})`;
+      const cb = label.firstChild;
+      checkboxes.push(cb);
+      col.appendChild(label);
+    }
+    container.appendChild(col);
+  }
+  return checkboxes;
+}
+
+// ==========================================
+// 2. GRILLE DES STUDIOS (avec Hiérarchie)
+// ==========================================
 function buildStudioFilterGrid(container, studioCount, imgData) {
     const capitalize = s => s.charAt(0).toUpperCase() + s.slice(1);
     const hierarchy = new Map();
@@ -124,7 +150,6 @@ function buildStudioFilterGrid(container, studioCount, imgData) {
         const label = document.createElement('label');
         const cb = createCheckbox(studioName);
         label.appendChild(cb);
-        // On affiche le compteur AGRÉGÉ
         label.appendChild(document.createTextNode(` ${capitalize(studioName)} (${aggregateCounts.get(studioName) || 0})`));
         globalColumns[colIndex].appendChild(label);
     });
@@ -159,7 +184,6 @@ function buildStudioFilterGrid(container, studioCount, imgData) {
         header.className = 'prod-group-header';
         const parentCb = createCheckbox(groupName);
         header.appendChild(parentCb);
-        // On affiche le compteur AGRÉGÉ pour le parent
         header.appendChild(document.createTextNode(` ${groupName} (${aggregateCounts.get(groupName) || 0})`));
         groupDiv.appendChild(header);
 
@@ -171,188 +195,7 @@ function buildStudioFilterGrid(container, studioCount, imgData) {
             const label = document.createElement('label');
             const cb = createCheckbox(studioName);
             label.appendChild(cb);
-            // On affiche le compteur AGRÉGÉ pour l'enfant
             label.appendChild(document.createTextNode(` ${capitalize(studioName)} (${aggregateCounts.get(studioName) || 0})`));
-            itemsDiv.appendChild(label);
-        });
-
-        groupDiv.appendChild(itemsDiv);
-        groupedList.appendChild(groupDiv);
-    });
-
-    container.appendChild(groupedList);
-
-    return Array.from(container.querySelectorAll('input[type="checkbox"]'));
-}
-
-// ==========================================
-// 2. GRILLE DES STUDIOS (avec Hiérarchie)
-// ==========================================
-function buildStudioFilterGrid(container, studioCount, imgData) {
-    const capitalize = s => s.charAt(0).toUpperCase() + s.slice(1);
-    const hierarchy = new Map();
-    const groupCounts = {};
-    
-    const allStudios = [...studioCount.keys()].sort((a, b) => a.localeCompare(b, 'fr', { sensitivity: 'base' }));
-    
-    // Initialiser tous les studios
-    allStudios.forEach(s => hierarchy.set(s, { id: s, parent: null, children: [], cbs: [] }));
-    
-    // Construire l'arbre
-    Object.entries(state.STUDIO_GROUPS).forEach(([groupName, members]) => {
-        if (!hierarchy.has(groupName)) hierarchy.set(groupName, { id: groupName, parent: null, children: [], cbs: [] });
-        
-        members.forEach(member => {
-            if (!hierarchy.has(member)) hierarchy.set(member, { id: member, parent: null, children: [], cbs: [] });
-            
-            hierarchy.get(member).parent = groupName;
-            hierarchy.get(groupName).children.push(member);
-        });
-        
-        const memberSet = new Set(members.map(m => m.toLowerCase()));
-        let count = 0;
-        imgData.forEach(({ studios }) => { if (studios.some(s => memberSet.has(s.toLowerCase()))) count++; });
-        groupCounts[groupName] = count;
-    });
-
-    // Sauvegarde de la hiérarchie pour le filtre
-    state.studioHierarchy = hierarchy;
-
-    function createCheckbox(value) {
-        const cb = document.createElement('input');
-        cb.type = 'checkbox';
-        cb.value = value;
-        if (hierarchy.has(value)) hierarchy.get(value).cbs.push(cb);
-        
-        cb.addEventListener('change', () => {
-            if (cb._ignoreNextEvent) { cb._ignoreNextEvent = false; return; }
-            handleChange(value, cb);
-        });
-        return cb;
-    }
-
-    function handleChange(nodeId, cb) {
-        const node = hierarchy.get(nodeId);
-        if (!node) return;
-
-        node.cbs.forEach(inst => {
-            if (inst !== cb) {
-                inst._ignoreNextEvent = true;
-                inst.checked = cb.checked;
-                inst.indeterminate = cb.indeterminate;
-            }
-        });
-
-        if (node.children.length > 0 && !cb.indeterminate) {
-            propagateDown(nodeId, cb.checked);
-        }
-
-        if (node.parent) {
-            updateState(node.parent);
-        }
-    }
-
-    function propagateDown(nodeId, state) {
-        const node = hierarchy.get(nodeId);
-        if (!node) return;
-        node.cbs.forEach(cb => {
-            cb._ignoreNextEvent = true;
-            cb.checked = state;
-            cb.indeterminate = false;
-        });
-        node.children.forEach(childId => propagateDown(childId, state));
-    }
-
-    function updateState(nodeId) {
-        const node = hierarchy.get(nodeId);
-        if (!node) return;
-
-        if (node.children.length > 0) {
-            let checkedCount = 0, indeterminateCount = 0, validChildren = 0;
-            
-            node.children.forEach(childId => {
-                const childNode = hierarchy.get(childId);
-                if (childNode.cbs.length > 0) {
-                    validChildren++;
-                    if (childNode.cbs[0].checked) checkedCount++;
-                    if (childNode.cbs[0].indeterminate) indeterminateCount++;
-                }
-            });
-
-            let newChecked = false, newIndeterminate = false;
-            if (checkedCount === 0 && indeterminateCount === 0) { newChecked = false; newIndeterminate = false; }
-            else if (checkedCount === validChildren) { newChecked = true; newIndeterminate = false; }
-            else { newChecked = false; newIndeterminate = true; }
-
-            node.cbs.forEach(cb => {
-                cb._ignoreNextEvent = true;
-                cb.checked = newChecked;
-                cb.indeterminate = newIndeterminate;
-            });
-        }
-
-        if (node.parent) updateState(node.parent);
-    }
-
-    container.innerHTML = '';
-    
-    // Liste globale
-    const globalList = document.createElement('div');
-    globalList.className = 'prod-global-list';
-    const NUM_COLS = 4;
-    const globalColumns = Array.from({ length: NUM_COLS }, () => { const d = document.createElement('div'); d.className = 'column'; return d; });
-    globalColumns.forEach(col => globalList.appendChild(col));
-    const perCol = Math.ceil(allStudios.length / NUM_COLS);
-
-    allStudios.forEach((studioName, idx) => {
-        const colIndex = Math.min(Math.floor(idx / perCol), NUM_COLS - 1);
-        const label = document.createElement('label');
-        const cb = createCheckbox(studioName);
-        label.appendChild(cb);
-        label.appendChild(document.createTextNode(` ${capitalize(studioName)} (${studioCount.get(studioName) || 0})`));
-        globalColumns[colIndex].appendChild(label);
-    });
-    container.appendChild(globalList);
-
-    const separator = document.createElement('hr');
-    separator.className = 'prod-separator';
-    container.appendChild(separator);
-
-    // Liste groupée (CORRIGÉ : on itère sur TOUTE la hiérarchie pour avoir les parents sans images)
-    const groupedList = document.createElement('div');
-    groupedList.className = 'prod-grouped-list';
-    
-    const groups = {};
-    Array.from(hierarchy.keys()).forEach(name => {
-        const g = hierarchy.get(name)?.parent;
-        if (g) {
-            if (!groups[g]) groups[g] = [];
-            groups[g].push(name);
-        }
-    });
-
-    const groupEntries = Object.entries(groups).sort((a, b) => a[0].localeCompare(b[0], 'fr', { sensitivity: 'base' }));
-
-    groupEntries.forEach(([groupName, members]) => {
-        const groupDiv = document.createElement('div');
-        groupDiv.className = 'prod-group';
-
-        const header = document.createElement('label');
-        header.className = 'prod-group-header';
-        const parentCb = createCheckbox(groupName);
-        header.appendChild(parentCb);
-        header.appendChild(document.createTextNode(` ${groupName} (${groupCounts[groupName] || 0})`));
-        groupDiv.appendChild(header);
-
-        const itemsDiv = document.createElement('div');
-        itemsDiv.className = 'prod-group-items';
-
-        members.sort((a, b) => a.localeCompare(b, 'fr', { sensitivity: 'base' }));
-        members.forEach(studioName => {
-            const label = document.createElement('label');
-            const cb = createCheckbox(studioName);
-            label.appendChild(cb);
-            label.appendChild(document.createTextNode(` ${capitalize(studioName)} (${studioCount.get(studioName) || 0})`));
             itemsDiv.appendChild(label);
         });
 
@@ -515,7 +358,6 @@ function createFilterCheckboxes(images) {
     const selectedAll = selected.includes('am:__all__');
     const selectedRest = selected.filter(v => v !== 'am:__all__');
 
-    // Helpers pour gérer les studios parents/enfants
     const isCoveredByParent = (val) => {
         if (!state.studioHierarchy || !state.studioHierarchy.has(val)) return false;
         let parent = state.studioHierarchy.get(val).parent;
@@ -797,4 +639,4 @@ function initColorFilter(updateBodyBackground) {
   [active, hue, lumActive, lumSlider, sim].forEach(el => el.addEventListener('input', update));
 }
 
-console.log("filters= version Russian Puppet 5");
+console.log("filters= version Russian Puppet 6");
