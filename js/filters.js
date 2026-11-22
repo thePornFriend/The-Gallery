@@ -111,18 +111,14 @@ function buildStudioFilterGrid(container, studioCount, imgData) {
         while (p) { activeNodes.add(p); p = hierarchy.get(p).parent; }
     });
 
-    // On sauvegarde la hiérarchie pour que la fonction de filtre puisse s'en servir (Règle 4)
     state.studioHierarchy = hierarchy;
 
     // ==========================================
     // LE CERVEAU CENTRAL DES CHECKBOXES
     // ==========================================
-    const states = new Map(); // id -> { checked: boolean, indeterminate: boolean }
-    
-    // Initialiser tous les états à "décoché"
+    const states = new Map();
     activeNodes.forEach(id => states.set(id, { checked: false, indeterminate: false }));
 
-    // Met à jour l'interface (toutes les pilules d'un même studio en même temps)
     function updateDOM() {
         states.forEach((state, id) => {
             hierarchy.get(id).checkboxes.forEach(cb => {
@@ -132,14 +128,12 @@ function buildStudioFilterGrid(container, studioCount, imgData) {
         });
     }
 
-    // Propage l'état vers le bas (aux enfants)
     function setStateDown(id, checked) {
         if (!activeNodes.has(id)) return;
         states.set(id, { checked, indeterminate: false });
         hierarchy.get(id).children.forEach(childId => setStateDown(childId, checked));
     }
 
-    // Met à jour l'état des parents vers le haut (Règle 1 : Indéterminé ou coché)
     function updateAncestors(id) {
         const parentId = hierarchy.get(id).parent;
         if (!parentId || !activeNodes.has(parentId)) return;
@@ -160,35 +154,48 @@ function buildStudioFilterGrid(container, studioCount, imgData) {
         if (checkedCount === 0 && indeterminateCount === 0) {
             newState = { checked: false, indeterminate: false };
         } else if (checkedCount === activeChildren.length) {
-            // Tous les enfants sont cochés -> Le parent est coché
             newState = { checked: true, indeterminate: false };
         } else {
-            // Certains enfants sont cochés -> Le parent est indéterminé
             newState = { checked: false, indeterminate: true };
         }
 
         states.set(parentId, newState);
-        updateAncestors(parentId); // On remonte encore plus haut (ex: de SexyHub vers Aylo)
+        updateAncestors(parentId);
     }
 
-    // Le chef d'orchestre : appelé à chaque clic sur une checkbox
     function handleCheckboxClick(id) {
         const currentState = states.get(id);
-        
-        // Si c'était indéterminé, le clic veut dire "cocher tout"
-        // Sinon, on inverse l'état (coché -> décoché, décoché -> coché)
         const newChecked = currentState.indeterminate ? true : !currentState.checked;
-
-        // 1. On propage vers le bas (Règle 2)
         setStateDown(id, newChecked);
-        
-        // 2. On met à jour les parents vers le haut (Règle 1)
         updateAncestors(id);
-        
-        // 3. On applique les changements visuels à toutes les pilules d'un coup (Règle 3)
         updateDOM();
     }
 
+    // ==========================================
+    // DÉCLENCHEURS POUR LA LIGHTBOX DES SCÈNES
+    // ==========================================
+    function attachSceneTriggers(label, studioId) {
+        label.title = "Double-cliquez (ou appui long) pour voir les scènes";
+        
+        // Double clic PC
+        label.addEventListener('dblclick', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            if (typeof showScenesForStudio === 'function') showScenesForStudio(studioId);
+        });
+
+        // Appui long Mobile
+        let pressTimer;
+        label.addEventListener('touchstart', (e) => {
+            pressTimer = setTimeout(() => {
+                e.preventDefault();
+                if (typeof showScenesForStudio === 'function') showScenesForStudio(studioId);
+            }, 600);
+        }, { passive: false });
+        
+        label.addEventListener('touchend', () => clearTimeout(pressTimer));
+        label.addEventListener('touchmove', () => clearTimeout(pressTimer));
+    }
 
     // ==========================================
     // RENDU VISUEL
@@ -200,11 +207,7 @@ function buildStudioFilterGrid(container, studioCount, imgData) {
         cb.type = 'checkbox';
         cb.value = value;
         hierarchy.get(value).checkboxes.push(cb);
-        
-        cb.addEventListener('change', () => {
-            // On ignore le changement visuel du navigateur et on laisse le cerveau gérer
-            handleCheckboxClick(value); 
-        });
+        cb.addEventListener('change', () => handleCheckboxClick(value));
         return cb;
     }
 
@@ -224,6 +227,9 @@ function buildStudioFilterGrid(container, studioCount, imgData) {
         const cb = createCheckbox(studioName);
         label.appendChild(cb);
         label.appendChild(document.createTextNode(` ${capitalize(studioName)} (${aggregateCounts.get(studioName) || 0})`));
+        
+        attachSceneTriggers(label, studioName); // <-- Ajout du déclencheur
+        
         globalColumns[colIndex].appendChild(label);
     });
     container.appendChild(globalList);
@@ -253,13 +259,18 @@ function buildStudioFilterGrid(container, studioCount, imgData) {
         const groupDiv = document.createElement('div');
         groupDiv.className = 'prod-group';
 
+        // En-tête du groupe (Parent)
         const header = document.createElement('label');
         header.className = 'prod-group-header';
         const parentCb = createCheckbox(groupName);
         header.appendChild(parentCb);
         header.appendChild(document.createTextNode(` ${groupName} (${aggregateCounts.get(groupName) || 0})`));
+        
+        attachSceneTriggers(header, groupName); // <-- Ajout du déclencheur
+        
         groupDiv.appendChild(header);
 
+        // Enfants du groupe
         const itemsDiv = document.createElement('div');
         itemsDiv.className = 'prod-group-items';
 
@@ -269,6 +280,9 @@ function buildStudioFilterGrid(container, studioCount, imgData) {
             const cb = createCheckbox(studioName);
             label.appendChild(cb);
             label.appendChild(document.createTextNode(` ${capitalize(studioName)} (${aggregateCounts.get(studioName) || 0})`));
+            
+            attachSceneTriggers(label, studioName); // <-- Ajout du déclencheur
+            
             itemsDiv.appendChild(label);
         });
 
@@ -278,7 +292,6 @@ function buildStudioFilterGrid(container, studioCount, imgData) {
 
     container.appendChild(groupedList);
 
-    // On retourne toutes les checkboxes pour que la fonction de filtre sache quoi écouter
     return Array.from(container.querySelectorAll('input[type="checkbox"]'));
 }
 
@@ -713,4 +726,4 @@ function initColorFilter(updateBodyBackground) {
   [active, hue, lumActive, lumSlider, sim].forEach(el => el.addEventListener('input', update));
 }
 
-console.log("Filters : Simplified Studio checkbox behaviour");
+console.log("filters=New lightboxes!");
