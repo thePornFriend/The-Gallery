@@ -12,9 +12,11 @@ const state = {
     'Euphoria' : ['Angels Love', 'Nancy Love', 'Sensual Love', 'Ultra Films', 'WowGirls'],
     'Letsdoit Channels' : ['A Girl Knows', 'Her Limit', 'Horny Hostel', 'Latina Milf', 'The White Boxxx'],
     'MetArt Network' : ['Domai', 'Eternal Desire', 'MetArt', 'MetArt X', 'SexArt', 'Straplez', 'Stunning 18', 'TLE|The Life Erotic', 'Viv Thomas'],
-    'Mile High Media' : ['EroticaX', 'HardX']
+    'Mile High Media' : ['EroticaX', 'HardX'],
     'New Sensations' : ['Hotwife XXX', 'Family XXX' ],
     'Nubiles Porn': ['Bratty Sis', 'Cheating Sis', 'Cum Swapping Sis', 'Family Swap', 'Moms Teach Sex', 'My Family Pies', 'Step Siblings Caught'],
     'Vixen Media Group': ['Blacked', 'Deeper', 'MILFY', 'Slayed', 'Tushy', 'Vixen','Wifey']
   }
 };
+
+console.log("state vérifier avec virgules");
