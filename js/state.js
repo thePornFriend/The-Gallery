@@ -7,12 +7,14 @@ const state = {
   neonController: null,
   CHIARO_YELLOW: '#7A6500',
   STUDIO_GROUPS: {
-    'Aylo (aka. MindGeek)' : ['Brazzers', 'Digital Playground', 'Letsdoit', 'Mofos', 'Reality Kings', 'Twistys', 'Sweetheart Video', 'Sweet Sinner', 'Family Sinners'],
-    'Vixen Media Group': ['Blacked', 'Deeper', 'MILFY', 'Slayed', 'Tushy', 'Vixen','Wifey'],
-    'MetArt Network':    ['MetArt', 'SexArt', 'Straplez', 'Viv Thomas', 'Domai', 'TLE|The Life Erotic', 'Stunning 18'],
-    'Nubiles Porn': ['Bratty Sis', 'Cheating Sis', 'Cum Swapping Sis', 'Family Swap', 'Moms Teach Sex', 'My Family Pies', 'Step Siblings Caught'],
-    'New Sensations' : ['Hotwife XXX', 'Family XXX' ],
+    'Aylo (aka. MindGeek)' : ['Brazzers', 'Digital Playground', 'Letsdoit Channels', 'Mofos', 'Reality Kings', 'Twistys', 'Sweetheart Video', 'Sweet Sinner', 'Family Sinners'],
+    'Adult Time' : ['21Naturals', 'Girlsway', 'Lez Be Bad', 'Joymii'],
+    'Euphoria' : ['Angels Love', 'Nancy Love', 'Sensual Love', 'Ultra Films', 'WowGirls']
     'Letsdoit Channels' : ['A Girl Knows', 'Her Limit', 'Horny Hostel', 'Latina Milf', 'The White Boxxx'],
-    'Adult Time' : ['21Naturals', 'Girlsway', 'Lez Be Bad' ]
+    'MetArt Network' : ['Domai', 'Eternal Desire', 'MetArt', 'MetArt X', 'SexArt', 'Straplez', 'Stunning 18', 'TLE|The Life Erotic', 'Viv Thomas'],
+    'Mile High Media' : ['EroticaX', 'HardX']
+    'New Sensations' : ['Hotwife XXX', 'Family XXX' ],
+    'Nubiles Porn': ['Bratty Sis', 'Cheating Sis', 'Cum Swapping Sis', 'Family Swap', 'Moms Teach Sex', 'My Family Pies', 'Step Siblings Caught'],
+    'Vixen Media Group': ['Blacked', 'Deeper', 'MILFY', 'Slayed', 'Tushy', 'Vixen','Wifey']
   }
 };
