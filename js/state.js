@@ -19,4 +19,4 @@ const state = {
   }
 };
 
-console.log("state vérifier avec virgules");
+console.log("state Letsdoit updated");
