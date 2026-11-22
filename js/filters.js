@@ -1,3 +1,6 @@
+// ==========================================
+// 1. GRILLE DE CHECKBOXES (Actrices, Tags)
+// ==========================================
 function buildCheckboxGrid(container, items, displayName = k => k) {
   const capitalize = s => s.charAt(0).toUpperCase() + s.slice(1);
   const sorted = [...items.keys()].sort((a, b) => displayName(a).localeCompare(displayName(b), 'fr', { sensitivity: 'base' }));
@@ -21,6 +24,9 @@ function buildCheckboxGrid(container, items, displayName = k => k) {
   return checkboxes;
 }
 
+// ==========================================
+// 2. GRILLE DES STUDIOS (avec Hiérarchie)
+// ==========================================
 function buildStudioFilterGrid(container, studioCount, imgData) {
     const capitalize = s => s.charAt(0).toUpperCase() + s.slice(1);
     const hierarchy = new Map();
@@ -28,29 +34,27 @@ function buildStudioFilterGrid(container, studioCount, imgData) {
     
     const allStudios = [...studioCount.keys()].sort((a, b) => a.localeCompare(b, 'fr', { sensitivity: 'base' }));
     
-    // 1. Initialiser tous les studios
+    // Initialiser tous les studios
     allStudios.forEach(s => hierarchy.set(s, { id: s, parent: null, children: [], cbs: [] }));
     
-    // 2. Construire l'arbre (qui est enfant de qui)
+    // Construire l'arbre (qui est enfant de qui)
     Object.entries(state.STUDIO_GROUPS).forEach(([groupName, members]) => {
         if (!hierarchy.has(groupName)) hierarchy.set(groupName, { id: groupName, parent: null, children: [], cbs: [] });
         
         members.forEach(member => {
             if (!hierarchy.has(member)) hierarchy.set(member, { id: member, parent: null, children: [], cbs: [] });
             
-            // On lie l'enfant au parent
             hierarchy.get(member).parent = groupName;
             hierarchy.get(groupName).children.push(member);
         });
         
-        // Compter les images pour le parent
         const memberSet = new Set(members.map(m => m.toLowerCase()));
         let count = 0;
         imgData.forEach(({ studios }) => { if (studios.some(s => memberSet.has(s.toLowerCase()))) count++; });
         groupCounts[groupName] = count;
     });
 
-    // 3. Créer une checkbox avec écouteur intelligent
+    // Créer une checkbox avec écouteur intelligent
     function createCheckbox(value) {
         const cb = document.createElement('input');
         cb.type = 'checkbox';
@@ -64,12 +68,11 @@ function buildStudioFilterGrid(container, studioCount, imgData) {
         return cb;
     }
 
-    // 4. Propager le clic vers le HAUT et le BAS
+    // Propager le clic vers le HAUT et le BAS
     function handleChange(nodeId, cb) {
         const node = hierarchy.get(nodeId);
         if (!node) return;
 
-        // Synchroniser les autres instances identiques (ex: pilule dans Aylo et titre du groupe)
         node.cbs.forEach(inst => {
             if (inst !== cb) {
                 inst._ignoreNextEvent = true;
@@ -78,12 +81,10 @@ function buildStudioFilterGrid(container, studioCount, imgData) {
             }
         });
 
-        // Si c'est un parent, on propage vers le BAS (ses enfants)
         if (node.children.length > 0 && !cb.indeterminate) {
             propagateDown(nodeId, cb.checked);
         }
 
-        // On propage vers le HAUT (vers son parent, ex: Aylo)
         if (node.parent) {
             updateState(node.parent);
         }
@@ -100,7 +101,6 @@ function buildStudioFilterGrid(container, studioCount, imgData) {
         node.children.forEach(childId => propagateDown(childId, state));
     }
 
-    // 5. Mettre à jour l'état d'un parent (Coché / Décoché / Indeterminate)
     function updateState(nodeId) {
         const node = hierarchy.get(nodeId);
         if (!node) return;
@@ -129,11 +129,10 @@ function buildStudioFilterGrid(container, studioCount, imgData) {
             });
         }
 
-        // On remonte encore plus haut s'il y a un "super parent"
         if (node.parent) updateState(node.parent);
     }
 
-    // --- RENDU VISUEL ---
+    // RENDU VISUEL
     container.innerHTML = '';
     
     // Liste globale
@@ -205,6 +204,9 @@ function buildStudioFilterGrid(container, studioCount, imgData) {
     return Array.from(container.querySelectorAll('input[type="checkbox"]'));
 }
 
+// ==========================================
+// 3. LOGIQUE PRINCIPALE DES FILTRES
+// ==========================================
 function createFilterCheckboxes(images) {
   const mainList = document.querySelector('.actress-list-main');
   const moreList = document.querySelector('.actress-list-more');
@@ -404,6 +406,9 @@ function createFilterCheckboxes(images) {
   filter();
 }
 
+// ==========================================
+// 4. RECHERCHE DE GALERIE
+// ==========================================
 function initGallerySearchFilter(images) {
   const input = document.getElementById('gallery-search-input');
   const suggestionsBox = document.getElementById('gallery-suggestions');
@@ -465,6 +470,9 @@ function initGallerySearchFilter(images) {
   document.addEventListener('click', (e) => { if (!suggestionsBox.contains(e.target) && e.target !== input) suggestionsBox.style.display = 'none'; });
 }
 
+// ==========================================
+// 5. FILTRES REPLIABLES
+// ==========================================
 function enableCollapsibleFilters() {
   document.querySelectorAll('.filter-sections h3').forEach(title => {
     let list = title.nextElementSibling;
@@ -479,6 +487,9 @@ function enableCollapsibleFilters() {
   });
 }
 
+// ==========================================
+// 6. BACKGROUND (Néon & Chiaroscuro)
+// ==========================================
 function enableTagBackgroundChange(updateBodyBackground) {
   const tagCheckboxes = document.querySelectorAll('.tag-list input[type="checkbox"]');
   if (!tagCheckboxes.length) return;
@@ -494,17 +505,8 @@ function enableTagBackgroundChange(updateBodyBackground) {
     updateBodyBackground(); 
   };
   
-  const startNeon = () => { 
-    if (neonInterval) return; 
-    applyNeonColor(); 
-    neonInterval = setInterval(applyNeonColor, 3000); 
-  };
-  
-  const stopNeon = () => { 
-    if (neonInterval) { clearInterval(neonInterval); neonInterval = null; } 
-    neonIndex = 0; 
-    document.documentElement.style.setProperty('--neon-color', 'transparent');
-  };
+  const startNeon = () => { if (neonInterval) return; applyNeonColor(); neonInterval = setInterval(applyNeonColor, 3000); };
+  const stopNeon = () => { if (neonInterval) { clearInterval(neonInterval); neonInterval = null; } neonIndex = 0; document.documentElement.style.setProperty('--neon-color', 'transparent'); };
 
   const isChecked = (val) => Array.from(tagCheckboxes).some(cb => cb.checked && cb.value.trim().toLowerCase() === val);
   const isNeonChecked = () => isChecked(NEON_TAG);
@@ -525,6 +527,9 @@ function enableTagBackgroundChange(updateBodyBackground) {
   updateFromTags();
 }
 
+// ==========================================
+// 7. FILTRE COULEUR & LUMINOSITÉ
+// ==========================================
 function initColorFilter(updateBodyBackground) {
   const sections = document.querySelector('.filter-sections');
   if (!sections) return;
