@@ -1,3 +1,44 @@
+document.addEventListener("DOMContentLoaded", () => {
+    // === AUTO-GENERATION DES SCORE-ENTRY ===
+    document.querySelectorAll(".score-min").forEach(img => {
+        const titleText = img.alt || "Untitled";
+
+        const entry = document.createElement("div");
+        entry.className = "score-entry";
+
+        const title = document.createElement("div");
+        title.className = "entry-title";
+        title.textContent = titleText;
+
+        [...img.attributes].forEach(a => {
+            if (a.name.startsWith("data-")) {
+                title.setAttribute(a.name, a.value);
+            }
+        });
+
+        const content = document.createElement("div");
+        content.className = "entry-content";
+
+        content.innerHTML = `
+            <div class="score-viewer">
+                <div class="svg-scrollbox">
+                    <img class="score-svg" src="${img.src}">
+                </div>
+                <div class="zoom-bar">
+                    <input type="range" class="zoom-range" min="0.5" max="3" step="0.1" value="1">
+                </div>
+            </div>
+            <div class="entry-subtitle">Related :</div>
+            <ul><li><a href="#"></a></li></ul>
+        `;
+
+        entry.appendChild(title);
+        entry.appendChild(content);
+
+        img.insertAdjacentElement("beforebegin", entry);
+        img.remove();
+    });
+});
 // ==========================================
 // 1. GRILLE DE CHECKBOXES (Actrices, Tags)
 // ==========================================
@@ -33,17 +74,16 @@ function buildStudioFilterGrid(container, studioCount, imgData) {
     const directCounts = new Map(studioCount);
     const aggregateCounts = new Map();
     
+    // 1. Initialiser les nœuds
     const allStudios = [...studioCount.keys()].sort((a, b) => a.localeCompare(b, 'fr', { sensitivity: 'base' }));
-    
-    // 1. Créer les nœuds
-    allStudios.forEach(s => hierarchy.set(s, { id: s, parent: null, children: [], cbs: [] }));
+    allStudios.forEach(s => hierarchy.set(s, { id: s, parent: null, children: [], checkboxes: [] }));
     
     // 2. Construire l'arbre
     Object.entries(state.STUDIO_GROUPS).forEach(([groupName, members]) => {
-        if (!hierarchy.has(groupName)) hierarchy.set(groupName, { id: groupName, parent: null, children: [], cbs: [] });
+        if (!hierarchy.has(groupName)) hierarchy.set(groupName, { id: groupName, parent: null, children: [], checkboxes: [] });
         
         members.forEach(member => {
-            if (!hierarchy.has(member)) hierarchy.set(member, { id: member, parent: null, children: [], cbs: [] });
+            if (!hierarchy.has(member)) hierarchy.set(member, { id: member, parent: null, children: [], checkboxes: [] });
             hierarchy.get(member).parent = groupName;
             hierarchy.get(groupName).children.push(member);
         });
@@ -57,84 +97,117 @@ function buildStudioFilterGrid(container, studioCount, imgData) {
         aggregateCounts.set(nodeId, count);
         return count;
     }
-    
-    // Calculer pour tous les parents racines
     Array.from(hierarchy.keys()).forEach(id => {
         if (!hierarchy.get(id).parent) calcAggregate(id);
     });
 
-    // 4. Ne garder que les nœuds qui ont au moins 1 image (directe ou via enfant)
+    // 4. Ne garder que les nœuds actifs (qui ont au moins 1 image)
     const activeNodes = new Set();
     Array.from(hierarchy.keys()).forEach(id => {
         if (aggregateCounts.get(id) > 0) activeNodes.add(id);
     });
-    // S'assurer que les parents d'enfants actifs soient aussi actifs
     activeNodes.forEach(id => {
         let p = hierarchy.get(id).parent;
-        while (p) {
-            activeNodes.add(p);
-            p = hierarchy.get(p).parent;
-        }
+        while (p) { activeNodes.add(p); p = hierarchy.get(p).parent; }
     });
 
+    // On sauvegarde la hiérarchie pour que la fonction de filtre puisse s'en servir (Règle 4)
     state.studioHierarchy = hierarchy;
 
-    // --- LOGIQUE DE CASES À COCHER ---
+    // ==========================================
+    // LE CERVEAU CENTRAL DES CHECKBOXES
+    // ==========================================
+    const states = new Map(); // id -> { checked: boolean, indeterminate: boolean }
+    
+    // Initialiser tous les états à "décoché"
+    activeNodes.forEach(id => states.set(id, { checked: false, indeterminate: false }));
+
+    // Met à jour l'interface (toutes les pilules d'un même studio en même temps)
+    function updateDOM() {
+        states.forEach((state, id) => {
+            hierarchy.get(id).checkboxes.forEach(cb => {
+                cb.checked = state.checked;
+                cb.indeterminate = state.indeterminate;
+            });
+        });
+    }
+
+    // Propage l'état vers le bas (aux enfants)
+    function setStateDown(id, checked) {
+        if (!activeNodes.has(id)) return;
+        states.set(id, { checked, indeterminate: false });
+        hierarchy.get(id).children.forEach(childId => setStateDown(childId, checked));
+    }
+
+    // Met à jour l'état des parents vers le haut (Règle 1 : Indéterminé ou coché)
+    function updateAncestors(id) {
+        const parentId = hierarchy.get(id).parent;
+        if (!parentId || !activeNodes.has(parentId)) return;
+
+        const parentNode = hierarchy.get(parentId);
+        const activeChildren = parentNode.children.filter(c => activeNodes.has(c));
+        
+        let checkedCount = 0;
+        let indeterminateCount = 0;
+
+        activeChildren.forEach(childId => {
+            const childState = states.get(childId);
+            if (childState.checked) checkedCount++;
+            if (childState.indeterminate) indeterminateCount++;
+        });
+
+        let newState;
+        if (checkedCount === 0 && indeterminateCount === 0) {
+            newState = { checked: false, indeterminate: false };
+        } else if (checkedCount === activeChildren.length) {
+            // Tous les enfants sont cochés -> Le parent est coché
+            newState = { checked: true, indeterminate: false };
+        } else {
+            // Certains enfants sont cochés -> Le parent est indéterminé
+            newState = { checked: false, indeterminate: true };
+        }
+
+        states.set(parentId, newState);
+        updateAncestors(parentId); // On remonte encore plus haut (ex: de SexyHub vers Aylo)
+    }
+
+    // Le chef d'orchestre : appelé à chaque clic sur une checkbox
+    function handleCheckboxClick(id) {
+        const currentState = states.get(id);
+        
+        // Si c'était indéterminé, le clic veut dire "cocher tout"
+        // Sinon, on inverse l'état (coché -> décoché, décoché -> coché)
+        const newChecked = currentState.indeterminate ? true : !currentState.checked;
+
+        // 1. On propage vers le bas (Règle 2)
+        setStateDown(id, newChecked);
+        
+        // 2. On met à jour les parents vers le haut (Règle 1)
+        updateAncestors(id);
+        
+        // 3. On applique les changements visuels à toutes les pilules d'un coup (Règle 3)
+        updateDOM();
+    }
+
+
+    // ==========================================
+    // RENDU VISUEL
+    // ==========================================
+    container.innerHTML = '';
+    
     function createCheckbox(value) {
         const cb = document.createElement('input');
         cb.type = 'checkbox';
         cb.value = value;
-        if (hierarchy.has(value)) hierarchy.get(value).cbs.push(cb);
+        hierarchy.get(value).checkboxes.push(cb);
+        
         cb.addEventListener('change', () => {
-            if (cb._ignoreNextEvent) { cb._ignoreNextEvent = false; return; }
-            handleChange(value, cb);
+            // On ignore le changement visuel du navigateur et on laisse le cerveau gérer
+            handleCheckboxClick(value); 
         });
         return cb;
     }
 
-    function handleChange(nodeId, cb) {
-        const node = hierarchy.get(nodeId);
-        if (!node) return;
-        node.cbs.forEach(inst => {
-            if (inst !== cb) { inst._ignoreNextEvent = true; inst.checked = cb.checked; inst.indeterminate = cb.indeterminate; }
-        });
-        if (node.children.length > 0 && !cb.indeterminate) propagateDown(nodeId, cb.checked);
-        if (node.parent) updateState(node.parent);
-    }
-
-    function propagateDown(nodeId, state) {
-        const node = hierarchy.get(nodeId);
-        if (!node) return;
-        node.cbs.forEach(cb => { cb._ignoreNextEvent = true; cb.checked = state; cb.indeterminate = false; });
-        node.children.forEach(childId => propagateDown(childId, state));
-    }
-
-    function updateState(nodeId) {
-        const node = hierarchy.get(nodeId);
-        if (!node) return;
-        if (node.children.length > 0) {
-            let checkedCount = 0, indeterminateCount = 0, validChildren = 0;
-            node.children.forEach(childId => {
-                const childNode = hierarchy.get(childId);
-                if (childNode.cbs.length > 0) {
-                    validChildren++;
-                    if (childNode.cbs[0].checked) checkedCount++;
-                    if (childNode.cbs[0].indeterminate) indeterminateCount++;
-                }
-            });
-            let newChecked = false, newIndeterminate = false;
-            if (checkedCount === 0 && indeterminateCount === 0) { newChecked = false; newIndeterminate = false; }
-            else if (checkedCount === validChildren) { newChecked = true; newIndeterminate = false; }
-            else { newChecked = false; newIndeterminate = true; }
-
-            node.cbs.forEach(cb => { cb._ignoreNextEvent = true; cb.checked = newChecked; cb.indeterminate = newIndeterminate; });
-        }
-        if (node.parent) updateState(node.parent);
-    }
-
-    // --- RENDU VISUEL ---
-    container.innerHTML = '';
-    
     // 1. Liste globale (uniquement les actifs)
     const globalList = document.createElement('div');
     globalList.className = 'prod-global-list';
@@ -205,6 +278,7 @@ function buildStudioFilterGrid(container, studioCount, imgData) {
 
     container.appendChild(groupedList);
 
+    // On retourne toutes les checkboxes pour que la fonction de filtre sache quoi écouter
     return Array.from(container.querySelectorAll('input[type="checkbox"]'));
 }
 
@@ -639,4 +713,4 @@ function initColorFilter(updateBodyBackground) {
   [active, hue, lumActive, lumSlider, sim].forEach(el => el.addEventListener('input', update));
 }
 
-console.log("filters= version Russian Puppet 6");
+console.log("Filters : Simplified Studio checkbox behaviour");
