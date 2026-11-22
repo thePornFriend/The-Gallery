@@ -1,27 +1,188 @@
 // ==========================================
 // 1. GRILLE DE CHECKBOXES (Actrices, Tags)
 // ==========================================
-function buildCheckboxGrid(container, items, displayName = k => k) {
-  const capitalize = s => s.charAt(0).toUpperCase() + s.slice(1);
-  const sorted = [...items.keys()].sort((a, b) => displayName(a).localeCompare(displayName(b), 'fr', { sensitivity: 'base' }));
-  const perCol = Math.ceil(sorted.length / 5);
-  container.innerHTML = '';
-  const checkboxes = [];
+function buildStudioFilterGrid(container, studioCount, imgData) {
+    const capitalize = s => s.charAt(0).toUpperCase() + s.slice(1);
+    const hierarchy = new Map();
+    const directCounts = new Map(studioCount);
+    const aggregateCounts = new Map();
+    
+    const allStudios = [...studioCount.keys()].sort((a, b) => a.localeCompare(b, 'fr', { sensitivity: 'base' }));
+    
+    // 1. Créer les nœuds
+    allStudios.forEach(s => hierarchy.set(s, { id: s, parent: null, children: [], cbs: [] }));
+    
+    // 2. Construire l'arbre
+    Object.entries(state.STUDIO_GROUPS).forEach(([groupName, members]) => {
+        if (!hierarchy.has(groupName)) hierarchy.set(groupName, { id: groupName, parent: null, children: [], cbs: [] });
+        
+        members.forEach(member => {
+            if (!hierarchy.has(member)) hierarchy.set(member, { id: member, parent: null, children: [], cbs: [] });
+            hierarchy.get(member).parent = groupName;
+            hierarchy.get(groupName).children.push(member);
+        });
+    });
 
-  for (let i = 0; i < 5; i++) {
-    const col = document.createElement('div');
-    col.className = 'column';
-    for (const item of sorted.slice(i * perCol, (i + 1) * perCol)) {
-      const label = document.createElement('label');
-      const display = capitalize(displayName(item));
-      label.innerHTML = `<input type="checkbox" value="${item}"> ${display} (${items.get(item)})`;
-      const cb = label.firstChild;
-      checkboxes.push(cb);
-      col.appendChild(label);
+    // 3. Calculer les compteurs (Additionner les enfants aux parents)
+    function calcAggregate(nodeId) {
+        const node = hierarchy.get(nodeId);
+        let count = directCounts.get(nodeId) || 0;
+        node.children.forEach(c => count += calcAggregate(c));
+        aggregateCounts.set(nodeId, count);
+        return count;
     }
-    container.appendChild(col);
-  }
-  return checkboxes;
+    
+    // Calculer pour tous les parents racines
+    Array.from(hierarchy.keys()).forEach(id => {
+        if (!hierarchy.get(id).parent) calcAggregate(id);
+    });
+
+    // 4. Ne garder que les nœuds qui ont au moins 1 image (directe ou via enfant)
+    const activeNodes = new Set();
+    Array.from(hierarchy.keys()).forEach(id => {
+        if (aggregateCounts.get(id) > 0) activeNodes.add(id);
+    });
+    // S'assurer que les parents d'enfants actifs soient aussi actifs
+    activeNodes.forEach(id => {
+        let p = hierarchy.get(id).parent;
+        while (p) {
+            activeNodes.add(p);
+            p = hierarchy.get(p).parent;
+        }
+    });
+
+    state.studioHierarchy = hierarchy;
+
+    // --- LOGIQUE DE CASES À COCHER ---
+    function createCheckbox(value) {
+        const cb = document.createElement('input');
+        cb.type = 'checkbox';
+        cb.value = value;
+        if (hierarchy.has(value)) hierarchy.get(value).cbs.push(cb);
+        cb.addEventListener('change', () => {
+            if (cb._ignoreNextEvent) { cb._ignoreNextEvent = false; return; }
+            handleChange(value, cb);
+        });
+        return cb;
+    }
+
+    function handleChange(nodeId, cb) {
+        const node = hierarchy.get(nodeId);
+        if (!node) return;
+        node.cbs.forEach(inst => {
+            if (inst !== cb) { inst._ignoreNextEvent = true; inst.checked = cb.checked; inst.indeterminate = cb.indeterminate; }
+        });
+        if (node.children.length > 0 && !cb.indeterminate) propagateDown(nodeId, cb.checked);
+        if (node.parent) updateState(node.parent);
+    }
+
+    function propagateDown(nodeId, state) {
+        const node = hierarchy.get(nodeId);
+        if (!node) return;
+        node.cbs.forEach(cb => { cb._ignoreNextEvent = true; cb.checked = state; cb.indeterminate = false; });
+        node.children.forEach(childId => propagateDown(childId, state));
+    }
+
+    function updateState(nodeId) {
+        const node = hierarchy.get(nodeId);
+        if (!node) return;
+        if (node.children.length > 0) {
+            let checkedCount = 0, indeterminateCount = 0, validChildren = 0;
+            node.children.forEach(childId => {
+                const childNode = hierarchy.get(childId);
+                if (childNode.cbs.length > 0) {
+                    validChildren++;
+                    if (childNode.cbs[0].checked) checkedCount++;
+                    if (childNode.cbs[0].indeterminate) indeterminateCount++;
+                }
+            });
+            let newChecked = false, newIndeterminate = false;
+            if (checkedCount === 0 && indeterminateCount === 0) { newChecked = false; newIndeterminate = false; }
+            else if (checkedCount === validChildren) { newChecked = true; newIndeterminate = false; }
+            else { newChecked = false; newIndeterminate = true; }
+
+            node.cbs.forEach(cb => { cb._ignoreNextEvent = true; cb.checked = newChecked; cb.indeterminate = newIndeterminate; });
+        }
+        if (node.parent) updateState(node.parent);
+    }
+
+    // --- RENDU VISUEL ---
+    container.innerHTML = '';
+    
+    // 1. Liste globale (uniquement les actifs)
+    const globalList = document.createElement('div');
+    globalList.className = 'prod-global-list';
+    const NUM_COLS = 4;
+    const globalColumns = Array.from({ length: NUM_COLS }, () => { const d = document.createElement('div'); d.className = 'column'; return d; });
+    globalColumns.forEach(col => globalList.appendChild(col));
+    
+    const visibleStudios = allStudios.filter(s => activeNodes.has(s));
+    const perCol = Math.ceil(visibleStudios.length / NUM_COLS) || 1;
+
+    visibleStudios.forEach((studioName, idx) => {
+        const colIndex = Math.min(Math.floor(idx / perCol), NUM_COLS - 1);
+        const label = document.createElement('label');
+        const cb = createCheckbox(studioName);
+        label.appendChild(cb);
+        // On affiche le compteur AGRÉGÉ
+        label.appendChild(document.createTextNode(` ${capitalize(studioName)} (${aggregateCounts.get(studioName) || 0})`));
+        globalColumns[colIndex].appendChild(label);
+    });
+    container.appendChild(globalList);
+
+    const separator = document.createElement('hr');
+    separator.className = 'prod-separator';
+    container.appendChild(separator);
+
+    // 2. Liste groupée (uniquement les actifs)
+    const groupedList = document.createElement('div');
+    groupedList.className = 'prod-grouped-list';
+    
+    const groups = {};
+    Array.from(hierarchy.keys()).forEach(name => {
+        const g = hierarchy.get(name)?.parent;
+        if (g && activeNodes.has(name)) {
+            if (!groups[g]) groups[g] = [];
+            groups[g].push(name);
+        }
+    });
+
+    const groupEntries = Object.entries(groups)
+        .filter(([g]) => activeNodes.has(g))
+        .sort((a, b) => a[0].localeCompare(b[0], 'fr', { sensitivity: 'base' }));
+
+    groupEntries.forEach(([groupName, members]) => {
+        const groupDiv = document.createElement('div');
+        groupDiv.className = 'prod-group';
+
+        const header = document.createElement('label');
+        header.className = 'prod-group-header';
+        const parentCb = createCheckbox(groupName);
+        header.appendChild(parentCb);
+        // On affiche le compteur AGRÉGÉ pour le parent
+        header.appendChild(document.createTextNode(` ${groupName} (${aggregateCounts.get(groupName) || 0})`));
+        groupDiv.appendChild(header);
+
+        const itemsDiv = document.createElement('div');
+        itemsDiv.className = 'prod-group-items';
+
+        members.sort((a, b) => a.localeCompare(b, 'fr', { sensitivity: 'base' }));
+        members.forEach(studioName => {
+            const label = document.createElement('label');
+            const cb = createCheckbox(studioName);
+            label.appendChild(cb);
+            // On affiche le compteur AGRÉGÉ pour l'enfant
+            label.appendChild(document.createTextNode(` ${capitalize(studioName)} (${aggregateCounts.get(studioName) || 0})`));
+            itemsDiv.appendChild(label);
+        });
+
+        groupDiv.appendChild(itemsDiv);
+        groupedList.appendChild(groupDiv);
+    });
+
+    container.appendChild(groupedList);
+
+    return Array.from(container.querySelectorAll('input[type="checkbox"]'));
 }
 
 // ==========================================
@@ -636,4 +797,4 @@ function initColorFilter(updateBodyBackground) {
   [active, hue, lumActive, lumSlider, sim].forEach(el => el.addEventListener('input', update));
 }
 
-console.log("filters= version Russian Puppet 4");
+console.log("filters= version Russian Puppet 5");
