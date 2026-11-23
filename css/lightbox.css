@@ -230,26 +230,28 @@
     display: block;
 }
 
-/* --- L'effet Hover (Dégradé + Police normale) --- */
+/* --- L'effet Hover (Dégradé seul, sans Blur) --- */
 .scene-thumb-overlay {
     position: absolute;
     bottom: 0;
     left: 0;
     width: 100%;
-    padding: 15px 8px 6px 8px; /* Plus de padding en haut pour le dégradé */
+    padding: 15px 8px 6px 8px; 
     
     /* LE DÉGRADÉ : Noir en bas, transparent en haut */
     background: linear-gradient(to top, rgba(0, 0, 0, 0.9) 0%, rgba(0, 0, 0, 0) 100%);
-    backdrop-filter: blur(4px); 
-    -webkit-backdrop-filter: blur(4px);
     
     color: #fff;
     font-size: 13px;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; /* Police normale */
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
     text-align: center;
     opacity: 0; 
     transition: opacity 0.2s ease;
     pointer-events: none;
+}
+
+.scene-thumb-wrapper:hover .scene-thumb-overlay {
+    opacity: 1;
 }
 
 .scene-thumb-wrapper:hover .scene-thumb-overlay {
