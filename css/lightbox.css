@@ -102,22 +102,22 @@
   background: #111;    
 }
 
-/* Les flèches fixées aux bords */
+/* Les flèches fixées aux bords (sans le fond ovale) */
 .collection-arrow { 
   position: absolute; 
   top: 50%;
-  transform: translateY(-50%); /* Centre verticalement */
-  font-size: 24px; 
+  transform: translateY(-50%);
+  font-size: 28px; 
   cursor: pointer; 
   user-select: none; 
-  z-index: 10; /* Passe au-dessus de l'image */
-  padding: 5px;
-  background: rgba(0, 0, 0, 0.5); /* Petit fond noir pour bien les voir */
-  border-radius: 50%;
+  z-index: 10;
+  padding: 10px; /* On garde un peu de padding pour que ce soit facile à cliquer */
+  color: #fff;
+  /* J'ai supprimé le background et le border-radius */
 }
 
 .collection-arrow:hover {
-  background: rgba(255, 255, 255, 0.2);
+  color: #fba3dc; /* On change juste la couleur de la flèche au survol */
 }
 
 /* Positionnement spécifique */
