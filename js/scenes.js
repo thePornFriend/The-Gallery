@@ -4,9 +4,10 @@
 
 const MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 
+// Traduit dd/mm/yyyy en "d Month yyyy" et renvoie un timestamp pour le tri
 function parseDateToEnglish(dateStr) {
     if (!dateStr) return { formatted: "Unknown date", timestamp: 0 };
-    const match = dateStr.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+    const match = dateStr.trim().match(/^(\d{1,2})\s*\/\s*(\d{1,2})\s*\/\s*(\d{4})$/);
     if (!match) return { formatted: dateStr, timestamp: 0 }; 
     
     const day = parseInt(match[1], 10);
@@ -23,10 +24,12 @@ function parseDateToEnglish(dateStr) {
 // --- FONCTION GÉNÉRIQUE POUR CONSTRUIRE LA MODALE ---
 function openScenesModal(title, filteredImages) {
     const scenesMap = new Map();
+    
     filteredImages.forEach(img => {
         if (!img._collection) return;
         const col = img._collection;
         const key = [col.title, col.date, col.studio].join('::');
+        
         if (!scenesMap.has(key)) {
             scenesMap.set(key, { 
                 title: col.title || "Untitled or unknown title", 
@@ -45,7 +48,7 @@ function openScenesModal(title, filteredImages) {
         scene.timestamp = parsed.timestamp;
     });
     
-    // Tri : Du plus récent au plus ancien. Les inconnues (0) à la fin.
+    // Tri : Du plus récent au plus ancien. Les dates inconnues (0) à la fin.
     scenesArray.sort((a, b) => {
         if (a.timestamp === 0) return 1;
         if (b.timestamp === 0) return -1;
@@ -81,6 +84,7 @@ function openScenesModal(title, filteredImages) {
                 </div>
                 <div class="scene-gallery">
         `;
+        
         scene.images.forEach(img => {
             html += `
                 <div class="scene-thumb-wrapper">
@@ -89,6 +93,7 @@ function openScenesModal(title, filteredImages) {
                 </div>
             `;
         });
+        
         html += `</div></div>`;
     });
 
@@ -112,8 +117,12 @@ function closeScenesModal() {
     }
 }
 
-// --- FONCTIONS SPÉCIFIQUES ---
+// ==========================================
+// FONCTIONS SPÉCIFIQUES (Appelées par les filtres)
+// ==========================================
+
 function showScenesForStudio(studioName) {
+    // 1. On récupère le studio et tous ses enfants (hiérarchie)
     let validStudios = [studioName.toLowerCase()];
     if (state.studioHierarchy && state.studioHierarchy.has(studioName)) {
         const getChildren = (nodeId) => {
@@ -126,6 +135,7 @@ function showScenesForStudio(studioName) {
         getChildren(studioName);
     }
 
+    // 2. On filtre les images
     const allMedia = window.backupAllMedia || Array.from(document.querySelectorAll('#gallery img'));
     const studioImages = allMedia.filter(el => {
         if (el.tagName.toLowerCase() !== 'img') return false;
@@ -133,13 +143,20 @@ function showScenesForStudio(studioName) {
         return studios.some(s => validStudios.includes(s));
     });
 
-    openScenesModal(`Scenes of Studio: ${studioName}`, studioImages);
+    // 3. Titre : "Scenes of : Nom du studio"
+    openScenesModal(`Scenes of : ${studioName}`, studioImages);
 }
 
 function showScenesForActress(actressName) {
-    // On nettoie le nom (retire le "main:" ou "am:" des checkboxes)
-    const cleanName = actressName.replace(/^(main|am):/, '').replace(/^\(|\)$/g, '').toLowerCase();
+    // 1. On nettoie le nom (retire le "main:" ou "am:" et les parenthèses)
+    let displayName = actressName.replace(/^(main|am):/, '').replace(/^\(|\)$/g, '');
     
+    // 2. On met une majuscule à chaque mot (ex: "nancy ace" -> "Nancy Ace")
+    const formattedName = displayName.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ');
+    
+    const cleanName = displayName.toLowerCase();
+    
+    // 3. On filtre les images
     const allMedia = window.backupAllMedia || Array.from(document.querySelectorAll('#gallery img'));
     const actressImages = allMedia.filter(el => {
         if (el.tagName.toLowerCase() !== 'img') return false;
@@ -150,7 +167,8 @@ function showScenesForActress(actressName) {
         });
     });
 
-    openScenesModal(`Appears in: ${cleanName}`, actressImages);
+    // 4. Titre : "Nom de l'actrice appears in :"
+    openScenesModal(`${formattedName} appears in :`, actressImages);
 }
 
-console.log("Scenes lightbox enhanced visuals - no N°");
+console.log("Scenes = Better Titles");
