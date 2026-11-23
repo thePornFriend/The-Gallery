@@ -37,6 +37,11 @@ document.addEventListener("DOMContentLoaded", async () => {
       // On récupère toutes les images, vidéos et iframes
       let elements = Array.from(tempDiv.querySelectorAll('img, video, iframe'));
 
+            // Appel du filtre temporaire (s'il est chargé)
+      if (typeof filterForDevelopment === 'function') {
+          elements = filterForDevelopment(elements);
+      }
+      
       if (elements.length === 0) {
         gallery.innerHTML = '<p style="text-align:center; padding: 20px;">Aucun média trouvé.</p>';
         return;
@@ -144,4 +149,4 @@ document.addEventListener("DOMContentLoaded", async () => {
   loadGalleryFromTxt();
 });
 
-console.log("main=version updatin file");
+console.log("main= filtre vixen!");
