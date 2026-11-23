@@ -82,7 +82,12 @@ function openScenesModal(title, filteredImages) {
                 <div class="scene-gallery">
         `;
         scene.images.forEach(img => {
-            html += `<img src="${img.src}" class="scene-thumb" loading="lazy">`;
+            html += `
+                <div class="scene-thumb-wrapper">
+                    <img src="${img.src}" class="scene-thumb" loading="lazy">
+                    <div class="scene-thumb-overlay">N° ${img.dataset.gallery || '?'}</div>
+                </div>
+            `;
         });
         html += `</div></div>`;
     });
