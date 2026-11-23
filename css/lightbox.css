@@ -78,17 +78,51 @@
 .collection-title { font-size: 18px; font-weight: 600; margin-bottom: 8px; }
 .collection-meta { opacity: 0.8; margin-bottom: 14px; }
 .collection-features, .collection-tags, .collection-count { margin-bottom: 10px; }
-.collection-preview { display: flex; align-items: center; justify-content: center; gap: 10px; margin-top: 16px; }
+/* PANNEAU COLLECTION - PREVIEW */
+.collection-preview { 
+  display: flex; 
+  align-items: center; 
+  justify-content: center; 
+  position: relative; /* Permet de placer les flèches en absolu */
+  width: 100%;        /* Prend toute la largeur du panneau */
+  height: 180px;      /* Garde une hauteur fixe */
+  margin-top: 16px; 
+  padding: 0 30px;    /* Laisse de l'espace pour les flèches sur les côtés */
+  box-sizing: border-box;
+}
+
+/* L'image de prévisualisation */
 .collection-preview-img { 
-  height: 180px;       /* Hauteur fixe */
-  width: auto;         /* La largeur s'adapte à l'image */
-  max-width: 100%;     /* Ne dépasse pas de la colonne */
-  object-fit: contain; /* Affiche l'image EN ENTIER */
+  height: 100%;       
+  width: auto;         
+  max-width: 100%;     
+  object-fit: contain; 
   cursor: pointer; 
   border-radius: 4px; 
-  background: #111;    /* Fond sombre pour les images transparentes */
+  background: #111;    
 }
-.collection-arrow { font-size: 24px; cursor: pointer; user-select: none; }
+
+/* Les flèches fixées aux bords */
+.collection-arrow { 
+  position: absolute; 
+  top: 50%;
+  transform: translateY(-50%); /* Centre verticalement */
+  font-size: 24px; 
+  cursor: pointer; 
+  user-select: none; 
+  z-index: 10; /* Passe au-dessus de l'image */
+  padding: 5px;
+  background: rgba(0, 0, 0, 0.5); /* Petit fond noir pour bien les voir */
+  border-radius: 50%;
+}
+
+.collection-arrow:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* Positionnement spécifique */
+.collection-arrow.left { left: 0; }
+.collection-arrow.right { right: 0; }
 .collection-preview-caption { text-align: center; font-size: 12px; opacity: 0.7; margin-top: 6px; }
 
 /* FOOTER COULEURS */
