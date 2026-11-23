@@ -372,6 +372,27 @@ function createFilterCheckboxes(images) {
 
   const actressCheckboxes = [...mainCheckboxes, ...amateurCheckboxes];
 
+  actressCheckboxes.forEach(cb => {
+      const label = cb.closest('label');
+      if (!label) return;
+      label.title = "Double-cliquez (ou appui long) pour voir ses scènes";
+      
+      label.addEventListener('dblclick', (e) => {
+          e.preventDefault(); e.stopPropagation();
+          if (typeof showScenesForActress === 'function') showScenesForActress(cb.value);
+      });
+
+      let pressTimer;
+      label.addEventListener('touchstart', (e) => {
+          pressTimer = setTimeout(() => {
+              e.preventDefault();
+              if (typeof showScenesForActress === 'function') showScenesForActress(cb.value);
+          }, 600);
+      }, { passive: false });
+      label.addEventListener('touchend', () => clearTimeout(pressTimer));
+      label.addEventListener('touchmove', () => clearTimeout(pressTimer));
+  });
+    
   if (toggleBtn && actressSec) {
     if (amateurCount.size === 0) toggleBtn.style.display = 'none';
     else {
@@ -726,4 +747,4 @@ function initColorFilter(updateBodyBackground) {
   [active, hue, lumActive, lumSlider, sim].forEach(el => el.addEventListener('input', update));
 }
 
-console.log("filters=New lightboxes!");
+console.log("filters=New lightboxes V2");
