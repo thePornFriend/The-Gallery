@@ -143,8 +143,8 @@ function showScenesForStudio(studioName) {
         return studios.some(s => validStudios.includes(s));
     });
 
-    // 3. Titre : "Scenes of : Nom du studio"
-    openScenesModal(`Scenes of : ${studioName}`, studioImages);
+    // 3. Titre : "Scenes from : Nom du studio"
+    openScenesModal(`Scenes from : ${studioName}`, studioImages);
 }
 
 function showScenesForActress(actressName) {
@@ -171,4 +171,4 @@ function showScenesForActress(actressName) {
     openScenesModal(`${formattedName} appears in :`, actressImages);
 }
 
-console.log("Scenes = Better Titles");
+console.log("Scenes = Better Titles - from");
