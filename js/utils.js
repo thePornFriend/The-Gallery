@@ -260,6 +260,33 @@ function buildCollections(images) {
 
   return collections;
 }
+// ==========================================
+// NORMALISATION DES TAGS (Threesome, Foursome, etc.)
+// ==========================================
+function normalizeTags(tagsString) {
+    if (!tagsString) return '';
+    
+    return tagsString.split(',').map(t => {
+        const tag = t.trim();
+        const upper = tag.toUpperCase();
+        
+        // Si le tag fait exactement 3 lettres et ne contient que des M et des F
+        if (/^[MF]{3}$/.test(upper)) {
+            return `Threesome : ${upper}`;
+        }
+        // Si le tag fait exactement 4 lettres et ne contient que des M et des F
+        if (/^[MF]{4}$/.test(upper)) {
+            return `Foursome : ${upper}`;
+        }
+        // (Optionnel) Si tu as des combinaisons à 5 lettres plus tard
+        if (/^[MF]{5}$/.test(upper)) {
+            return `Fivesome : ${upper}`;
+        }
+        
+        // Si ce n'est pas une combinaison, on garde le tag tel quel
+        return tag;
+    }).join(', ');
+}
 
 function autoPopulateDatasets(images) {
   images.forEach(img => {
