@@ -473,3 +473,5 @@ function enableZoomDrag() {
     }, { passive: false });
   });
 }
+
+console.log("lighbox.js = Reformulations des titre et mois");
