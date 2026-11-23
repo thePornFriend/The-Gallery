@@ -1,3 +1,7 @@
+// ==========================================
+// UTILITAIRES DE PARSING ET DE TRI
+// ==========================================
+
 function sortImages(images) {
   return images.sort((a, b) => {
     const aData = a.getAttribute("data-gallery") || "";
@@ -27,7 +31,9 @@ function parseActressField(raw) {
     const trimmed = part.trim();
     const excluded = trimmed.startsWith('(-)');
     const cropped  = trimmed.startsWith('(+)');
-    const name = unescapeDash((excluded || cropped ? trimmed.slice(3) : trimmed).trim());
+    const name = unescapeDash(
+      (excluded || cropped ? trimmed.slice(3) : trimmed).trim()
+    );
     return { name, excluded, cropped };
   }).filter(a => a.name);
 }
@@ -201,23 +207,57 @@ function applyCombinedData(img) {
 
 function buildCollections(images) {
   const collections = new Map();
+
+  // Cette fonction ignore les zéros inutiles (ex: 01/03/2026 et 1/3/2026 deviennent 2026-3-1)
+  function normalizeDate(dateStr) {
+    if (!dateStr) return "no-date";
+    // Regex : accepte 1 ou 2 chiffres pour le jour et le mois, et 4 pour l'année
+    const match = dateStr.trim().match(/^(\d{1,2})\s*\/\s*(\d{1,2})\s*\/\s*(\d{4})$/);
+    if (match) {
+        const day = parseInt(match[1], 10);
+        const month = parseInt(match[2], 10);
+        const year = match[3];
+        return `${year}-${month}-${day}`; // Renvoie "2026-3-1"
+    }
+    return dateStr.toLowerCase(); // Si ce n'est pas une date, on garde le texte brut
+  }
+
   images.forEach(img => {
     if (!img.dataset.title && !img.dataset.collectionActresses) return;
-    const actressKey = (img.dataset.collectionActresses || img.dataset.actress || '').split(',').map(n => n.trim().toLowerCase()).filter(Boolean).sort().join('|');
-    const key = [actressKey, img.dataset.studio || '', img.dataset.series || '', img.dataset.date || '', img.dataset.title || ''].join('::');
+
+    const actressKey = (img.dataset.collectionActresses || img.dataset.actress || '')
+      .split(',').map(n => n.trim().toLowerCase()).filter(Boolean).sort().join('|');
+      
+    const dateKey = normalizeDate(img.dataset.date); // <-- On utilise la date nettoyée
+    
+    // La clé de la collection utilise la date nettoyée (donc 01/03/2026 et 1/3/2026 sont identiques)
+    const key = [actressKey, img.dataset.studio || '', img.dataset.series || '', dateKey, img.dataset.title || ''].join('::');
 
     if (!collections.has(key)) {
-      collections.set(key, { title: img.dataset.title || '', subtitle: img.dataset.subtitle || '', series: img.dataset.series || '', studio: img.dataset.studio || '', date: img.dataset.date || '', actresses: new Set(), tags: new Set(), images: [] });
+      collections.set(key, {
+        title: img.dataset.title || '',
+        subtitle: img.dataset.subtitle || '',
+        series: img.dataset.series || '',
+        studio: img.dataset.studio || '',
+        date: img.dataset.date || '', // On garde la première date brute rencontrée pour l'affichage
+        actresses: new Set(),
+        tags: new Set(),
+        images: []
+      });
     }
+
     const col = collections.get(key);
-    (img.dataset.collectionActresses || img.dataset.actress || '').split(',').map(n => n.trim().replace(/[()]/g, '')).filter(Boolean).forEach(n => col.actresses.add(n));
+    (img.dataset.collectionActresses || img.dataset.actress || '')
+      .split(',').map(n => n.trim().replace(/[()]/g, '')).filter(Boolean).forEach(n => col.actresses.add(n));
     (img.dataset.tag || '').split(',').map(t => t.trim()).filter(Boolean).forEach(t => col.tags.add(t));
     col.images.push(img);
   });
+
   collections.forEach(col => {
     col.images = sortImages(col.images);
     col.images.forEach(i => { i._collection = col; });
   });
+
   return collections;
 }
 
@@ -289,6 +329,10 @@ function applyLazyLoading(images) {
   });
 }
 
+// ==========================================
+// UTILITAIRES DE COULEURS (HSL)
+// ==========================================
+
 function hexToHsl(hex) {
   let h = hex.replace('#', '');
   if (h.length === 3) h = h.split('').map(c => c + c).join('');
@@ -339,4 +383,6 @@ function hueSimilarity(h1, h2) {
   const diff = Math.abs(h1 - h2);
   const d = Math.min(diff, 360 - diff);
   return 100 * (1 - d / 180);
-} 
+}
+
+console.log("utils= Dates v2");
