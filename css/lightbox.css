@@ -178,19 +178,18 @@
     font-size: 1rem;
     color: #fff; 
     margin-bottom: 5px;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
 .scene-title strong {
-    color: #eee; /* Date en blanc cassé, simple */
+    color: #eee; 
     font-weight: 600;
-    margin-right: 10px;
 }
 
 .scene-title span {
-    color: #888; /* Actrices en gris discret */
+    color: #888; 
     font-style: italic;
     font-size: 0.9rem;
-    margin-left: 10px;
 }
 
 /* La galerie horizontale */
@@ -231,26 +230,28 @@
     display: block;
 }
 
-/* --- Le fameux effet Hover (Blur + Numéro) --- */
+/* --- L'effet Hover (Dégradé + Police normale) --- */
 .scene-thumb-overlay {
     position: absolute;
     bottom: 0;
     left: 0;
     width: 100%;
-    padding: 6px 8px;
-    background: rgba(0, 0, 0, 0.6); 
+    padding: 15px 8px 6px 8px; /* Plus de padding en haut pour le dégradé */
+    
+    /* LE DÉGRADÉ : Noir en bas, transparent en haut */
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.9) 0%, rgba(0, 0, 0, 0) 100%);
     backdrop-filter: blur(4px); 
     -webkit-backdrop-filter: blur(4px);
+    
     color: #fff;
-    font-size: 11px;
-    font-family: monospace;
+    font-size: 13px;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; /* Police normale */
     text-align: center;
-    opacity: 0; /* Caché par défaut */
+    opacity: 0; 
     transition: opacity 0.2s ease;
     pointer-events: none;
 }
 
-/* Quand on survole le conteneur, on affiche le texte */
 .scene-thumb-wrapper:hover .scene-thumb-overlay {
     opacity: 1;
 }
