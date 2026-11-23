@@ -79,7 +79,15 @@
 .collection-meta { opacity: 0.8; margin-bottom: 14px; }
 .collection-features, .collection-tags, .collection-count { margin-bottom: 10px; }
 .collection-preview { display: flex; align-items: center; justify-content: center; gap: 10px; margin-top: 16px; }
-.collection-preview-img { width: 180px; height: 180px; object-fit: cover; cursor: pointer; border-radius: 4px; }
+.collection-preview-img { 
+  height: 180px;       /* Hauteur fixe */
+  width: auto;         /* La largeur s'adapte à l'image */
+  max-width: 100%;     /* Ne dépasse pas de la colonne */
+  object-fit: contain; /* Affiche l'image EN ENTIER */
+  cursor: pointer; 
+  border-radius: 4px; 
+  background: #111;    /* Fond sombre pour les images transparentes */
+}
 .collection-arrow { font-size: 24px; cursor: pointer; user-select: none; }
 .collection-preview-caption { text-align: center; font-size: 12px; opacity: 0.7; margin-top: 6px; }
 
