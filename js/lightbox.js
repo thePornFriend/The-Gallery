@@ -67,6 +67,20 @@ function enableZoomDrag() {
     return `${list.slice(0, -1).join(", ")} & ${list[list.length - 1]}`;
   }
 
+  // Formate dd/mm/yyyy en "d Month yyyy" (Mois en toutes lettres)
+  function formatDateForDisplay(dateStr) {
+    if (!dateStr) return "";
+    const match = dateStr.trim().match(/^(\d{1,2})\s*\/\s*(\d{1,2})\s*\/\s*(\d{4})$/);
+    if (match) {
+        const day = parseInt(match[1], 10);
+        const month = parseInt(match[2], 10);
+        const year = match[3];
+        const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+        return `${day} ${months[month - 1]} ${year}`;
+    }
+    return dateStr; 
+  }
+
   function generateDescription(media) {
     const galleryId = media.dataset.gallery || "—";
     const actresses = cleanActressNames(media.dataset.actress || media.alt || "");
@@ -128,17 +142,26 @@ function enableZoomDrag() {
       currentCollection = col;
       collectionPreviewIndex = 0;
     }
+
+    const formattedDate = formatDateForDisplay(col.date);
     const titleLine = col.series ? `${col.title} (${col.series})` : col.title;
+    
     collectionTitle.innerHTML = col.subtitle ? `${titleLine} : ${col.subtitle}` : titleLine;
-    collectionMeta.textContent = [col.studio, col.date].filter(Boolean).join(", ");
+    
+    // On utilise formattedDate pour l'affichage
+    collectionMeta.textContent = [col.studio, formattedDate].filter(Boolean).join(", ");
+    
     collectionFeatures.innerHTML = `Features : ${joinWithAmpersand([...col.actresses])}`;
+    
+    // Masquer les tags s'il n'y en a pas
     if (col.tags.size > 0) {
         collectionTags.innerHTML = `Tags : ${[...col.tags].join(", ")}`;
-        collectionTags.style.display = "block"; // On affiche
+        collectionTags.style.display = "block";
     } else {
         collectionTags.innerHTML = "";
-        collectionTags.style.display = "none"; // On cache s'il n'y a pas de tags
+        collectionTags.style.display = "none";
     }
+    
     collectionCount.textContent = `Images : ${col.images.length}`;
     collectionPanel.classList.add("visible");
     showCollectionPreview();
@@ -178,17 +201,21 @@ function enableZoomDrag() {
     if (tag === 'video') {
       const video = document.createElement('video');
       video.src = media.src;
-      video.controls = true;
+      video.controls = false;
       video.style.maxWidth = '100%';
       video.style.maxHeight = '100%';
       video.style.cursor = 'pointer';
+      video.addEventListener('click', () => {
+        if (video.paused) video.play();
+        else video.pause();
+      });
       stageBox.appendChild(video);
     } else if (tag === 'iframe') {
       const iframe = document.createElement('iframe');
       iframe.src = media.src;
       iframe.style.width = '100%';
       iframe.style.height = '100%';
-      iframe.style.maxWidth = '900px'; // Taille max raisonnable
+      iframe.style.maxWidth = '900px';
       iframe.style.maxHeight = '75vh';
       iframe.style.border = 'none';
       iframe.setAttribute('allowfullscreen', 'true');
@@ -232,11 +259,11 @@ function enableZoomDrag() {
       pipWindow.appendChild(activeMedia);
       pipWindow.appendChild(closeBtn);
       
-      // On ajoute une barre de drag invisible pour les iframes
       if (activeMedia.tagName.toLowerCase() === 'iframe') {
         const dragHandle = document.createElement('div');
         dragHandle.className = 'pip-drag-handle';
         pipWindow.appendChild(dragHandle);
+        activeMedia.style.pointerEvents = 'auto'; 
       }
 
       ['tl', 'tr', 'bl', 'br'].forEach(corner => {
@@ -251,14 +278,11 @@ function enableZoomDrag() {
 
       pipContainer.appendChild(pipWindow);
 
-      // --- LOGIQUE DE DÉPLACEMENT (DRAG) ---
       let isDragging = false;
       let startX, startY, startLeft, startTop;
 
       pipWindow.addEventListener('pointerdown', (e) => {
         if (e.target.closest('.pip-close') || e.target.closest('.pip-resize-corner')) return;
-
-        // Si c'est une iframe et qu'on ne clique pas sur la barre de drag invisible, on ignore
         if (activeMedia.tagName.toLowerCase() === 'iframe' && !e.target.closest('.pip-drag-handle')) return;
 
         isDragging = true;
@@ -293,12 +317,11 @@ function enableZoomDrag() {
   }
 
   function initResize(e, corner, pipWindow, media) {
-    let aspectRatio = 16 / 9; // Par défaut
+    let aspectRatio = 16 / 9; 
     
     if (media.tagName.toLowerCase() === 'video') {
       aspectRatio = (media.videoWidth && media.videoHeight) ? (media.videoWidth / media.videoHeight) : (16 / 9);
     } else if (media.tagName.toLowerCase() === 'iframe') {
-      // On lit l'orientation depuis le data-2 (ex: "o_portrait" ou "o_landscape")
       const orientation = media.dataset.orientation || 'landscape';
       aspectRatio = (orientation === 'portrait') ? (9 / 16) : (16 / 9);
       pipWindow.style.aspectRatio = aspectRatio;
@@ -331,7 +354,7 @@ function enableZoomDrag() {
       if (corner.includes('r')) newWidth = startWidth + dx;
       if (corner.includes('l')) newWidth = startWidth - dx;
 
-      if (newWidth < 200) newWidth = 200; // Taille min un peu plus grande pour les iframes
+      if (newWidth < 150) newWidth = 150; 
       let newHeight = newWidth / aspectRatio;
 
       if (corner.includes('l')) newLeft = startLeft + (startWidth - newWidth);
@@ -363,7 +386,6 @@ function enableZoomDrag() {
     if (e.key === "Escape") closeLightbox();
   });
   
-  // TOUCHE ESPACE : PLAY/PAUSE SUR TOUTES LES VIDÉOS PIP
   window.addEventListener('keydown', (e) => {
     if (e.code === 'Space' && e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA') {
       e.preventDefault(); 
@@ -376,7 +398,6 @@ function enableZoomDrag() {
   
   lightbox.addEventListener("click", e => { if (e.target === lightbox) closeLightbox(); });
 
-  // GESTION DE LA GRILLE (Zoom pour images, clic pour vidéos/iframes)
   document.querySelectorAll(".img-container").forEach((container) => {
     const media = container.querySelector("img, video, iframe");
     
@@ -452,4 +473,3 @@ function enableZoomDrag() {
     }, { passive: false });
   });
 }
-console.log("lightbox = no usless tag mention ! ");
