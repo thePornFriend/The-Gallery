@@ -153,4 +153,4 @@ function showScenesForActress(actressName) {
     openScenesModal(`Appears in: ${cleanName}`, actressImages);
 }
 
-console.log("Scenes lightbox V2");
+console.log("Scenes lightbox enhanced visuals");
