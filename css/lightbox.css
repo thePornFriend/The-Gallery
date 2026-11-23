@@ -99,6 +99,7 @@
 .modal-content { padding: 20px; max-width: 80%; border-radius: 8px; text-align: center; }
 .thumbs { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-top: 10px; }
 .duplicate-thumb { width: 80px; height: 80px; object-fit: cover; cursor: pointer; border: 2px solid transparent; }
+
 /* ==========================================
    SCENES MODAL (Lightbox studios/actrices)
    ========================================== */
@@ -107,7 +108,7 @@
     position: fixed;
     inset: 0;
     background: rgba(0, 0, 0, 0.85);
-    z-index: 3000; /* Au dessus de tout */
+    z-index: 3000;
     justify-content: center;
     align-items: center;
     backdrop-filter: blur(4px);
@@ -172,45 +173,84 @@
     gap: 10px;
 }
 
+/* --- Titre des scènes (Plus de vert) --- */
 .scene-title {
     font-size: 1rem;
-    color: #ddd;
+    color: #fff; 
+    margin-bottom: 5px;
 }
 
 .scene-title strong {
-    color: #4CAF50; /* Vert pour la date */
+    color: #eee; /* Date en blanc cassé, simple */
+    font-weight: 600;
     margin-right: 10px;
 }
 
 .scene-title span {
-    color: #999;
+    color: #888; /* Actrices en gris discret */
     font-style: italic;
     font-size: 0.9rem;
     margin-left: 10px;
 }
 
-/* La fameuse galerie horizontale scrollable */
+/* La galerie horizontale */
 .scene-gallery {
     display: flex;
-    gap: 10px;
+    gap: 12px;
     overflow-x: auto;
     padding-bottom: 10px;
     scrollbar-width: thin;
-    scrollbar-color: #555 transparent;
+    scrollbar-color: #444 transparent;
+    align-items: center;
 }
 
 .scene-gallery::-webkit-scrollbar {
-    height: 8px;
+    height: 6px;
 }
 .scene-gallery::-webkit-scrollbar-thumb {
-    background-color: #555;
+    background-color: #444;
     border-radius: 4px;
 }
 
-.scene-thumb {
-    height: 150px;
-    min-width: 200px;
-    object-fit: cover;
+/* --- Le conteneur de l'image (pour l'effet hover) --- */
+.scene-thumb-wrapper {
+    position: relative;
+    height: 160px; /* Hauteur fixe pour TOUTES les images */
+    flex-shrink: 0;
     border-radius: 6px;
-    background: #000;
+    overflow: hidden;
+    background: #111; 
+    cursor: pointer;
+}
+
+/* L'image elle-même */
+.scene-thumb {
+    height: 100%;
+    width: auto; /* L'image prend la largeur dont elle a besoin */
+    object-fit: contain; /* Affiche l'image EN ENTIER sans la couper */
+    display: block;
+}
+
+/* --- Le fameux effet Hover (Blur + Numéro) --- */
+.scene-thumb-overlay {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    padding: 6px 8px;
+    background: rgba(0, 0, 0, 0.6); 
+    backdrop-filter: blur(4px); 
+    -webkit-backdrop-filter: blur(4px);
+    color: #fff;
+    font-size: 11px;
+    font-family: monospace;
+    text-align: center;
+    opacity: 0; /* Caché par défaut */
+    transition: opacity 0.2s ease;
+    pointer-events: none;
+}
+
+/* Quand on survole le conteneur, on affiche le texte */
+.scene-thumb-wrapper:hover .scene-thumb-overlay {
+    opacity: 1;
 }
