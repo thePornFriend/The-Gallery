@@ -132,7 +132,13 @@ function enableZoomDrag() {
     collectionTitle.innerHTML = col.subtitle ? `${titleLine} : ${col.subtitle}` : titleLine;
     collectionMeta.textContent = [col.studio, col.date].filter(Boolean).join(", ");
     collectionFeatures.innerHTML = `Features : ${joinWithAmpersand([...col.actresses])}`;
-    collectionTags.innerHTML = `Tags : ${[...col.tags].join(", ") || "—"}`;
+    if (col.tags.size > 0) {
+        collectionTags.innerHTML = `Tags : ${[...col.tags].join(", ")}`;
+        collectionTags.style.display = "block"; // On affiche
+    } else {
+        collectionTags.innerHTML = "";
+        collectionTags.style.display = "none"; // On cache s'il n'y a pas de tags
+    }
     collectionCount.textContent = `Images : ${col.images.length}`;
     collectionPanel.classList.add("visible");
     showCollectionPreview();
@@ -446,3 +452,4 @@ function enableZoomDrag() {
     }, { passive: false });
   });
 }
+console.log("lightbox = no usless tag mention ! ");
