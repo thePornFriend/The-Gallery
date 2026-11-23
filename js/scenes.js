@@ -85,7 +85,7 @@ function openScenesModal(title, filteredImages) {
             html += `
                 <div class="scene-thumb-wrapper">
                     <img src="${img.src}" class="scene-thumb" loading="lazy">
-                    <div class="scene-thumb-overlay">N° ${img.dataset.gallery || '?'}</div>
+                    <div class="scene-thumb-overlay">${img.dataset.gallery || '?'}</div>
                 </div>
             `;
         });
@@ -153,4 +153,4 @@ function showScenesForActress(actressName) {
     openScenesModal(`Appears in: ${cleanName}`, actressImages);
 }
 
-console.log("Scenes lightbox enhanced visuals");
+console.log("Scenes lightbox enhanced visuals - no N°");
