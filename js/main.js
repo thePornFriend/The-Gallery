@@ -72,7 +72,6 @@ document.addEventListener("DOMContentLoaded", async () => {
           // 2. Récupération du Data-1
           if (trimmed.startsWith('data-1=')) {
               currentData1 = trimmed.substring(7).trim();
-              // On nettoie les guillemets s'il y en a
               if (currentData1.startsWith('"') && currentData1.endsWith('"')) {
                   currentData1 = currentData1.slice(1, -1);
               }
@@ -89,6 +88,11 @@ document.addEventListener("DOMContentLoaded", async () => {
               
               let blocks = parts;
               
+              // ⬇⬇⬇ LA CORRECTION EST ICI ⬇⬇⬇
+              // On crée une copie locale de la scène pour cette image
+              let localData1 = currentData1; 
+              // ⬆⬆⬆ FIN DE LA CORRECTION ⬆⬆⬆
+
               // Gestion des modificateurs (+)/(-)
               let modMatch = blocks[0] ? blocks[0].match(/^\(([+-])\)(.*)/) : null;
               if (modMatch) {
@@ -97,17 +101,18 @@ document.addEventListener("DOMContentLoaded", async () => {
                   
                   if (rest === '') {
                       // Cas: "- (+) ; 99_8_4_999-l ; url"
-                      currentData1 = currentData1.replace(/^\s*([^,-]+)/, `(${mod})$1`);
-                      blocks.shift(); // On retire le bloc "(+)"
+                      // On modifie la COPIE locale
+                      localData1 = localData1.replace(/^\s*([^,-]+)/, `(${mod})$1`);
+                      blocks.shift(); 
                   } else if (/^\d/.test(rest)) {
                       // Cas: "- (+)99_8_4_999-l ; url"
-                      currentData1 = currentData1.replace(/^\s*([^,-]+)/, `(${mod})$1`);
-                      blocks[0] = rest; // On remplace le bloc par la galerie
+                      localData1 = localData1.replace(/^\s*([^,-]+)/, `(${mod})$1`);
+                      blocks[0] = rest; 
                   } else {
                       // Cas: "- (+)Adriana Chechik ; 11_999-p ; url"
                       const regex = new RegExp(`(?<=^|,)\\s*${rest}\\s*(?=,|$)`, 'i');
-                      currentData1 = currentData1.replace(regex, `(${mod})${rest}`);
-                      blocks.shift(); // On retire le bloc "(+)Nom"
+                      localData1 = localData1.replace(regex, `(${mod})${rest}`);
+                      blocks.shift(); 
                   }
               }
               
@@ -117,13 +122,13 @@ document.addEventListener("DOMContentLoaded", async () => {
               
               data2Raw = data2Raw.replace(/^-\s*/, '').trim();
               
-              let attrs = `data-1="${currentData1}" data-2="${data2Raw}"`;
+              // On utilise localData1 pour construire la balise
+              let attrs = `data-1="${localData1}" data-2="${data2Raw}"`;
               if (dataClr) attrs += ` data-clr="${dataClr}"`;
               if (dataWeight) attrs += ` data-weight="${dataWeight}"`;
               
               let srcAttr = (dataWeight.toLowerCase() === 'heavy') ? `data-src="${url}"` : `src="${url}"`;
               
-              // On ajoute data-fallback="" pour être raccord avec ton HTML
               htmlOutput += `<img ${attrs} ${srcAttr} data-fallback="">\n`;
           }
       });
@@ -272,4 +277,4 @@ document.addEventListener("DOMContentLoaded", async () => {
   loadGalleryFromTxt();
 });
 
-console.log("main > filtre per line");
+console.log("main > cropped ajusted");
