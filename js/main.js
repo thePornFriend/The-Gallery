@@ -278,4 +278,4 @@ document.addEventListener("DOMContentLoaded", async () => {
   loadGalleryFromTxt();
 });
 
-console.log("main > focus on stack_1");
+console.log("main > VMG/Blacked_2025_2026");
