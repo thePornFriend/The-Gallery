@@ -1,72 +1,112 @@
 document.addEventListener("DOMContentLoaded", async () => {
   const gallery = document.getElementById("gallery");
   
-  // 1. ON GARDE CE QUI EST DÉJÀ DANS LE HTML
-  const initialHtml = gallery.innerHTML;
-  gallery.innerHTML = '<p style="text-align:center; padding: 20px;">Chargement de la galerie...</p>';
+  // Variables globales pour la gestion des images lourdes
+  window.allMediaData = [];
+  window.heavyMediaData = [];
+  window.lightMediaData = [];
+  window.isHeavyLoaded = false;
 
   // ==========================================
-  // 📂 CHARGEMENT DES FICHIERS TXT
+  // CRÉATION DU BOUTON GLOBAL
+  // ==========================================
+  const loadBtn = document.createElement('button');
+  loadBtn.id = 'load-heavy-btn';
+  loadBtn.style.cssText = 'position: fixed; top: 20px; right: 20px; z-index: 10000; background: #FF0080; color: white; padding: 10px 20px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; display: none; box-shadow: 0 4px 10px rgba(0,0,0,0.3); transition: background 0.3s, transform 0.2s; font-family: sans-serif;';
+  document.body.appendChild(loadBtn);
+  
+  loadBtn.addEventListener('mouseenter', () => { if (!loadBtn.disabled) loadBtn.style.transform = 'scale(1.05)'; });
+  loadBtn.addEventListener('mouseleave', () => { loadBtn.style.transform = 'scale(1)'; });
+
+  // Fonction pour mettre à jour le bouton
+  window.updateLoadButton = function() {
+      if (window.heavyMediaData.length > 0) {
+          loadBtn.style.display = 'block';
+          loadBtn.textContent = `📶 Load Heavy Images (${window.heavyMediaData.length})`;
+          loadBtn.disabled = false;
+          loadBtn.style.background = '#FF0080';
+          loadBtn.style.cursor = 'pointer';
+      } else {
+          // Le bouton ne disparait pas, il passe juste en vert
+          loadBtn.style.display = 'block';
+          loadBtn.textContent = `✅ All Heavy Images Loaded`;
+          loadBtn.disabled = true;
+          loadBtn.style.background = '#4CAF50';
+          loadBtn.style.cursor = 'default';
+      }
+  };
+
+  // Action au clic
+  loadBtn.addEventListener('click', () => {
+      if (window.heavyMediaData.length === 0 || loadBtn.disabled) return;
+      
+      // On transforme les data-src en src
+      window.heavyMediaData.forEach(el => {
+          el.src = el.getAttribute('data-src');
+          el.removeAttribute('data-src');
+      });
+      
+      window.isHeavyLoaded = true;
+      window.heavyMediaData = []; // On vide la liste lourde
+      window.updateLoadButton();
+      
+      // On demande au filtre de se relancer pour tout réafficher
+      if (typeof state !== 'undefined' && state.triggerFilter) {
+          state.triggerFilter();
+      }
+  });
+
+  // ==========================================
+  // CHARGEMENT DE LA GALERIE
   // ==========================================
   async function loadGalleryFromTxt() {
-    // Liste de tes fichiers txt
-    const txtFiles = ['0.txt', '001.txt', '002.txt', '003.txt', '004.txt', '005.txt', '006.txt', '007.txt', '008.txt', '009.txt', '010.txt', '011.txt', '012.txt', '013.txt', '099.txt', '100.txt', '105.txt', '110.txt', '120.txt', 'video.txt'];
+    // ... (Garde ta liste de fichiers txtFiles et le fetchPromises ici) ...
+    const txtFiles = ['0.txt', '001.txt', '002.txt', '003.txt', '004.txt', '005.txt', '006.txt', '007.txt', '008.txt', '009.txt', '010.txt', '011.txt', '012.txt', '013.txt', '099.txt', '100.txt', '105.txt', '110.txt', '120.txt', 'video.txt']; // <-- AJOUTE TES FICHIERS
     
-    let allHtmlStrings = [];
-
     try {
-      // On télécharge tous les fichiers en même temps
-      const fetchPromises = txtFiles.map(async (filename) => {
-        const res = await fetch(`data/${filename}`);
-        if (!res.ok) {
-          console.warn(`Fichier introuvable : data/${filename}`);
-          return '';
-        }
-        return await res.text();
-      });
+        const fetchPromises = txtFiles.map(async (filename) => {
+            const res = await fetch(`data/${filename}`);
+            if (!res.ok) return '';
+            return await res.text();
+        });
+        const contents = await Promise.all(fetchPromises);
+        const allHtml = contents.join('\n');
+        
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = allHtml;
+        const allElements = Array.from(tempDiv.querySelectorAll('img, video, iframe'));
+        
+        // On initialise les données de TOUTES les images (lourdes et légères)
+        autoPopulateDatasets(allElements);
 
-      const contents = await Promise.all(fetchPromises);
-      
-      // On compile le HTML existant + le HTML des fichiers txt
-      const allHtml = initialHtml + '\n' + contents.join('\n');
-      
-      // On crée un conteneur virtuel pour lire le HTML
-      const tempDiv = document.createElement('div');
-      tempDiv.innerHTML = allHtml;
-      
-      // On récupère toutes les images, vidéos et iframes
-      let elements = Array.from(tempDiv.querySelectorAll('img, video, iframe'));
+        window.allMediaData = [];
+        window.heavyMediaData = [];
+        window.lightMediaData = [];
 
-            // Appel du filtre temporaire (s'il est chargé)
-      if (typeof filterForDevelopment === 'function') {
-          elements = filterForDevelopment(elements);
-      }
-      
-      if (elements.length === 0) {
-        gallery.innerHTML = '<p style="text-align:center; padding: 20px;">Aucun média trouvé.</p>';
-        return;
-      }
+        // On sépare les légères des lourdes
+        allElements.forEach(el => {
+            window.allMediaData.push(el);
+            if (el.tagName.toLowerCase() === 'img' && el.hasAttribute('data-src')) {
+                window.heavyMediaData.push(el);
+            } else {
+                window.lightMediaData.push(el);
+            }
+        });
 
-      // ==========================================
-      // ⚙️ TRI DES IMAGES (Aucun aléatoire, juste le tri standard)
-      // ==========================================
-      elements = sortImages(elements);
+        // On injecte UNIQUEMENT les légères dans la galerie pour l'instant
+        gallery.innerHTML = '';
+        window.lightMediaData.forEach(el => gallery.appendChild(el));
 
-      // On injecte dans la galerie
-      gallery.innerHTML = '';
-      elements.forEach(el => gallery.appendChild(el));
-
-      // On lance l'application
-      initApp(elements);
-
+        initApp(window.allMediaData);
+        window.updateLoadButton();
+        
     } catch (error) {
-      console.error(error);
-      gallery.innerHTML = `<p style="text-align:center; color:red; padding: 20px;">Erreur de chargement. Vérifie la console.</p>`;
+        console.error(error);
     }
   }
 
   // ==========================================
-  // 🚀 INITIALISATION DE L'APPLICATION
+  // INITIALISATION DE L'APPLICATION
   // ==========================================
   function initApp(galleryImages) {
     function getOrCreateChiaroLayer() {
@@ -83,7 +123,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     function updateBodyBackground() {
       const chiaroLayer = getOrCreateChiaroLayer();
       let bgColor = '', bgTransition = '0.3s ease';
-
       if (state.colorFilter.colorActive || state.colorFilter.lumActive) {
         const hue = state.colorFilter.colorActive ? state.colorFilter.hue : 0;
         const sat = state.colorFilter.colorActive ? 100 : 0;
@@ -97,56 +136,50 @@ document.addEventListener("DOMContentLoaded", async () => {
         bgColor = state.CHIARO_YELLOW;
         bgTransition = '0.6s ease';
       }
-
       document.body.style.transition = `background-color ${bgTransition}`;
       document.body.style.backgroundColor = bgColor;
       chiaroLayer.style.opacity = (state.chiaroscuroActive && !(state.colorFilter.colorActive || state.colorFilter.lumActive)) ? '1' : '0';
     }
 
-    // Appel de toutes tes fonctions (qui sont dans tes autres fichiers JS)
     const sortedImages = galleryImages; 
-    autoPopulateDatasets(sortedImages);
     buildCollections(sortedImages);
     applyLazyLoading(sortedImages);
     
+    // On passe TOUTES les images (lourdes + légères) aux filtres pour que les actrices soient reconnues
     createFilterCheckboxes(sortedImages);
     initGallerySearchFilter(sortedImages);
     initColorFilter(updateBodyBackground);
     enableCollapsibleFilters();
     enableTagBackgroundChange(updateBodyBackground);
-    
-    groupImagesByPrefix(sortedImages);
-    enableZoomDrag();
-
-    // Ton outil de debug pour la console
-    window.injectNewImages = function(htmlString) {
-      const temp = document.createElement('div');
-      temp.innerHTML = htmlString;
-      const newImgs = Array.from(temp.querySelectorAll('img, video, iframe'));
-      newImgs.forEach(el => gallery.appendChild(el));
-      
-      const allImages = Array.from(gallery.querySelectorAll('img, video, iframe'));
-      allImages.forEach(img => { delete img._collection; delete img._clrData; });
-      
-      document.querySelector('.actress-list-main').innerHTML = '';
-      document.querySelector('.actress-list-more').innerHTML = '';
-      document.querySelector('.tag-list').innerHTML = '';
-      document.querySelector('.prod-list').innerHTML = '';
-      
-      document.querySelectorAll('.lightbox').forEach(lb => lb.remove());
-      
-      autoPopulateDatasets(allImages);
-      buildCollections(allImages);
-      createFilterCheckboxes(allImages);
-      groupImagesByPrefix(allImages);
-      enableZoomDrag();
-      
-      console.log(`✅ ${newImgs.length} éléments injectés, filtres et galerie recalculés !`);
-    };
   }
 
-  // ON LANCE LE CHARGEMENT !
+  // ==========================================
+  // OUTIL DE DEBUG CONSOLE
+  // ==========================================
+  window.injectNewImages = function(htmlString) {
+    const temp = document.createElement('div');
+    temp.innerHTML = htmlString;
+    const newImgs = Array.from(temp.querySelectorAll('img, video, iframe'));
+    
+    newImgs.forEach(el => {
+        applyCombinedData(el);
+        window.allMediaData.push(el);
+        if (el.tagName.toLowerCase() === 'img' && el.hasAttribute('data-src')) {
+            window.heavyMediaData.push(el);
+        } else {
+            window.lightMediaData.push(el);
+        }
+    });
+
+    autoPopulateDatasets(window.allMediaData);
+    buildCollections(window.allMediaData);
+    createFilterCheckboxes(window.allMediaData); // Va déclencher filter() qui fera le rendu
+    window.updateLoadButton();
+    
+    console.log(`✅ ${newImgs.length} éléments injectés !`);
+  };
+
   loadGalleryFromTxt();
 });
 
-console.log("main= filtre vixen!");
+console.log("main= filtre heavy images");
