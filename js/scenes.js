@@ -171,4 +171,4 @@ function showScenesForActress(actressName) {
     openScenesModal(`${formattedName} appears in :`, actressImages);
 }
 
-console.log("Scenes = Better Titles - from");
+console.log("Scenes > done ");
