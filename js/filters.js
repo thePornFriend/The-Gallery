@@ -536,8 +536,16 @@ function createFilterCheckboxes(images) {
     }).map(({ img }) => img);
 
     const gallery = document.getElementById("gallery");
+    
+    // ⬇⬇⬇ LOGIQUE POUR IGNORER LES IMAGES LOURDES ⬇⬇⬇
+    let renderImages = visibleImages;
+    if (window.isHeavyLoaded === false) {
+        renderImages = visibleImages.filter(img => !img.hasAttribute('data-src'));
+    }
+    // ⬆⬆⬆ FIN DE LA LOGIQUE ⬆⬆⬆
+
     gallery.innerHTML = '';
-    groupImagesByPrefix(visibleImages);
+    groupImagesByPrefix(renderImages);
     enableZoomDrag();
     updateRelatedActresses();
   };
