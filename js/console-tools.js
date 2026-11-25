@@ -4,7 +4,7 @@
 
 console.log(
   `%c🛠️ WELCOME TO THE GALLERY CONSOLE TOOLS 🛠️`,
-  "background: #4CAF50; color: white; font-size: 16px; font-weight: bold; padding: 6px; border-radius: 4px;"
+  "background: #ffc0cb; color: Black; font-size: 14px; padding: 6px; border-radius: 4px;"
 );
 
 console.log(
@@ -82,4 +82,4 @@ window.searchProject = function(textToSearch) {
     }
 };
 
-console.log("resizer=version heavy img");
+console.log("Console tools > done");
