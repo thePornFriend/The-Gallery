@@ -89,3 +89,5 @@ document.addEventListener("DOMContentLoaded", () => {
 
     }, 2000); // Délai de 2 secondes
 });
+
+console.log("debug > done");
