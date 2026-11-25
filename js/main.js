@@ -140,7 +140,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   // CHARGEMENT DE LA GALERIE
   // ==========================================
   async function loadGalleryFromTxt() {
-    let txtFiles = ['0.txt', '001.txt', '002.txt', '003.txt', '004.txt', '005.txt', '006.txt', '007.txt', '008.txt', '009.txt', '010.txt', '011.txt', '012.txt', '013.txt', '099.txt', '100.txt', '105.txt', '110.txt', '120.txt', 'video.txt',
+    let txtFiles = [ // '0.txt', '001.txt', '002.txt', '003.txt', '004.txt', '005.txt', '006.txt', '007.txt', '008.txt', '009.txt', '010.txt', '011.txt', '012.txt', '013.txt', '099.txt', '100.txt', '105.txt', '110.txt', '120.txt', 'video.txt',
                     'stack_1.txt'];
     
     // 1. Vérifier test.txt
@@ -278,4 +278,4 @@ document.addEventListener("DOMContentLoaded", async () => {
   loadGalleryFromTxt();
 });
 
-console.log("main > done");
+console.log("main > focus on stack_1");
