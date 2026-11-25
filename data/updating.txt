@@ -1,6 +1,7 @@
 TO-DO LIST : 
 Actresses into tag : Ebony, Asian.
 Gif into tag : 
+data-heavy="true/false"
 Filter : Better accesess
 Filter : color picker pop-up --> relative index!
 
