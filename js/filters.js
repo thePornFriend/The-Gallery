@@ -1,44 +1,3 @@
-document.addEventListener("DOMContentLoaded", () => {
-    // === AUTO-GENERATION DES SCORE-ENTRY ===
-    document.querySelectorAll(".score-min").forEach(img => {
-        const titleText = img.alt || "Untitled";
-
-        const entry = document.createElement("div");
-        entry.className = "score-entry";
-
-        const title = document.createElement("div");
-        title.className = "entry-title";
-        title.textContent = titleText;
-
-        [...img.attributes].forEach(a => {
-            if (a.name.startsWith("data-")) {
-                title.setAttribute(a.name, a.value);
-            }
-        });
-
-        const content = document.createElement("div");
-        content.className = "entry-content";
-
-        content.innerHTML = `
-            <div class="score-viewer">
-                <div class="svg-scrollbox">
-                    <img class="score-svg" src="${img.src}">
-                </div>
-                <div class="zoom-bar">
-                    <input type="range" class="zoom-range" min="0.5" max="3" step="0.1" value="1">
-                </div>
-            </div>
-            <div class="entry-subtitle">Related :</div>
-            <ul><li><a href="#"></a></li></ul>
-        `;
-
-        entry.appendChild(title);
-        entry.appendChild(content);
-
-        img.insertAdjacentElement("beforebegin", entry);
-        img.remove();
-    });
-});
 // ==========================================
 // 1. GRILLE DE CHECKBOXES (Actrices, Tags)
 // ==========================================
@@ -74,11 +33,9 @@ function buildStudioFilterGrid(container, studioCount, imgData) {
     const directCounts = new Map(studioCount);
     const aggregateCounts = new Map();
     
-    // 1. Initialiser les nœuds
     const allStudios = [...studioCount.keys()].sort((a, b) => a.localeCompare(b, 'fr', { sensitivity: 'base' }));
     allStudios.forEach(s => hierarchy.set(s, { id: s, parent: null, children: [], checkboxes: [] }));
     
-    // 2. Construire l'arbre
     Object.entries(state.STUDIO_GROUPS).forEach(([groupName, members]) => {
         if (!hierarchy.has(groupName)) hierarchy.set(groupName, { id: groupName, parent: null, children: [], checkboxes: [] });
         
@@ -89,7 +46,6 @@ function buildStudioFilterGrid(container, studioCount, imgData) {
         });
     });
 
-    // 3. Calculer les compteurs (Additionner les enfants aux parents)
     function calcAggregate(nodeId) {
         const node = hierarchy.get(nodeId);
         let count = directCounts.get(nodeId) || 0;
@@ -101,7 +57,6 @@ function buildStudioFilterGrid(container, studioCount, imgData) {
         if (!hierarchy.get(id).parent) calcAggregate(id);
     });
 
-    // 4. Ne garder que les nœuds actifs (qui ont au moins 1 image)
     const activeNodes = new Set();
     Array.from(hierarchy.keys()).forEach(id => {
         if (aggregateCounts.get(id) > 0) activeNodes.add(id);
@@ -113,9 +68,6 @@ function buildStudioFilterGrid(container, studioCount, imgData) {
 
     state.studioHierarchy = hierarchy;
 
-    // ==========================================
-    // LE CERVEAU CENTRAL DES CHECKBOXES
-    // ==========================================
     const states = new Map();
     activeNodes.forEach(id => states.set(id, { checked: false, indeterminate: false }));
 
@@ -171,20 +123,12 @@ function buildStudioFilterGrid(container, studioCount, imgData) {
         updateDOM();
     }
 
-    // ==========================================
-    // DÉCLENCHEURS POUR LA LIGHTBOX DES SCÈNES
-    // ==========================================
     function attachSceneTriggers(label, studioId) {
         label.title = "Double-cliquez (ou appui long) pour voir les scènes";
-        
-        // Double clic PC
         label.addEventListener('dblclick', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
+            e.preventDefault(); e.stopPropagation();
             if (typeof showScenesForStudio === 'function') showScenesForStudio(studioId);
         });
-
-        // Appui long Mobile
         let pressTimer;
         label.addEventListener('touchstart', (e) => {
             pressTimer = setTimeout(() => {
@@ -192,14 +136,10 @@ function buildStudioFilterGrid(container, studioCount, imgData) {
                 if (typeof showScenesForStudio === 'function') showScenesForStudio(studioId);
             }, 600);
         }, { passive: false });
-        
         label.addEventListener('touchend', () => clearTimeout(pressTimer));
         label.addEventListener('touchmove', () => clearTimeout(pressTimer));
     }
 
-    // ==========================================
-    // RENDU VISUEL
-    // ==========================================
     container.innerHTML = '';
     
     function createCheckbox(value) {
@@ -211,7 +151,6 @@ function buildStudioFilterGrid(container, studioCount, imgData) {
         return cb;
     }
 
-    // 1. Liste globale (uniquement les actifs)
     const globalList = document.createElement('div');
     globalList.className = 'prod-global-list';
     const NUM_COLS = 4;
@@ -227,9 +166,7 @@ function buildStudioFilterGrid(container, studioCount, imgData) {
         const cb = createCheckbox(studioName);
         label.appendChild(cb);
         label.appendChild(document.createTextNode(` ${capitalize(studioName)} (${aggregateCounts.get(studioName) || 0})`));
-        
-        attachSceneTriggers(label, studioName); // <-- Ajout du déclencheur
-        
+        attachSceneTriggers(label, studioName);
         globalColumns[colIndex].appendChild(label);
     });
     container.appendChild(globalList);
@@ -238,7 +175,6 @@ function buildStudioFilterGrid(container, studioCount, imgData) {
     separator.className = 'prod-separator';
     container.appendChild(separator);
 
-    // 2. Liste groupée (uniquement les actifs)
     const groupedList = document.createElement('div');
     groupedList.className = 'prod-grouped-list';
     
@@ -259,18 +195,14 @@ function buildStudioFilterGrid(container, studioCount, imgData) {
         const groupDiv = document.createElement('div');
         groupDiv.className = 'prod-group';
 
-        // En-tête du groupe (Parent)
         const header = document.createElement('label');
         header.className = 'prod-group-header';
         const parentCb = createCheckbox(groupName);
         header.appendChild(parentCb);
         header.appendChild(document.createTextNode(` ${groupName} (${aggregateCounts.get(groupName) || 0})`));
-        
-        attachSceneTriggers(header, groupName); // <-- Ajout du déclencheur
-        
+        attachSceneTriggers(header, groupName);
         groupDiv.appendChild(header);
 
-        // Enfants du groupe
         const itemsDiv = document.createElement('div');
         itemsDiv.className = 'prod-group-items';
 
@@ -280,9 +212,7 @@ function buildStudioFilterGrid(container, studioCount, imgData) {
             const cb = createCheckbox(studioName);
             label.appendChild(cb);
             label.appendChild(document.createTextNode(` ${capitalize(studioName)} (${aggregateCounts.get(studioName) || 0})`));
-            
-            attachSceneTriggers(label, studioName); // <-- Ajout du déclencheur
-            
+            attachSceneTriggers(label, studioName);
             itemsDiv.appendChild(label);
         });
 
@@ -291,7 +221,6 @@ function buildStudioFilterGrid(container, studioCount, imgData) {
     });
 
     container.appendChild(groupedList);
-
     return Array.from(container.querySelectorAll('input[type="checkbox"]'));
 }
 
@@ -330,13 +259,13 @@ function createFilterCheckboxes(images) {
     const rawActs = (img.dataset.actress || '').split(',').map(n => n.trim()).filter(Boolean);
     const mainActs = rawActs.filter(n => !isAmateurEntry(n)).map(n => 'main:' + n);
     const amateurActs = rawActs.filter(n => isAmateurEntry(n)).map(n => 'am:' + normalizeAmName(n));
-        // ⬇⬇⬇ MODIFICATION ICI ⬇⬇⬇
+    
     let rawTags = img.dataset.tag || '';
     if (typeof normalizeTags === 'function') {
         rawTags = normalizeTags(rawTags);
     }
     const tags = rawTags.split(',').map(t => t.trim()).filter(Boolean);
-    // ⬆⬆⬆ FIN DE LA MODIFICATION ⬆⬆⬆
+    
     const studios = (img.dataset.studio || '').split(',').map(s => s.trim()).filter(Boolean);
     return { img, acts: [...mainActs, ...amateurActs], mainActs, amateurActs, tags, studios };
   });
@@ -761,4 +690,5 @@ function initColorFilter(updateBodyBackground) {
   [active, hue, lumActive, lumSlider, sim].forEach(el => el.addEventListener('input', update));
 }
 
-console.log("3somes, 4somes, test 2");
+
+console.log("Filter > Filter content");
