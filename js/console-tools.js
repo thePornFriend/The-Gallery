@@ -81,3 +81,5 @@ window.searchProject = function(textToSearch) {
         console.log(`%c❌ No results for "${textToSearch}".`, "color: #FF9800; font-weight: bold;");
     }
 };
+
+console.log("resizer=version heavy img");
