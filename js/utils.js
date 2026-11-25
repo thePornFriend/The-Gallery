@@ -249,7 +249,13 @@ function buildCollections(images) {
     const col = collections.get(key);
     (img.dataset.collectionActresses || img.dataset.actress || '')
       .split(',').map(n => n.trim().replace(/[()]/g, '')).filter(Boolean).forEach(n => col.actresses.add(n));
-    (img.dataset.tag || '').split(',').map(t => t.trim()).filter(Boolean).forEach(t => col.tags.add(t));
+        // ⬇⬇⬇ MODIFICATION ICI ⬇⬇⬇
+    let normalizedTagStr = img.dataset.tag || '';
+    if (typeof normalizeTags === 'function') {
+        normalizedTagStr = normalizeTags(normalizedTagStr);
+    }
+    normalizedTagStr.split(',').map(t => t.trim()).filter(Boolean).forEach(t => col.tags.add(t));
+    // ⬆⬆⬆ FIN DE LA MODIFICATION ⬆⬆⬆
     col.images.push(img);
   });
 
@@ -294,6 +300,12 @@ function autoPopulateDatasets(images) {
     if (!img.dataset.gallery || !img.dataset.actress) {
       extractDataFromURL(img);
     }
+    
+    // ⬇⬇⬇ AJOUT ICI : On normalise le tag dès le chargement ⬇⬇⬇
+    if (img.dataset.tag) {
+        img.dataset.tag = normalizeTags(img.dataset.tag);
+    }
+    // ⬆⬆⬆ FIN DE L'AJOUT ⬆⬆⬆
   });
 }
 
@@ -412,4 +424,4 @@ function hueSimilarity(h1, h2) {
   return 100 * (1 - d / 180);
 }
 
-console.log("utils= Threesomes & Foursomes");
+console.log("utils= Threesomes & Foursomes, test 2");
