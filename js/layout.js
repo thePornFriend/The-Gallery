@@ -205,4 +205,4 @@ function buildGalleryLayout(images, container = document.getElementById("gallery
   container.appendChild(galleryLine);
 }
 
-console.log("layout= nouvelle logique de fin de groupe");
+console.log("layout > done");
