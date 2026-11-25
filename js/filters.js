@@ -330,7 +330,13 @@ function createFilterCheckboxes(images) {
     const rawActs = (img.dataset.actress || '').split(',').map(n => n.trim()).filter(Boolean);
     const mainActs = rawActs.filter(n => !isAmateurEntry(n)).map(n => 'main:' + n);
     const amateurActs = rawActs.filter(n => isAmateurEntry(n)).map(n => 'am:' + normalizeAmName(n));
-    const tags = (img.dataset.tag || '').split(',').map(t => t.trim()).filter(Boolean);
+        // ⬇⬇⬇ MODIFICATION ICI ⬇⬇⬇
+    let rawTags = img.dataset.tag || '';
+    if (typeof normalizeTags === 'function') {
+        rawTags = normalizeTags(rawTags);
+    }
+    const tags = rawTags.split(',').map(t => t.trim()).filter(Boolean);
+    // ⬆⬆⬆ FIN DE LA MODIFICATION ⬆⬆⬆
     const studios = (img.dataset.studio || '').split(',').map(s => s.trim()).filter(Boolean);
     return { img, acts: [...mainActs, ...amateurActs], mainActs, amateurActs, tags, studios };
   });
@@ -747,4 +753,4 @@ function initColorFilter(updateBodyBackground) {
   [active, hue, lumActive, lumSlider, sim].forEach(el => el.addEventListener('input', update));
 }
 
-console.log("filters=New lightboxes V2");
+console.log("3somes, 4somes, test 2");
