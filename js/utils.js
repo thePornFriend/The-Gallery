@@ -424,4 +424,4 @@ function hueSimilarity(h1, h2) {
   return 100 * (1 - d / 180);
 }
 
-console.log("utils= Threesomes & Foursomes, test 2");
+console.log("utils = done ");
