@@ -63,57 +63,68 @@ document.addEventListener("DOMContentLoaded", async () => {
           const trimmed = line.trim();
           if (!trimmed) return;
           
-          // 1. Récupération du Data-1
-          if (trimmed.startsWith('data-1=')) {
-              currentData1 = trimmed.substring(7).trim();
+          // 1. Si c'est déjà du HTML, on le passe tel quel
+          if (trimmed.startsWith('<')) {
+              htmlOutput += trimmed + '\n';
               return;
           }
           
-          // 2. Traitement de la ligne d'image
+          // 2. Récupération du Data-1
+          if (trimmed.startsWith('data-1=')) {
+              currentData1 = trimmed.substring(7).trim();
+              // On nettoie les guillemets s'il y en a
+              if (currentData1.startsWith('"') && currentData1.endsWith('"')) {
+                  currentData1 = currentData1.slice(1, -1);
+              }
+              return;
+          }
+          
+          // 3. Traitement de la ligne d'image brute
           if (trimmed.startsWith('-')) {
               let content = trimmed.substring(1).trim();
               let parts = content.split(';').map(p => p.trim());
               
-              // L'URL est le dernier élément
               let url = parts.pop();
               if (!url) return; 
               
-              let data2Raw = parts[0] || '';
-              let dataClr = parts[1] || '';
-              let dataWeight = parts[2] || '';
+              let blocks = parts;
               
-              // 3. Gestion des modificateurs (+)/(-)
-              let localData1 = currentData1;
-              let modMatch = data2Raw.match(/^\(([+-])\)\s*(.*)/);
-              
+              // Gestion des modificateurs (+)/(-)
+              let modMatch = blocks[0] ? blocks[0].match(/^\(([+-])\)(.*)/) : null;
               if (modMatch) {
                   let mod = modMatch[1]; 
-                  let targetName = modMatch[2].trim(); 
+                  let rest = modMatch[2].trim(); 
                   
-                  if (targetName) {
-                      // Modifie une actrice spécifique
-                      const regex = new RegExp(`(?<=^|,)\\s*${targetName}\\s*(?=,|$)`, 'i');
-                      localData1 = localData1.replace(regex, `(${mod})${targetName}`);
-                      data2Raw = data2Raw.substring(modMatch[0].length).trim();
+                  if (rest === '') {
+                      // Cas: "- (+) ; 99_8_4_999-l ; url"
+                      currentData1 = currentData1.replace(/^\s*([^,-]+)/, `(${mod})$1`);
+                      blocks.shift(); // On retire le bloc "(+)"
+                  } else if (/^\d/.test(rest)) {
+                      // Cas: "- (+)99_8_4_999-l ; url"
+                      currentData1 = currentData1.replace(/^\s*([^,-]+)/, `(${mod})$1`);
+                      blocks[0] = rest; // On remplace le bloc par la galerie
                   } else {
-                      // Modifie la première actrice
-                      localData1 = localData1.replace(/^\s*([^,-]+)/, `(${mod})$1`);
-                      data2Raw = data2Raw.substring(3).trim();
+                      // Cas: "- (+)Adriana Chechik ; 11_999-p ; url"
+                      const regex = new RegExp(`(?<=^|,)\\s*${rest}\\s*(?=,|$)`, 'i');
+                      currentData1 = currentData1.replace(regex, `(${mod})${rest}`);
+                      blocks.shift(); // On retire le bloc "(+)Nom"
                   }
               }
               
-              // 4. Nettoyage du data2
+              let data2Raw = blocks[0] || '';
+              let dataClr = blocks[1] || '';
+              let dataWeight = blocks[2] || '';
+              
               data2Raw = data2Raw.replace(/^-\s*/, '').trim();
               
-              // 5. Construction de la balise HTML
-              let attrs = `data-1="${localData1}" data-2="${data2Raw}"`;
+              let attrs = `data-1="${currentData1}" data-2="${data2Raw}"`;
               if (dataClr) attrs += ` data-clr="${dataClr}"`;
               if (dataWeight) attrs += ` data-weight="${dataWeight}"`;
               
-              // 6. src ou data-src
               let srcAttr = (dataWeight.toLowerCase() === 'heavy') ? `data-src="${url}"` : `src="${url}"`;
               
-              htmlOutput += `<img ${attrs} ${srcAttr}>\n`;
+              // On ajoute data-fallback="" pour être raccord avec ton HTML
+              htmlOutput += `<img ${attrs} ${srcAttr} data-fallback="">\n`;
           }
       });
       
@@ -124,7 +135,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   // CHARGEMENT DE LA GALERIE
   // ==========================================
   async function loadGalleryFromTxt() {
-    let txtFiles = ['test.txt', '0.txt', '001.txt', '002.txt', '003.txt', '004.txt', '005.txt', '006.txt', '007.txt', '008.txt', '009.txt', '010.txt', '011.txt', '012.txt', '013.txt', '099.txt', '100.txt', '105.txt', '110.txt', '120.txt', 'video.txt'];
+    let txtFiles = ['0.txt', '001.txt', '002.txt', '003.txt', '004.txt', '005.txt', '006.txt', '007.txt', '008.txt', '009.txt', '010.txt', '011.txt', '012.txt', '013.txt', '099.txt', '100.txt', '105.txt', '110.txt', '120.txt', 'video.txt'];
     
     // 1. Vérifier test.txt
     try {
@@ -146,15 +157,14 @@ document.addEventListener("DOMContentLoaded", async () => {
         
         let allHtml = '';
         
-        // 2. Traitement HTML ou Texte brut
+        // ⬇⬇⬇ C'EST ICI QUE LA CORRECTION SE FAIT ⬇⬇⬇
+        // On passe TOUS les fichiers dans le parseur. 
+        // Il gérera les balises <img> déjà existantes ET le texte brut.
         contents.forEach(content => {
             if (!content) return;
-            if (/<(img|video|iframe)/i.test(content)) {
-                allHtml += content + '\n';
-            } else {
-                allHtml += parseRawTxtToHtml(content) + '\n';
-            }
+            allHtml += parseRawTxtToHtml(content) + '\n';
         });
+        // ⬆⬆⬆ FIN DE LA CORRECTION ⬆⬆⬆
         
         const tempDiv = document.createElement('div');
         tempDiv.innerHTML = allHtml;
@@ -238,7 +248,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   // ==========================================
   window.injectNewImages = function(htmlString) {
     const temp = document.createElement('div');
-    temp.innerHTML = htmlString;
+    temp.innerHTML = parseRawTxtToHtml(htmlString); // On utilise le parser ici aussi !
     const newImgs = Array.from(temp.querySelectorAll('img, video, iframe'));
     
     newImgs.forEach(el => {
@@ -262,4 +272,4 @@ document.addEventListener("DOMContentLoaded", async () => {
   loadGalleryFromTxt();
 });
 
-console.log("main= filtre of docs with test included");
+console.log("main > filtre per line");
