@@ -691,4 +691,4 @@ function initColorFilter(updateBodyBackground) {
 }
 
 
-console.log("Filter > Filter content");
+console.log("Filter > done");
