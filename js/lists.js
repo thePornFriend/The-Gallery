@@ -12,7 +12,6 @@ window.GALLERY_TXT_FILES = [
     // '005.txt', '006.txt', '007.txt', '008.txt', '009.txt', 
     // '010.txt', '011.txt', '012.txt', '013.txt', '099.txt', 
     // '100.txt', '105.txt', '110.txt', '120.txt'
-    // Ajoute tes autres fichiers ici
 ];
 
 // 2. Règles d'auto-tagging
