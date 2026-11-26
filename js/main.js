@@ -278,4 +278,4 @@ document.addEventListener("DOMContentLoaded", async () => {
   loadGalleryFromTxt();
 });
 
-console.log("main > Blacked_2025_2026");
+console.log("main > Blacked_2025_2026 & vids");
