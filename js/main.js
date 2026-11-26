@@ -54,88 +54,118 @@ document.addEventListener("DOMContentLoaded", async () => {
   // ==========================================
   // PARSEUR POUR LE FORMAT TEXTE BRUT
   // ==========================================
+  
   function parseRawTxtToHtml(rawText) {
       const lines = rawText.split('\n');
       let htmlOutput = '';
       let currentData1 = '';
       
-      lines.forEach(line => {
+      lines.forEach((line, index) => {
           const trimmed = line.trim();
           if (!trimmed) return;
           
-          // 1. Si c'est déjà du HTML, on le passe tel quel
-          if (trimmed.startsWith('<')) {
-              htmlOutput += trimmed + '\n';
-              return;
-          }
-          
-          // 2. Récupération du Data-1
-          if (trimmed.startsWith('data-1=')) {
-              currentData1 = trimmed.substring(7).trim();
-              if (currentData1.startsWith('"') && currentData1.endsWith('"')) {
-                  currentData1 = currentData1.slice(1, -1);
+          // On englobe le traitement de la ligne dans un try/catch
+          try {
+              // 1. Si c'est déjà du HTML, on le passe tel quel
+              if (trimmed.startsWith('<')) {
+                  htmlOutput += trimmed + '\n';
+                  return;
               }
-              return;
-          }
-          
-          // 3. Traitement de la ligne d'image brute
-          if (trimmed.startsWith('-')) {
-              let content = trimmed.substring(1).trim();
-              let parts = content.split(';').map(p => p.trim());
               
-              let url = parts.pop();
-              if (!url) return; 
-              
-              let blocks = parts;
-              
-              // ⬇⬇⬇ LA CORRECTION EST ICI ⬇⬇⬇
-              // On crée une copie locale de la scène pour cette image
-              let localData1 = currentData1; 
-              // ⬆⬆⬆ FIN DE LA CORRECTION ⬆⬆⬆
-
-              // Gestion des modificateurs (+)/(-)
-              let modMatch = blocks[0] ? blocks[0].match(/^\(([+-])\)(.*)/) : null;
-              if (modMatch) {
-                  let mod = modMatch[1]; 
-                  let rest = modMatch[2].trim(); 
-                  
-                  if (rest === '') {
-                      // Cas: "- (+) ; 99_8_4_999-l ; url"
-                      // On modifie la COPIE locale
-                      localData1 = localData1.replace(/^\s*([^,-]+)/, `(${mod})$1`);
-                      blocks.shift(); 
-                  } else if (/^\d/.test(rest)) {
-                      // Cas: "- (+)99_8_4_999-l ; url"
-                      localData1 = localData1.replace(/^\s*([^,-]+)/, `(${mod})$1`);
-                      blocks[0] = rest; 
-                  } else {
-                      // Cas: "- (+)Adriana Chechik ; 11_999-p ; url"
-                      const regex = new RegExp(`(?<=^|,)\\s*${rest}\\s*(?=,|$)`, 'i');
-                      localData1 = localData1.replace(regex, `(${mod})${rest}`);
-                      blocks.shift(); 
+              // 2. Récupération du Data-1
+              if (trimmed.startsWith('data-1=')) {
+                  currentData1 = trimmed.substring(7).trim();
+                  if (currentData1.startsWith('"') && currentData1.endsWith('"')) {
+                      currentData1 = currentData1.slice(1, -1);
                   }
+                  return;
               }
               
-              let data2Raw = blocks[0] || '';
-              let dataClr = blocks[1] || '';
-              let dataWeight = blocks[2] || '';
-              
-              data2Raw = data2Raw.replace(/^-\s*/, '').trim();
-              
-              // On utilise localData1 pour construire la balise
-              let attrs = `data-1="${localData1}" data-2="${data2Raw}"`;
-              if (dataClr) attrs += ` data-clr="${dataClr}"`;
-              if (dataWeight) attrs += ` data-weight="${dataWeight}"`;
-              
-              let srcAttr = (dataWeight.toLowerCase() === 'heavy') ? `data-src="${url}"` : `src="${url}"`;
-              
-              htmlOutput += `<img ${attrs} ${srcAttr} data-fallback="">\n`;
+              // 3. Traitement de la ligne d'image brute
+              if (trimmed.startsWith('-')) {
+                  let content = trimmed.substring(1).trim();
+                  let parts = content.split(';').map(p => p.trim());
+                  
+                  let url = parts.pop();
+                  if (!url) return; 
+                  
+                  let blocks = parts;
+                  let localData1 = currentData1; 
+
+                  // Gestion des modificateurs (+)/(-) - Version robuste
+                  while (blocks.length > 0) {
+                      let block = blocks[0].trim();
+
+                      // Cas 1: Le bloc est exactement "(+)" ou "(-)"
+                      if (block === '(+)' || block === '(-)') {
+                          let mod = block[1];
+                          localData1 = localData1.replace(/^\s*([^,-]+)/, `(${mod})$1`);
+                          blocks.shift();
+                          continue;
+                      }
+
+                      // Cas 2: Le bloc commence par un modificateur suivi d'un numéro (ex: "(+)99_8_4_999-l")
+                      let matchNum = block.match(/^\(([+-])\)(\d.*)/);
+                      if (matchNum) {
+                          let mod = matchNum[1];
+                          let rest = matchNum[2].trim();
+                          localData1 = localData1.replace(/^\s*([^,-]+)/, `(${mod})$1`);
+                          blocks[0] = rest;
+                          break; 
+                      }
+
+                      // Cas 3: Le bloc contient des noms d'actrices avec modificateurs (ex: "(+)Kelsi Monroe, (+)Olivia Jayy")
+                      if (block.includes('(+)') || block.includes('(-)')) {
+                          let actressMods = block.split(',').map(s => s.trim());
+                          
+                          actressMods.forEach(item => {
+                              const itemMatch = item.match(/^\(([+-])\)(.*)/);
+                              if (itemMatch) {
+                                  let itemMod = itemMatch[1];
+                                  let itemName = itemMatch[2].trim();
+                                  if (itemName !== '') {
+                                      // Échappe les caractères spéciaux pour éviter le crash
+                                      const escapedName = itemName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                                      const regex = new RegExp(`(?<=^|,)\\s*${escapedName}\\s*(?=,|$)`, 'i');
+                                      localData1 = localData1.replace(regex, `(${itemMod})${itemName}`);
+                                  }
+                              }
+                          });
+                          blocks.shift();
+                          continue; 
+                      }
+                      break;
+                  }
+                  
+                  let data2Raw = blocks[0] || '';
+                  let dataClr = blocks[1] || '';
+                  let dataWeight = blocks[2] || '';
+                  
+                  data2Raw = data2Raw.replace(/^-\s*/, '').trim();
+                  
+                  // On utilise localData1 pour construire la balise
+                  let attrs = `data-1="${localData1}" data-2="${data2Raw}"`;
+                  if (dataClr) attrs += ` data-clr="${dataClr}"`;
+                  if (dataWeight) attrs += ` data-weight="${dataWeight}"`;
+                  
+                  let srcAttr = (dataWeight.toLowerCase() === 'heavy') ? `data-src="${url}"` : `src="${url}"`;
+                  
+                  htmlOutput += `<img ${attrs} ${srcAttr} data-fallback="">\n`;
+              }
+          } catch (err) {
+              // Si une erreur survient sur cette ligne spécifique, on l'affiche dans la console
+              // mais on n'arrête pas le chargement de la galerie !
+              console.warn(
+                  `%c⚠️ Erreur de formatage ignorée à la ligne ${index + 1} :\n%c${trimmed}`,
+                  "color: #FF9800; font-weight: bold;",
+                  "color: #FFF; font-family: monospace;"
+              );
+              console.error(`Détail de l'erreur : ${err.message}`);
           }
       });
       
       return htmlOutput;
   }
-
   // ==========================================
   // CHARGEMENT DE LA GALERIE
   // ==========================================
@@ -279,4 +309,4 @@ document.addEventListener("DOMContentLoaded", async () => {
   loadGalleryFromTxt();
 });
 
-console.log("main > VMG/Blacked_2025_2026 & vids, one line");
+console.log("main > Plus robuste");
