@@ -126,7 +126,7 @@ document.addEventListener("DOMContentLoaded", async () => {
                                   if (itemName !== '') {
                                       // Échappe les caractères spéciaux pour éviter le crash
                                       const escapedName = itemName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-                                      const regex = new RegExp(`(?<=^|,)\\s*${escapedName}\\s*(?=,|$)`, 'i');
+                                      const regex = new RegExp(`(?<=^|,)\\s*${escapedName}\\s*(?=,|$|-)`, 'i');
                                       localData1 = localData1.replace(regex, `(${itemMod})${itemName}`);
                                   }
                               }
@@ -308,4 +308,4 @@ document.addEventListener("DOMContentLoaded", async () => {
   loadGalleryFromTxt();
 });
 
-console.log("main > calls the lists");
+console.log("main > parsing plus robuste ");
