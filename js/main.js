@@ -170,9 +170,8 @@ document.addEventListener("DOMContentLoaded", async () => {
   // CHARGEMENT DE LA GALERIE
   // ==========================================
   async function loadGalleryFromTxt() {
-    let txtFiles = [ 'video.txt', 'VMG/Blacked_2025_2026.txt', 'VMG/Blacked_2014_2015_2016.txt'];
-    // '0.txt', '001.txt', '002.txt', '003.txt', '004.txt', '005.txt', '006.txt', '007.txt', '008.txt', '009.txt', '010.txt', '011.txt', '012.txt', '013.txt', '099.txt', '100.txt', '105.txt', '110.txt', '120.txt', 
-                    
+    // On récupère la liste depuis lists.js
+    let txtFiles = window.GALLERY_TXT_FILES || [];               
     
     // 1. Vérifier test.txt
     try {
@@ -309,4 +308,4 @@ document.addEventListener("DOMContentLoaded", async () => {
   loadGalleryFromTxt();
 });
 
-console.log("main > Plus robuste");
+console.log("main > calls the lists");
