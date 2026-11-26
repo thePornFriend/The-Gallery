@@ -179,19 +179,48 @@ function applyCombinedData(img) {
     const parsed1 = parseData1(raw1);
     if (parsed1) {
       img.dataset.collectionActresses = parsed1.actresses.map(a => a.name).join(', ');
+      
       const visible = parsed1.actresses.filter(a => !a.excluded).map(a => a.name);
       if (!img.dataset.actress) {
-        img.dataset.actress = (visible.length ? visible : parsed1.actresses.map(a => a.name)).join(', ');
+        // On ne garde QUE les actrices visibles. Si tout le monde est en (-), ça reste vide.
+        img.dataset.actress = visible.join(', ');
       }
+      
       const cropped = parsed1.actresses.filter(a => a.cropped).map(a => a.name);
       if (cropped.length && !img.dataset.croppedActresses) {
         img.dataset.croppedActresses = cropped.join(', ');
       }
+      
       if (!img.dataset.studio && parsed1.studio) img.dataset.studio = parsed1.studio;
       if (!img.dataset.series && parsed1.series) img.dataset.series = parsed1.series;
       if (!img.dataset.date && parsed1.date) img.dataset.date = parsed1.date;
       if (!img.dataset.title && parsed1.title) img.dataset.title = parsed1.title;
       if (!img.dataset.subtitle && parsed1.subtitle) img.dataset.subtitle = parsed1.subtitle;
+
+      // ⬇⬇⬇ LOGIQUE D'AUTO-TAGGING ⬇⬇⬇
+      if (window.AUTO_TAG_RULES) {
+          let currentTags = img.dataset.tag ? img.dataset.tag.split(',').map(t => t.trim()) : [];
+          let newTags = new Set(currentTags.filter(Boolean));
+
+          parsed1.actresses.forEach(act => {
+              // L'actrice doit être présente sur l'image : ni (-) ni (+)
+              if (!act.excluded && !act.cropped) {
+                  const nameLower = act.name.toLowerCase();
+                  
+                  // On parcourt nos règles (Asian, Ebony, etc.)
+                  for (const [tagName, actressesList] of Object.entries(window.AUTO_TAG_RULES)) {
+                      if (actressesList.some(a => a.toLowerCase() === nameLower)) {
+                          newTags.add(tagName);
+                      }
+                  }
+              }
+          });
+
+          if (newTags.size > 0) {
+              img.dataset.tag = Array.from(newTags).join(', ');
+          }
+      }
+      // ⬆⬆⬆ FIN LOGIQUE D'AUTO-TAGGING ⬆⬆⬆
     }
   }
 
@@ -424,4 +453,4 @@ function hueSimilarity(h1, h2) {
   return 100 * (1 - d / 180);
 }
 
-console.log("utils = done ");
+console.log("utils > calls lists ");
