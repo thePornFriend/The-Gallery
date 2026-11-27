@@ -5,11 +5,9 @@ function buildCheckboxGrid(container, counts, displayName = k => k, onLoadHeavy 
   const capitalize = s => s.charAt(0).toUpperCase() + s.slice(1);
   const showHeavy = document.getElementById('toggle-heavy-filters')?.checked;
   
-  // Fusionner les clés pour l'affichage
   const allKeys = new Set([...counts.light.keys(), ...counts.heavy.keys()]);
   
   const sorted = [...allKeys].filter(k => {
-      // Si showHeavy est faux, on n'affiche que les labels qui ont au moins 1 image légère
       return showHeavy ? true : (counts.light.get(k) || 0) > 0;
   }).sort((a, b) => displayName(a).localeCompare(displayName(b), 'fr', { sensitivity: 'base' }));
 
@@ -27,29 +25,24 @@ function buildCheckboxGrid(container, counts, displayName = k => k, onLoadHeavy 
       const lCount = counts.light.get(item) || 0;
       const hCount = counts.heavy.get(item) || 0;
       
-      let countHtml = '';
+      // Le texte de base sans le +X
+      let htmlContent = `<input type="checkbox" value="${item}"> <span>${display} (${lCount})</span>`;
       
       if (showHeavy && hCount > 0) {
-          // Si on affiche les lourds, on montre (X +Y)
           if (lCount === 0) {
-              // Uniquement des lourds : on rend le label entier cliquable pour charger
-              countHtml = `(<span class="heavy-badge" data-val="${item}">+${hCount}</span>)`;
               label.classList.add('heavy-only-label');
               label.title = "Cliquez pour charger ces images lourdes";
           } else {
-              // Mélange de légers et de lourds
-              countHtml = `(${lCount} <span class="heavy-badge" data-val="${item}">+${hCount}</span>)`;
+              label.classList.add('has-heavy');
           }
-      } else {
-          // Que des légers (ou lourds masqués)
-          countHtml = `(${lCount})`;
+          // On ajoute le badge à l'extrême droite
+          htmlContent += `<span class="heavy-badge" data-val="${item}">+${hCount}</span>`;
       }
 
-      label.innerHTML = `<input type="checkbox" value="${item}"> ${display} ${countHtml}`;
-      
+      label.innerHTML = htmlContent;
       const cb = label.firstChild;
       
-      // Si c'est un label "heavy only", cliquer sur le label charge les images
+      // Si c'est un label "heavy only", cliquer dessus charge les images
       if (lCount === 0 && showHeavy && hCount > 0 && onLoadHeavy) {
           label.addEventListener('click', (e) => {
               if (e.target !== cb && !e.target.classList.contains('heavy-badge')) {
@@ -65,12 +58,10 @@ function buildCheckboxGrid(container, counts, displayName = k => k, onLoadHeavy 
     container.appendChild(col);
   }
   
-  // Ajouter les écouteurs sur les badges +X
   if (onLoadHeavy) {
       container.querySelectorAll('.heavy-badge').forEach(badge => {
           badge.addEventListener('click', (e) => {
-              e.preventDefault(); 
-              e.stopPropagation(); 
+              e.preventDefault(); e.stopPropagation(); 
               onLoadHeavy(badge.dataset.val);
           });
       });
@@ -86,7 +77,6 @@ function buildStudioFilterGrid(container, lightCounts, heavyCounts, imgData, onL
     const capitalize = s => s.charAt(0).toUpperCase() + s.slice(1);
     const showHeavy = document.getElementById('toggle-heavy-filters')?.checked;
     
-    // Construction de la hiérarchie
     const hierarchy = new Map();
     const allStudios = [...new Set([...lightCounts.keys(), ...heavyCounts.keys()])].sort((a, b) => a.localeCompare(b, 'fr', { sensitivity: 'base' }));
     
@@ -168,13 +158,9 @@ function buildStudioFilterGrid(container, lightCounts, heavyCounts, imgData, onL
         });
 
         let newState;
-        if (checkedCount === 0 && indeterminateCount === 0) {
-            newState = { checked: false, indeterminate: false };
-        } else if (checkedCount === activeChildren.length) {
-            newState = { checked: true, indeterminate: false };
-        } else {
-            newState = { checked: false, indeterminate: true };
-        }
+        if (checkedCount === 0 && indeterminateCount === 0) newState = { checked: false, indeterminate: false };
+        else if (checkedCount === activeChildren.length) newState = { checked: true, indeterminate: false };
+        else newState = { checked: false, indeterminate: true };
 
         states.set(parentId, newState);
         updateAncestors(parentId);
@@ -207,20 +193,21 @@ function buildStudioFilterGrid(container, lightCounts, heavyCounts, imgData, onL
         return cb;
     }
 
-    function createLabelContent(value, isGroup = false) {
+    function buildLabelContent(value, isGroup = false) {
         const lCount = aggLight.get(value) || 0;
         const hCount = aggHeavy.get(value) || 0;
         const display = capitalize(value);
         
-        let countHtml = '';
+        let html = `<span>${isGroup ? '' : ' '}${display} (${lCount})</span>`;
+        let extraClass = '';
+        
         if (showHeavy && hCount > 0) {
-            if (lCount === 0) countHtml = `(<span class="heavy-badge" data-val="${value}">+${hCount}</span>)`;
-            else countHtml = `(${lCount} <span class="heavy-badge" data-val="${value}">+${hCount}</span>)`;
-        } else {
-            countHtml = `(${lCount})`;
+            if (lCount === 0) extraClass = 'heavy-only-label';
+            else extraClass = 'has-heavy';
+            html += `<span class="heavy-badge" data-val="${value}">+${hCount}</span>`;
         }
         
-        return `${isGroup ? '' : ' '}${display} ${countHtml}`;
+        return { html, extraClass };
     }
 
     const globalList = document.createElement('div');
@@ -238,10 +225,20 @@ function buildStudioFilterGrid(container, lightCounts, heavyCounts, imgData, onL
         const cb = createCheckbox(studioName);
         label.appendChild(cb);
         
-        // Insérer le texte avec le span pour le badge
+        const { html, extraClass } = buildLabelContent(studioName);
+        if (extraClass) label.classList.add(extraClass);
+        
         const span = document.createElement('span');
-        span.innerHTML = createLabelContent(studioName);
+        span.innerHTML = html;
         label.appendChild(span);
+        
+        if (extraClass === 'heavy-only-label' && onLoadHeavy) {
+            label.addEventListener('click', (e) => {
+                if (e.target !== cb && !e.target.classList.contains('heavy-badge')) {
+                    e.preventDefault(); onLoadHeavy(studioName);
+                }
+            });
+        }
         
         attachSceneTriggers(label, studioName);
         globalColumns[colIndex].appendChild(label);
@@ -277,8 +274,10 @@ function buildStudioFilterGrid(container, lightCounts, heavyCounts, imgData, onL
         const parentCb = createCheckbox(groupName);
         header.appendChild(parentCb);
         
+        const { html: headerHtml, extraClass: headerClass } = buildLabelContent(groupName, true);
+        if (headerClass) header.classList.add(headerClass);
         const headerSpan = document.createElement('span');
-        headerSpan.innerHTML = createLabelContent(groupName, true);
+        headerSpan.innerHTML = headerHtml;
         header.appendChild(headerSpan);
         
         attachSceneTriggers(header, groupName);
@@ -293,9 +292,20 @@ function buildStudioFilterGrid(container, lightCounts, heavyCounts, imgData, onL
             const cb = createCheckbox(studioName);
             label.appendChild(cb);
             
+            const { html, extraClass } = buildLabelContent(studioName);
+            if (extraClass) label.classList.add(extraClass);
+            
             const span = document.createElement('span');
-            span.innerHTML = createLabelContent(studioName);
+            span.innerHTML = html;
             label.appendChild(span);
+            
+            if (extraClass === 'heavy-only-label' && onLoadHeavy) {
+                label.addEventListener('click', (e) => {
+                    if (e.target !== cb && !e.target.classList.contains('heavy-badge')) {
+                        e.preventDefault(); onLoadHeavy(studioName);
+                    }
+                });
+            }
             
             attachSceneTriggers(label, studioName);
             itemsDiv.appendChild(label);
@@ -307,29 +317,12 @@ function buildStudioFilterGrid(container, lightCounts, heavyCounts, imgData, onL
 
     container.appendChild(groupedList);
 
-    // Écouteurs sur les badges
     if (onLoadHeavy) {
         container.querySelectorAll('.heavy-badge').forEach(badge => {
             badge.addEventListener('click', (e) => {
                 e.preventDefault(); e.stopPropagation();
                 onLoadHeavy(badge.dataset.val);
             });
-        });
-        
-        // Labels "heavy only"
-        container.querySelectorAll('.prod-global-list label, .prod-group-items label').forEach(label => {
-            const cb = label.querySelector('input[type="checkbox"]');
-            if (!cb) return;
-            const val = cb.value;
-            const lCount = aggLight.get(val) || 0;
-            if (lCount === 0 && showHeavy && (aggHeavy.get(val) || 0) > 0) {
-                label.addEventListener('click', (e) => {
-                    if (e.target !== cb && !e.target.classList.contains('heavy-badge')) {
-                        e.preventDefault();
-                        onLoadHeavy(val);
-                    }
-                });
-            }
         });
     }
 
@@ -351,7 +344,6 @@ function createFilterCheckboxes(images) {
 
   if (!mainList || !tagList || !modeSelect) return;
 
-  // Mettre à jour le bouton global
   const heavyBtn = document.getElementById('load-heavy-btn');
   const heavyCountDisplay = document.getElementById('heavy-count-display');
   if (heavyBtn && heavyCountDisplay) {
@@ -360,7 +352,6 @@ function createFilterCheckboxes(images) {
       if (heavyBtn.disabled) heavyBtn.innerHTML = "All heavy loaded";
   }
 
-  // Éviter d'ajouter l'écouteur plusieurs fois
   if (toggleHeavyFilters) {
       toggleHeavyFilters.onchange = () => createFilterCheckboxes(images);
   }
@@ -376,12 +367,10 @@ function createFilterCheckboxes(images) {
     return stripped;
   };
 
-  // --- NOUVELLE LOGIQUE DE COMPTAGE ---
   const createCounts = (extractor) => {
       const light = new Map();
       const heavy = new Map();
       images.forEach(img => {
-          // Si l'image est lourde et n'est pas chargée (a encore data-src)
           const isHeavy = img.hasAttribute('data-src');
           const values = extractor(img);
           values.forEach(v => {
@@ -406,28 +395,20 @@ function createFilterCheckboxes(images) {
   const tagCounts = createCounts(extractTags);
   const studioCounts = createCounts(extractStudios);
 
-  // --- FONCTION DE CHARGEMENT CIBLÉ ---
   const loadHeavyForTarget = (val) => {
-      // On cherche les images lourdes qui matchent cette valeur
       const cleanVal = val.replace(/^(main|am):/, '').toLowerCase();
       
       const toLoad = window.heavyMediaData.filter(img => {
-          // Match actrice
           const acts = (img.dataset.actress || '').toLowerCase();
           if (acts.includes(cleanVal)) return true;
-          
-          // Match tag
           const tags = (img.dataset.tag || '').toLowerCase();
           if (tags.includes(cleanVal)) return true;
-          
-          // Match studio (avec vérification de hiérarchie basique)
           const studios = (img.dataset.studio || '').toLowerCase();
           if (studios.includes(cleanVal)) return true;
           if (state.studioHierarchy && state.studioHierarchy.has(val)) {
               const node = state.studioHierarchy.get(val);
               if (node.children.some(c => studios.includes(c.toLowerCase()))) return true;
           }
-
           return false;
       });
 
@@ -442,7 +423,6 @@ function createFilterCheckboxes(images) {
       }
   };
 
-  // --- CONSTRUCTION DE L'UI ---
   const mainCheckboxes = buildCheckboxGrid(mainList, mainCounts, stripPrefix, loadHeavyForTarget);
   const amateurCheckboxes = buildCheckboxGrid(moreList, amateurCounts, stripPrefix, loadHeavyForTarget);
   const tagCheckboxes = buildCheckboxGrid(tagList, tagCounts, k => k, loadHeavyForTarget);
@@ -475,7 +455,6 @@ function createFilterCheckboxes(images) {
 
   const actressCheckboxes = [...mainCheckboxes, ...amateurCheckboxes];
 
-  // Attacher les événements "dblclick" pour les scènes
   actressCheckboxes.forEach(cb => {
       const label = cb.closest('label');
       if (!label) return;
@@ -492,7 +471,7 @@ function createFilterCheckboxes(images) {
       toggleBtn.onclick = (e) => {
         e.stopPropagation();
         actressSec.classList.toggle('more-active');
-        toggleBtn.textContent = actressSec.classList.contains('more-active') ? '← See main actresses' : 'See more actresses →';
+        toggleBtn.textContent = actressSec.classList.contains('more-active') ? '← See main' : 'See more →';
       };
     }
   }
@@ -628,9 +607,11 @@ function createFilterCheckboxes(images) {
 
     const gallery = document.getElementById("gallery");
     
-    // On affiche les images filtrées
+    // ⬇⬇⬇ CORRECTION : On exclut totalement les images non chargées ⬇⬇⬇
+    const loadedImages = visibleImages.filter(img => !img.hasAttribute('data-src'));
+    
     gallery.innerHTML = '';
-    groupImagesByPrefix(visibleImages);
+    groupImagesByPrefix(loadedImages);
     enableZoomDrag();
     updateRelatedActresses();
   };
@@ -846,4 +827,6 @@ function initColorFilter(updateBodyBackground) {
   [active, hue, lumActive, lumSlider, sim].forEach(el => el.addEventListener('input', update));
 }
 
-console.log("Filters > NEW HEAVY IMG BEAHAVIOUR");
+console.log("Filter > done");
+
+console.log("Filters > NEW HEAVY IMG BEAHAVIOUR v2");
