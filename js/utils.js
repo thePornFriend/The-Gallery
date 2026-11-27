@@ -463,4 +463,4 @@ function hueSimilarity(h1, h2) {
   return 100 * (1 - d / 180);
 }
 
-console.log("utils > TAG_ABBREVIATIONS ");
+console.log("");
