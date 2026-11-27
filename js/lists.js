@@ -29,4 +29,17 @@ window.AUTO_TAG_RULES = {
     ]
 };
 
-console.log("lists > done");
+
+// 3. Abréviations de tags
+// Clé = ce que tu tapes dans le .txt / Valeur = ce qui s'affiche
+window.TAG_ABBREVIATIONS = {
+    "bsp": "Beaches & Swimming Pools",
+    "beach": "Beaches & Swimming Pools",
+    "swim": "Beaches & Swimming Pools",
+    "pool": "Beaches & Swimming Pools",
+    "bbw": "BBW / Curvy"
+    // Ajoute tes autres abréviations ici
+};
+
+
+console.log("lists > TAG_ABBREVIATION");
