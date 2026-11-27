@@ -847,5 +847,3 @@ function initColorFilter(updateBodyBackground) {
 }
 
 console.log("Filters > NEW HEAVY IMG BEAHAVIOUR");
-
-console.log("Filter > done");
