@@ -8,53 +8,8 @@ document.addEventListener("DOMContentLoaded", async () => {
   window.isHeavyLoaded = false;
 
   // ==========================================
-  // CRÉATION DU BOUTON GLOBAL
+  // PARSEUR POUR LE FORMAT TEXTE BRUT (RÉSILIENT)
   // ==========================================
-  const loadBtn = document.createElement('button');
-  loadBtn.id = 'load-heavy-btn';
-  loadBtn.style.cssText = 'position: fixed; top: 20px; right: 20px; z-index: 10000; background: #FF0080; color: white; padding: 10px 20px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; display: none; box-shadow: 0 4px 10px rgba(0,0,0,0.3); transition: background 0.3s, transform 0.2s; font-family: sans-serif;';
-  document.body.appendChild(loadBtn);
-  
-  loadBtn.addEventListener('mouseenter', () => { if (!loadBtn.disabled) loadBtn.style.transform = 'scale(1.05)'; });
-  loadBtn.addEventListener('mouseleave', () => { loadBtn.style.transform = 'scale(1)'; });
-
-  window.updateLoadButton = function() {
-      if (window.heavyMediaData.length > 0) {
-          loadBtn.style.display = 'block';
-          loadBtn.textContent = `📶 Load Heavy Images (${window.heavyMediaData.length})`;
-          loadBtn.disabled = false;
-          loadBtn.style.background = '#FF0080';
-          loadBtn.style.cursor = 'pointer';
-      } else {
-          loadBtn.style.display = 'block';
-          loadBtn.textContent = `✅ All Heavy Images Loaded`;
-          loadBtn.disabled = true;
-          loadBtn.style.background = '#4CAF50';
-          loadBtn.style.cursor = 'default';
-      }
-  };
-
-  loadBtn.addEventListener('click', () => {
-      if (window.heavyMediaData.length === 0 || loadBtn.disabled) return;
-      
-      window.heavyMediaData.forEach(el => {
-          el.src = el.getAttribute('data-src');
-          el.removeAttribute('data-src');
-      });
-      
-      window.isHeavyLoaded = true;
-      window.heavyMediaData = []; 
-      window.updateLoadButton();
-      
-      if (typeof state !== 'undefined' && state.triggerFilter) {
-          state.triggerFilter();
-      }
-  });
-
-  // ==========================================
-  // PARSEUR POUR LE FORMAT TEXTE BRUT
-  // ==========================================
-  
   function parseRawTxtToHtml(rawText) {
       const lines = rawText.split('\n');
       let htmlOutput = '';
@@ -64,15 +19,12 @@ document.addEventListener("DOMContentLoaded", async () => {
           const trimmed = line.trim();
           if (!trimmed) return;
           
-          // On englobe le traitement de la ligne dans un try/catch
           try {
-              // 1. Si c'est déjà du HTML, on le passe tel quel
               if (trimmed.startsWith('<')) {
                   htmlOutput += trimmed + '\n';
                   return;
               }
               
-              // 2. Récupération du Data-1
               if (trimmed.startsWith('data-1=')) {
                   currentData1 = trimmed.substring(7).trim();
                   if (currentData1.startsWith('"') && currentData1.endsWith('"')) {
@@ -81,7 +33,6 @@ document.addEventListener("DOMContentLoaded", async () => {
                   return;
               }
               
-              // 3. Traitement de la ligne d'image brute
               if (trimmed.startsWith('-')) {
                   let content = trimmed.substring(1).trim();
                   let parts = content.split(';').map(p => p.trim());
@@ -92,11 +43,10 @@ document.addEventListener("DOMContentLoaded", async () => {
                   let blocks = parts;
                   let localData1 = currentData1; 
 
-                  // Gestion des modificateurs (+)/(-) - Version robuste
+                  // Gestion des modificateurs (+)/(-)
                   while (blocks.length > 0) {
                       let block = blocks[0].trim();
 
-                      // Cas 1: Le bloc est exactement "(+)" ou "(-)"
                       if (block === '(+)' || block === '(-)') {
                           let mod = block[1];
                           localData1 = localData1.replace(/^\s*([^,-]+)/, `(${mod})$1`);
@@ -104,7 +54,6 @@ document.addEventListener("DOMContentLoaded", async () => {
                           continue;
                       }
 
-                      // Cas 2: Le bloc commence par un modificateur suivi d'un numéro (ex: "(+)99_8_4_999-l")
                       let matchNum = block.match(/^\(([+-])\)(\d.*)/);
                       if (matchNum) {
                           let mod = matchNum[1];
@@ -114,17 +63,14 @@ document.addEventListener("DOMContentLoaded", async () => {
                           break; 
                       }
 
-                      // Cas 3: Le bloc contient des noms d'actrices avec modificateurs (ex: "(+)Kelsi Monroe, (+)Olivia Jayy")
                       if (block.includes('(+)') || block.includes('(-)')) {
                           let actressMods = block.split(',').map(s => s.trim());
-                          
                           actressMods.forEach(item => {
                               const itemMatch = item.match(/^\(([+-])\)(.*)/);
                               if (itemMatch) {
                                   let itemMod = itemMatch[1];
                                   let itemName = itemMatch[2].trim();
                                   if (itemName !== '') {
-                                      // Échappe les caractères spéciaux pour éviter le crash
                                       const escapedName = itemName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
                                       const regex = new RegExp(`(?<=^|,)\\s*${escapedName}\\s*(?=,|$|-)`, 'i');
                                       localData1 = localData1.replace(regex, `(${itemMod})${itemName}`);
@@ -137,43 +83,31 @@ document.addEventListener("DOMContentLoaded", async () => {
                       break;
                   }
                   
-                  let data2Raw = blocks[0] || '';
+                  let data2Raw = (blocks[0] || '').replace(/^-\s*/, '').trim();
                   let dataClr = blocks[1] || '';
                   let dataWeight = blocks[2] || '';
                   
-                  data2Raw = data2Raw.replace(/^-\s*/, '').trim();
-                  
-                  // On utilise localData1 pour construire la balise
                   let attrs = `data-1="${localData1}" data-2="${data2Raw}"`;
                   if (dataClr) attrs += ` data-clr="${dataClr}"`;
                   if (dataWeight) attrs += ` data-weight="${dataWeight}"`;
                   
                   let srcAttr = (dataWeight.toLowerCase() === 'heavy') ? `data-src="${url}"` : `src="${url}"`;
-                  
                   htmlOutput += `<img ${attrs} ${srcAttr} data-fallback="">\n`;
               }
           } catch (err) {
-              // Si une erreur survient sur cette ligne spécifique, on l'affiche dans la console
-              // mais on n'arrête pas le chargement de la galerie !
-              console.warn(
-                  `%c⚠️ Erreur de formatage ignorée à la ligne ${index + 1} :\n%c${trimmed}`,
-                  "color: #FF9800; font-weight: bold;",
-                  "color: #FFF; font-family: monospace;"
-              );
-              console.error(`Détail de l'erreur : ${err.message}`);
+              console.warn(`%c⚠️ Erreur de formatage ignorée ligne ${index + 1} :\n%c${trimmed}`, "color: #FF9800;", "color: #FFF; font-family: monospace;");
           }
       });
-      
       return htmlOutput;
   }
+
   // ==========================================
   // CHARGEMENT DE LA GALERIE
   // ==========================================
   async function loadGalleryFromTxt() {
-    // On récupère la liste depuis lists.js
-    let txtFiles = window.GALLERY_TXT_FILES || [];               
+    let txtFiles = window.GALLERY_TXT_FILES || []; 
     
-    // 1. Vérifier test.txt
+    // Vérifier test.txt
     try {
         const testRes = await fetch(`data/test.txt`);
         if (testRes.ok) {
@@ -190,17 +124,11 @@ document.addEventListener("DOMContentLoaded", async () => {
         });
 
         const contents = await Promise.all(fetchPromises);
-        
         let allHtml = '';
-        
-        // ⬇⬇⬇ C'EST ICI QUE LA CORRECTION SE FAIT ⬇⬇⬇
-        // On passe TOUS les fichiers dans le parseur. 
-        // Il gérera les balises <img> déjà existantes ET le texte brut.
         contents.forEach(content => {
             if (!content) return;
             allHtml += parseRawTxtToHtml(content) + '\n';
         });
-        // ⬆⬆⬆ FIN DE LA CORRECTION ⬆⬆⬆
         
         const tempDiv = document.createElement('div');
         tempDiv.innerHTML = allHtml;
@@ -225,7 +153,6 @@ document.addEventListener("DOMContentLoaded", async () => {
         window.lightMediaData.forEach(el => gallery.appendChild(el));
 
         initApp(window.allMediaData);
-        window.updateLoadButton();
         
     } catch (error) {
         console.error(error);
@@ -234,7 +161,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 
   // ==========================================
-  // INITIALISATION
+  // INITIALISATION & MISE À JOUR GLOBALE
   // ==========================================
   function initApp(galleryImages) {
     function getOrCreateChiaroLayer() {
@@ -269,6 +196,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       chiaroLayer.style.opacity = (state.chiaroscuroActive && !(state.colorFilter.colorActive || state.colorFilter.lumActive)) ? '1' : '0';
     }
 
+    // Initialisation
     buildCollections(galleryImages);
     applyLazyLoading(galleryImages);
     
@@ -279,33 +207,47 @@ document.addEventListener("DOMContentLoaded", async () => {
     enableTagBackgroundChange(updateBodyBackground);
   }
 
-  // ==========================================
-  // DEBUG CONSOLE
-  // ==========================================
-  window.injectNewImages = function(htmlString) {
-    const temp = document.createElement('div');
-    temp.innerHTML = parseRawTxtToHtml(htmlString); // On utilise le parser ici aussi !
-    const newImgs = Array.from(temp.querySelectorAll('img, video, iframe'));
-    
-    newImgs.forEach(el => {
-        applyCombinedData(el);
-        window.allMediaData.push(el);
-        if (el.tagName.toLowerCase() === 'img' && el.hasAttribute('data-src')) {
-            window.heavyMediaData.push(el);
-        } else {
-            window.lightMediaData.push(el);
+  // Fonction globale appelée par filters.js quand une image lourde est chargée
+  window.refreshFiltersAndGallery = function() {
+    // 1. Mettre à jour le compteur global du bouton
+    const heavyBtn = document.getElementById('load-heavy-btn');
+    const heavyCountDisplay = document.getElementById('heavy-count-display');
+    if (heavyBtn && heavyCountDisplay) {
+        heavyCountDisplay.textContent = window.heavyMediaData.length;
+        if (window.heavyMediaData.length === 0) {
+            heavyBtn.disabled = true;
+            heavyBtn.innerHTML = "All heavy loaded";
         }
-    });
+    }
 
-    autoPopulateDatasets(window.allMediaData);
-    buildCollections(window.allMediaData);
-    createFilterCheckboxes(window.allMediaData);
-    window.updateLoadButton();
+    // 2. Reconstruire les filtres (pour mettre à jour les +X)
+    if (typeof createFilterCheckboxes === 'function') {
+        createFilterCheckboxes(window.allMediaData);
+    }
     
-    console.log(`✅ ${newImgs.length} éléments injectés !`);
+    // 3. Rafraîchir la galerie
+    if (typeof state !== 'undefined' && state.triggerFilter) {
+        state.triggerFilter();
+    }
   };
+
+  // Gérer le bouton global "Load all"
+  document.addEventListener('click', (e) => {
+      if (e.target && e.target.id === 'load-heavy-btn') {
+          if (window.heavyMediaData.length === 0) return;
+          
+          window.heavyMediaData.forEach(el => {
+              el.src = el.getAttribute('data-src');
+              el.removeAttribute('data-src');
+          });
+          
+          window.isHeavyLoaded = true;
+          window.heavyMediaData = []; 
+          window.refreshFiltersAndGallery();
+      }
+  });
 
   loadGalleryFromTxt();
 });
 
-console.log("main > done ");
+console.log("main > NEW HEAVY IMG BEAHAVIOUR ");
