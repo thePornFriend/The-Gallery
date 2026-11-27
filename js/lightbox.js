@@ -83,12 +83,54 @@ function enableZoomDrag() {
 
   function generateDescription(media) {
     const galleryId = media.dataset.gallery || "—";
-    const actresses = cleanActressNames(media.dataset.actress || media.alt || "");
+    const rawActress = media.dataset.actress || media.dataset.collectionActresses || media.alt || "";
+    const actresses = cleanActressNames(rawActress);
+    
     const cropped = new Set(cleanActressNames(media.dataset.croppedActresses || "").map(n => n.toLowerCase()));
-    const labeled = actresses.map(n => cropped.has(n.toLowerCase()) ? `${n} (<i>cropped</i>)` : n);
-    return `Image n° : ${galleryId}<br>${joinWithAmpersand(labeled)}`;
-  }
+    
+    // On entoure chaque nom d'un <span> cliquable
+    const labeled = actresses.map(n => {
+        const isCropped = cropped.has(n.toLowerCase());
+        const displayName = isCropped ? `${n} (<i>cropped</i>)` : n;
+        return `<span class="clickable-actress" data-actress="${n}">${displayName}</span>`;
+    });
+    
+    const onlyExcluded = actresses.length > 0 && (!media.dataset.actress || media.dataset.actress.trim() === "");
+    const suffix = onlyExcluded ? " <i>(not visible)</i>" : "";
 
+    // On ajoute le studio cliquable
+    const studioName = media.dataset.studio || (media._collection && media._collection.studio) || "";
+    let studioHtml = "";
+    if (studioName) {
+        studioHtml = `<br>Studio : <span class="clickable-studio" data-studio="${studioName}">${studioName}</span>`;
+    }
+
+    return `Image n° : ${galleryId}<br>${joinWithAmpersand(labeled)}${suffix}${studioHtml}`;
+  }
+  // Écouter les clics sur les noms dans la description
+  descBox.addEventListener('click', (e) => {
+    const actressSpan = e.target.closest('.clickable-actress');
+    if (actressSpan) {
+        e.stopPropagation();
+        const actressName = actressSpan.dataset.actress;
+        closeLightbox(); // On ferme la lightbox d'image
+        if (typeof showScenesForActress === 'function') {
+            showScenesForActress(actressName);
+        }
+        return;
+    }
+
+    const studioSpan = e.target.closest('.clickable-studio');
+    if (studioSpan) {
+        e.stopPropagation();
+        const studioName = studioSpan.dataset.studio;
+        closeLightbox(); // On ferme la lightbox d'image
+        if (typeof showScenesForStudio === 'function') {
+            showScenesForStudio(studioName);
+        }
+        return;
+    }
+  });
   function applyColorFilterFromHex(hex) {
     const active = document.getElementById('color-active');
     const hue    = document.getElementById('color-hue');
@@ -233,7 +275,13 @@ function enableZoomDrag() {
   }
 
   function openLightbox(clickedMedia) {
-    allMedia = Array.from(document.querySelectorAll(".img-container img, .img-container video, .img-container iframe"));
+    // On utilise la liste globale si elle existe pour pouvoir naviguer partout
+    if (window.allMediaData && window.allMediaData.length > 0) {
+        allMedia = window.allMediaData;
+    } else {
+        allMedia = Array.from(document.querySelectorAll(".img-container img, .img-container video, .img-container iframe"));
+    }
+    
     currentIndex = allMedia.indexOf(clickedMedia);
     if (currentIndex !== -1) {
       showImage(currentIndex);
@@ -241,6 +289,10 @@ function enableZoomDrag() {
       document.body.style.overflow = "hidden";
     }
   }
+  
+  // ⬇⬇⬇ AJOUTE CETTE LIGNE JUSTE EN DESSOUS ⬇⬇⬇
+  // Exposer la fonction pour que scenes.js puisse l'appeler
+  window.triggerLightbox = openLightbox;
 
   function closeLightbox() {
     lightbox.classList.remove("visible");
@@ -474,4 +526,4 @@ function enableZoomDrag() {
   });
 }
 
-console.log("lighbox > done");
+console.log("lighbox > interactive !!!");
