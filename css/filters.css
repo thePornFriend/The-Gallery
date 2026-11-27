@@ -88,3 +88,113 @@
 
 .actress-list label.related-actress { background-color: rgba(120, 165, 250, 0.72); color: #050505; font-weight: 600; box-shadow: 0 3px 9px rgba(0, 70, 180, 0.28); }
 .actress-list label.related-actress:hover { background-color: #cce0ff; box-shadow: 0 6px 15px rgba(0, 123, 255, 0.35); }
+
+
+/* ==========================================
+   AJOUTS : PANNEAU HEAVY ET BADGES (Sans modifier le design d'origine)
+   ========================================== */
+
+/* Le panneau de contrôle en haut à gauche */
+.heavy-controls {
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-family: 'Poppins', sans-serif;
+    font-size: 0.75em;
+    z-index: 10;
+}
+
+.heavy-btn {
+    background: rgba(0, 123, 255, 0.1);
+    color: rgba(0, 123, 255, 0.8);
+    border: 1px solid rgba(0, 123, 255, 0.3);
+    padding: 3px 6px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-family: inherit;
+    font-weight: 600;
+    transition: all 0.2s ease;
+}
+.heavy-btn:hover:not(:disabled) {
+    background: rgba(0, 123, 255, 0.2);
+    color: #fba3dc;
+    border-color: #fba3dc;
+}
+.heavy-btn:disabled {
+    opacity: 0.5;
+    cursor: default;
+    background: #e0e0e0;
+    color: #888;
+    border-color: #ccc;
+}
+
+/* Le Switch (Toggle) */
+.heavy-switch { position: relative; display: inline-block; width: 24px; height: 14px; }
+.heavy-switch input { opacity: 0; width: 0; height: 0; }
+.heavy-switch .slider { position: absolute; cursor: pointer; inset: 0; background-color: #ccc; transition: .3s; border-radius: 14px; }
+.heavy-switch .slider:before { position: absolute; content: ""; height: 10px; width: 10px; left: 2px; bottom: 2px; background-color: white; transition: .3s; border-radius: 50%; }
+.heavy-switch input:checked + .slider { background-color: #4CAF50; }
+.heavy-switch input:checked + .slider:before { transform: translateX(10px); }
+.heavy-switch-label { color: rgba(0, 123, 255, 0.6); font-weight: 600; }
+
+/* Préparation des pilules pour accueillir le badge à droite */
+.actress-list label.has-heavy-badge,
+.tag-list label.has-heavy-badge,
+.prod-global-list label.has-heavy-badge,
+.prod-grouped-list label.has-heavy-badge,
+.actress-list label.heavy-only-label,
+.tag-list label.heavy-only-label,
+.prod-global-list label.heavy-only-label,
+.prod-grouped-list label.heavy-only-label {
+    position: relative;
+    padding-right: 32px; /* Espace pour ne pas que le texte passe sous le badge */
+}
+
+/* Dégradé vers le vert pour les images mixtes (à l'extrême droite) */
+.actress-list label.has-heavy-badge,
+.tag-list label.has-heavy-badge,
+.prod-global-list label.has-heavy-badge,
+.prod-grouped-list label.has-heavy-badge {
+    /* On utilise background-image pour se superposer à ta couleur d'origine sans l'effacer */
+    background-image: linear-gradient(to right, transparent 60%, rgba(76, 175, 80, 0.5) 100%);
+}
+
+/* Label 100% lourd (Texte vert et hover flashy) */
+.actress-list label.heavy-only-label,
+.tag-list label.heavy-only-label,
+.prod-global-list label.heavy-only-label,
+.prod-grouped-list label.heavy-only-label {
+    color: #4CAF50 !important;
+    font-weight: 600;
+    cursor: pointer;
+}
+.actress-list label.heavy-only-label:hover,
+.tag-list label.heavy-only-label:hover,
+.prod-global-list label.heavy-only-label:hover,
+.prod-grouped-list label.heavy-only-label:hover {
+    color: #00FF00 !important;
+    text-shadow: 0 0 5px rgba(0, 255, 0, 0.6);
+}
+
+/* Le badge +X */
+.heavy-badge {
+    position: absolute;
+    right: 6px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #4CAF50;
+    font-weight: bold;
+    font-size: 0.85em;
+    cursor: pointer;
+    padding: 2px 4px;
+    border-radius: 4px;
+    z-index: 2;
+}
+.heavy-badge:hover {
+    color: #fff;
+    background: #4CAF50;
+}
