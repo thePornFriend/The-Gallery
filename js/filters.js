@@ -1,10 +1,19 @@
 // ==========================================
 // 1. GRILLE DE CHECKBOXES (Actrices, Tags)
 // ==========================================
-function buildCheckboxGrid(container, items, displayName = k => k) {
+function buildCheckboxGrid(container, counts, displayName = k => k, onLoadHeavy = null) {
   const capitalize = s => s.charAt(0).toUpperCase() + s.slice(1);
-  const sorted = [...items.keys()].sort((a, b) => displayName(a).localeCompare(displayName(b), 'fr', { sensitivity: 'base' }));
-  const perCol = Math.ceil(sorted.length / 5);
+  const showHeavy = document.getElementById('toggle-heavy-filters')?.checked;
+  
+  // Fusionner les clés pour l'affichage
+  const allKeys = new Set([...counts.light.keys(), ...counts.heavy.keys()]);
+  
+  const sorted = [...allKeys].filter(k => {
+      // Si showHeavy est faux, on n'affiche que les labels qui ont au moins 1 image légère
+      return showHeavy ? true : (counts.light.get(k) || 0) > 0;
+  }).sort((a, b) => displayName(a).localeCompare(displayName(b), 'fr', { sensitivity: 'base' }));
+
+  const perCol = Math.ceil(sorted.length / 5) || 1;
   container.innerHTML = '';
   const checkboxes = [];
 
@@ -14,31 +23,77 @@ function buildCheckboxGrid(container, items, displayName = k => k) {
     for (const item of sorted.slice(i * perCol, (i + 1) * perCol)) {
       const label = document.createElement('label');
       const display = capitalize(displayName(item));
-      label.innerHTML = `<input type="checkbox" value="${item}"> ${display} (${items.get(item)})`;
+      
+      const lCount = counts.light.get(item) || 0;
+      const hCount = counts.heavy.get(item) || 0;
+      
+      let countHtml = '';
+      
+      if (showHeavy && hCount > 0) {
+          // Si on affiche les lourds, on montre (X +Y)
+          if (lCount === 0) {
+              // Uniquement des lourds : on rend le label entier cliquable pour charger
+              countHtml = `(<span class="heavy-badge" data-val="${item}">+${hCount}</span>)`;
+              label.classList.add('heavy-only-label');
+              label.title = "Cliquez pour charger ces images lourdes";
+          } else {
+              // Mélange de légers et de lourds
+              countHtml = `(${lCount} <span class="heavy-badge" data-val="${item}">+${hCount}</span>)`;
+          }
+      } else {
+          // Que des légers (ou lourds masqués)
+          countHtml = `(${lCount})`;
+      }
+
+      label.innerHTML = `<input type="checkbox" value="${item}"> ${display} ${countHtml}`;
+      
       const cb = label.firstChild;
+      
+      // Si c'est un label "heavy only", cliquer sur le label charge les images
+      if (lCount === 0 && showHeavy && hCount > 0 && onLoadHeavy) {
+          label.addEventListener('click', (e) => {
+              if (e.target !== cb && !e.target.classList.contains('heavy-badge')) {
+                  e.preventDefault();
+                  onLoadHeavy(item);
+              }
+          });
+      }
+
       checkboxes.push(cb);
       col.appendChild(label);
     }
     container.appendChild(col);
   }
+  
+  // Ajouter les écouteurs sur les badges +X
+  if (onLoadHeavy) {
+      container.querySelectorAll('.heavy-badge').forEach(badge => {
+          badge.addEventListener('click', (e) => {
+              e.preventDefault(); 
+              e.stopPropagation(); 
+              onLoadHeavy(badge.dataset.val);
+          });
+      });
+  }
+  
   return checkboxes;
 }
 
 // ==========================================
 // 2. GRILLE DES STUDIOS (avec Hiérarchie)
 // ==========================================
-function buildStudioFilterGrid(container, studioCount, imgData) {
+function buildStudioFilterGrid(container, lightCounts, heavyCounts, imgData, onLoadHeavy) {
     const capitalize = s => s.charAt(0).toUpperCase() + s.slice(1);
-    const hierarchy = new Map();
-    const directCounts = new Map(studioCount);
-    const aggregateCounts = new Map();
+    const showHeavy = document.getElementById('toggle-heavy-filters')?.checked;
     
-    const allStudios = [...studioCount.keys()].sort((a, b) => a.localeCompare(b, 'fr', { sensitivity: 'base' }));
+    // Construction de la hiérarchie
+    const hierarchy = new Map();
+    const allStudios = [...new Set([...lightCounts.keys(), ...heavyCounts.keys()])].sort((a, b) => a.localeCompare(b, 'fr', { sensitivity: 'base' }));
+    
     allStudios.forEach(s => hierarchy.set(s, { id: s, parent: null, children: [], checkboxes: [] }));
     
     Object.entries(state.STUDIO_GROUPS).forEach(([groupName, members]) => {
         if (!hierarchy.has(groupName)) hierarchy.set(groupName, { id: groupName, parent: null, children: [], checkboxes: [] });
-        
         members.forEach(member => {
             if (!hierarchy.has(member)) hierarchy.set(member, { id: member, parent: null, children: [], checkboxes: [] });
             hierarchy.get(member).parent = groupName;
@@ -46,20 +101,30 @@ function buildStudioFilterGrid(container, studioCount, imgData) {
         });
     });
 
+    const aggLight = new Map();
+    const aggHeavy = new Map();
+    
     function calcAggregate(nodeId) {
         const node = hierarchy.get(nodeId);
-        let count = directCounts.get(nodeId) || 0;
-        node.children.forEach(c => count += calcAggregate(c));
-        aggregateCounts.set(nodeId, count);
-        return count;
+        let lCount = lightCounts.get(nodeId) || 0;
+        let hCount = heavyCounts.get(nodeId) || 0;
+        node.children.forEach(c => {
+            const childAgg = calcAggregate(c);
+            lCount += childAgg.l;
+            hCount += childAgg.h;
+        });
+        aggLight.set(nodeId, lCount);
+        aggHeavy.set(nodeId, hCount);
+        return { l: lCount, h: hCount };
     }
+    
     Array.from(hierarchy.keys()).forEach(id => {
         if (!hierarchy.get(id).parent) calcAggregate(id);
     });
 
     const activeNodes = new Set();
     Array.from(hierarchy.keys()).forEach(id => {
-        if (aggregateCounts.get(id) > 0) activeNodes.add(id);
+        if (aggLight.get(id) > 0 || (showHeavy && aggHeavy.get(id) > 0)) activeNodes.add(id);
     });
     activeNodes.forEach(id => {
         let p = hierarchy.get(id).parent;
@@ -124,20 +189,11 @@ function buildStudioFilterGrid(container, studioCount, imgData) {
     }
 
     function attachSceneTriggers(label, studioId) {
-        label.title = "Double-cliquez (ou appui long) pour voir les scènes";
+        label.title = "Double-cliquez pour voir les scènes";
         label.addEventListener('dblclick', (e) => {
             e.preventDefault(); e.stopPropagation();
             if (typeof showScenesForStudio === 'function') showScenesForStudio(studioId);
         });
-        let pressTimer;
-        label.addEventListener('touchstart', (e) => {
-            pressTimer = setTimeout(() => {
-                e.preventDefault();
-                if (typeof showScenesForStudio === 'function') showScenesForStudio(studioId);
-            }, 600);
-        }, { passive: false });
-        label.addEventListener('touchend', () => clearTimeout(pressTimer));
-        label.addEventListener('touchmove', () => clearTimeout(pressTimer));
     }
 
     container.innerHTML = '';
@@ -149,6 +205,22 @@ function buildStudioFilterGrid(container, studioCount, imgData) {
         hierarchy.get(value).checkboxes.push(cb);
         cb.addEventListener('change', () => handleCheckboxClick(value));
         return cb;
+    }
+
+    function createLabelContent(value, isGroup = false) {
+        const lCount = aggLight.get(value) || 0;
+        const hCount = aggHeavy.get(value) || 0;
+        const display = capitalize(value);
+        
+        let countHtml = '';
+        if (showHeavy && hCount > 0) {
+            if (lCount === 0) countHtml = `(<span class="heavy-badge" data-val="${value}">+${hCount}</span>)`;
+            else countHtml = `(${lCount} <span class="heavy-badge" data-val="${value}">+${hCount}</span>)`;
+        } else {
+            countHtml = `(${lCount})`;
+        }
+        
+        return `${isGroup ? '' : ' '}${display} ${countHtml}`;
     }
 
     const globalList = document.createElement('div');
@@ -165,7 +237,12 @@ function buildStudioFilterGrid(container, studioCount, imgData) {
         const label = document.createElement('label');
         const cb = createCheckbox(studioName);
         label.appendChild(cb);
-        label.appendChild(document.createTextNode(` ${capitalize(studioName)} (${aggregateCounts.get(studioName) || 0})`));
+        
+        // Insérer le texte avec le span pour le badge
+        const span = document.createElement('span');
+        span.innerHTML = createLabelContent(studioName);
+        label.appendChild(span);
+        
         attachSceneTriggers(label, studioName);
         globalColumns[colIndex].appendChild(label);
     });
@@ -199,7 +276,11 @@ function buildStudioFilterGrid(container, studioCount, imgData) {
         header.className = 'prod-group-header';
         const parentCb = createCheckbox(groupName);
         header.appendChild(parentCb);
-        header.appendChild(document.createTextNode(` ${groupName} (${aggregateCounts.get(groupName) || 0})`));
+        
+        const headerSpan = document.createElement('span');
+        headerSpan.innerHTML = createLabelContent(groupName, true);
+        header.appendChild(headerSpan);
+        
         attachSceneTriggers(header, groupName);
         groupDiv.appendChild(header);
 
@@ -211,7 +292,11 @@ function buildStudioFilterGrid(container, studioCount, imgData) {
             const label = document.createElement('label');
             const cb = createCheckbox(studioName);
             label.appendChild(cb);
-            label.appendChild(document.createTextNode(` ${capitalize(studioName)} (${aggregateCounts.get(studioName) || 0})`));
+            
+            const span = document.createElement('span');
+            span.innerHTML = createLabelContent(studioName);
+            label.appendChild(span);
+            
             attachSceneTriggers(label, studioName);
             itemsDiv.appendChild(label);
         });
@@ -221,6 +306,33 @@ function buildStudioFilterGrid(container, studioCount, imgData) {
     });
 
     container.appendChild(groupedList);
+
+    // Écouteurs sur les badges
+    if (onLoadHeavy) {
+        container.querySelectorAll('.heavy-badge').forEach(badge => {
+            badge.addEventListener('click', (e) => {
+                e.preventDefault(); e.stopPropagation();
+                onLoadHeavy(badge.dataset.val);
+            });
+        });
+        
+        // Labels "heavy only"
+        container.querySelectorAll('.prod-global-list label, .prod-group-items label').forEach(label => {
+            const cb = label.querySelector('input[type="checkbox"]');
+            if (!cb) return;
+            const val = cb.value;
+            const lCount = aggLight.get(val) || 0;
+            if (lCount === 0 && showHeavy && (aggHeavy.get(val) || 0) > 0) {
+                label.addEventListener('click', (e) => {
+                    if (e.target !== cb && !e.target.classList.contains('heavy-badge')) {
+                        e.preventDefault();
+                        onLoadHeavy(val);
+                    }
+                });
+            }
+        });
+    }
+
     return Array.from(container.querySelectorAll('input[type="checkbox"]'));
 }
 
@@ -231,12 +343,27 @@ function createFilterCheckboxes(images) {
   const mainList = document.querySelector('.actress-list-main');
   const moreList = document.querySelector('.actress-list-more');
   const tagList = document.querySelector('.tag-list');
+  const prodList = document.querySelector('.prod-list');
   const modeSelect = document.getElementById('filter-mode');
   const toggleBtn = document.querySelector('.actress-toggle');
   const actressSec = document.querySelector('.actress-section');
+  const toggleHeavyFilters = document.getElementById('toggle-heavy-filters');
 
-  images.forEach(img => { if (!img.dataset.studio || img.dataset.studio.trim() === '') img.dataset.studio = 'unassigned'; });
-  if (!mainList || !moreList || !tagList || !modeSelect) return;
+  if (!mainList || !tagList || !modeSelect) return;
+
+  // Mettre à jour le bouton global
+  const heavyBtn = document.getElementById('load-heavy-btn');
+  const heavyCountDisplay = document.getElementById('heavy-count-display');
+  if (heavyBtn && heavyCountDisplay) {
+      heavyCountDisplay.textContent = window.heavyMediaData.length;
+      heavyBtn.disabled = window.heavyMediaData.length === 0;
+      if (heavyBtn.disabled) heavyBtn.innerHTML = "All heavy loaded";
+  }
+
+  // Éviter d'ajouter l'écouteur plusieurs fois
+  if (toggleHeavyFilters) {
+      toggleHeavyFilters.onchange = () => createFilterCheckboxes(images);
+  }
 
   const stripParens = n => n.replace(/^\(|\)$/g, '').trim();
   const isAmateur = n => /^\(.*\)$/.test(n.trim());
@@ -249,37 +376,78 @@ function createFilterCheckboxes(images) {
     return stripped;
   };
 
-  const countMap = (items) => {
-    const count = new Map();
-    items.forEach(arr => arr.forEach(v => count.set(v, (count.get(v) || 0) + 1)));
-    return count;
+  // --- NOUVELLE LOGIQUE DE COMPTAGE ---
+  const createCounts = (extractor) => {
+      const light = new Map();
+      const heavy = new Map();
+      images.forEach(img => {
+          // Si l'image est lourde et n'est pas chargée (a encore data-src)
+          const isHeavy = img.hasAttribute('data-src');
+          const values = extractor(img);
+          values.forEach(v => {
+              if (isHeavy) heavy.set(v, (heavy.get(v) || 0) + 1);
+              else light.set(v, (light.get(v) || 0) + 1);
+          });
+      });
+      return { light, heavy };
   };
 
-  const imgData = images.map(img => {
-    const rawActs = (img.dataset.actress || '').split(',').map(n => n.trim()).filter(Boolean);
-    const mainActs = rawActs.filter(n => !isAmateurEntry(n)).map(n => 'main:' + n);
-    const amateurActs = rawActs.filter(n => isAmateurEntry(n)).map(n => 'am:' + normalizeAmName(n));
-    
-    let rawTags = img.dataset.tag || '';
-    if (typeof normalizeTags === 'function') {
-        rawTags = normalizeTags(rawTags);
-    }
-    const tags = rawTags.split(',').map(t => t.trim()).filter(Boolean);
-    
-    const studios = (img.dataset.studio || '').split(',').map(s => s.trim()).filter(Boolean);
-    return { img, acts: [...mainActs, ...amateurActs], mainActs, amateurActs, tags, studios };
-  });
+  const extractMainActs = (img) => (img.dataset.actress || '').split(',').map(n => n.trim()).filter(n => n && !isAmateurEntry(n)).map(n => 'main:' + n);
+  const extractAmActs = (img) => (img.dataset.actress || '').split(',').map(n => n.trim()).filter(n => n && isAmateurEntry(n)).map(n => 'am:' + normalizeAmName(n));
+  const extractTags = (img) => {
+      let rawTags = img.dataset.tag || '';
+      if (typeof normalizeTags === 'function') rawTags = normalizeTags(rawTags);
+      return rawTags.split(',').map(t => t.trim()).filter(Boolean);
+  };
+  const extractStudios = (img) => (img.dataset.studio || '').split(',').map(s => s.trim()).filter(Boolean);
 
-  const mainCount = countMap(imgData.map(d => d.mainActs));
-  const amateurCount = countMap(imgData.map(d => d.amateurActs));
-  const tagCount = countMap(imgData.map(d => d.tags));
-  const studioCount = countMap(imgData.map(d => d.studios));
+  const mainCounts = createCounts(extractMainActs);
+  const amateurCounts = createCounts(extractAmActs);
+  const tagCounts = createCounts(extractTags);
+  const studioCounts = createCounts(extractStudios);
 
-  const mainCheckboxes = buildCheckboxGrid(mainList, mainCount, stripPrefix);
-  const amateurCheckboxes = buildCheckboxGrid(moreList, amateurCount, stripPrefix);
-  const tagCheckboxes = buildCheckboxGrid(tagList, tagCount);
+  // --- FONCTION DE CHARGEMENT CIBLÉ ---
+  const loadHeavyForTarget = (val) => {
+      // On cherche les images lourdes qui matchent cette valeur
+      const cleanVal = val.replace(/^(main|am):/, '').toLowerCase();
+      
+      const toLoad = window.heavyMediaData.filter(img => {
+          // Match actrice
+          const acts = (img.dataset.actress || '').toLowerCase();
+          if (acts.includes(cleanVal)) return true;
+          
+          // Match tag
+          const tags = (img.dataset.tag || '').toLowerCase();
+          if (tags.includes(cleanVal)) return true;
+          
+          // Match studio (avec vérification de hiérarchie basique)
+          const studios = (img.dataset.studio || '').toLowerCase();
+          if (studios.includes(cleanVal)) return true;
+          if (state.studioHierarchy && state.studioHierarchy.has(val)) {
+              const node = state.studioHierarchy.get(val);
+              if (node.children.some(c => studios.includes(c.toLowerCase()))) return true;
+          }
 
-  const amateurImagesCount = imgData.filter(d => d.amateurActs.length > 0).length;
+          return false;
+      });
+
+      if (toLoad.length > 0) {
+          toLoad.forEach(el => {
+              el.src = el.getAttribute('data-src');
+              el.removeAttribute('data-src');
+          });
+          
+          window.heavyMediaData = window.heavyMediaData.filter(el => el.hasAttribute('data-src'));
+          window.refreshFiltersAndGallery();
+      }
+  };
+
+  // --- CONSTRUCTION DE L'UI ---
+  const mainCheckboxes = buildCheckboxGrid(mainList, mainCounts, stripPrefix, loadHeavyForTarget);
+  const amateurCheckboxes = buildCheckboxGrid(moreList, amateurCounts, stripPrefix, loadHeavyForTarget);
+  const tagCheckboxes = buildCheckboxGrid(tagList, tagCounts, k => k, loadHeavyForTarget);
+
+  const amateurImagesCount = images.filter(d => extractAmActs(d).length > 0).length;
   let amateurCb = null;
 
   if (amateurImagesCount > 0) {
@@ -307,42 +475,32 @@ function createFilterCheckboxes(images) {
 
   const actressCheckboxes = [...mainCheckboxes, ...amateurCheckboxes];
 
+  // Attacher les événements "dblclick" pour les scènes
   actressCheckboxes.forEach(cb => {
       const label = cb.closest('label');
       if (!label) return;
-      label.title = "Double-cliquez (ou appui long) pour voir ses scènes";
-      
+      label.title = "Double-cliquez pour voir ses scènes";
       label.addEventListener('dblclick', (e) => {
           e.preventDefault(); e.stopPropagation();
           if (typeof showScenesForActress === 'function') showScenesForActress(cb.value);
       });
-
-      let pressTimer;
-      label.addEventListener('touchstart', (e) => {
-          pressTimer = setTimeout(() => {
-              e.preventDefault();
-              if (typeof showScenesForActress === 'function') showScenesForActress(cb.value);
-          }, 600);
-      }, { passive: false });
-      label.addEventListener('touchend', () => clearTimeout(pressTimer));
-      label.addEventListener('touchmove', () => clearTimeout(pressTimer));
   });
     
   if (toggleBtn && actressSec) {
-    if (amateurCount.size === 0) toggleBtn.style.display = 'none';
+    if (amateurCounts.light.size === 0 && amateurCounts.heavy.size === 0) toggleBtn.style.display = 'none';
     else {
-      toggleBtn.addEventListener('click', (e) => {
+      toggleBtn.onclick = (e) => {
         e.stopPropagation();
         actressSec.classList.toggle('more-active');
         toggleBtn.textContent = actressSec.classList.contains('more-active') ? '← See main actresses' : 'See more actresses →';
-      });
+      };
     }
   }
 
-  const prodList = document.querySelector('.prod-list');
-  const studioCheckboxes = prodList ? buildStudioFilterGrid(prodList, studioCount, imgData) : [];
+  const studioCheckboxes = prodList ? buildStudioFilterGrid(prodList, studioCounts.light, studioCounts.heavy, images, loadHeavyForTarget) : [];
   const allCheckboxes = [...actressCheckboxes, ...tagCheckboxes, ...studioCheckboxes];
 
+  // --- LOGIQUE DE FILTRAGE ---
   const normalizeActress = n => {
     const t = n.trim();
     if (isAmateurEntry(t)) return 'am:' + normalizeAmName(t);
@@ -421,11 +579,15 @@ function createFilterCheckboxes(images) {
         return checkChildren(node);
     };
 
-    const visibleImages = imgData.filter(({ acts, tags, studios, amateurActs, img }) => {
+    const visibleImages = images.filter(img => {
+      const acts = extractMainActs(img).concat(extractAmActs(img));
+      const tags = extractTags(img);
+      const studios = extractStudios(img);
+      
       let passesCheckboxFilter;
       if (selected.length === 0) passesCheckboxFilter = true;
       else if (inclusive) {
-        const matchAll = selectedAll && amateurActs.length > 0;
+        const matchAll = selectedAll && extractAmActs(img).length > 0;
         const matchRest = selectedRest.some(v => {
             if (acts.includes(v) || tags.includes(v)) return true;
             if (studios.includes(v)) return true;
@@ -441,7 +603,7 @@ function createFilterCheckboxes(images) {
             if (isCoveredByParent(v)) return true;
             return false;
         });
-        const allReq = !selectedAll || amateurActs.length > 0;
+        const allReq = !selectedAll || extractAmActs(img).length > 0;
         passesCheckboxFilter = allReq && allCovered;
       }
       const passesGalleryFilter = state.selectedGalleryValues.size === 0 || state.selectedGalleryValues.has(img.dataset.gallery);
@@ -462,19 +624,13 @@ function createFilterCheckboxes(images) {
         }
       }
       return passesCheckboxFilter && passesGalleryFilter && passesColor;
-    }).map(({ img }) => img);
+    });
 
     const gallery = document.getElementById("gallery");
     
-    // ⬇⬇⬇ LOGIQUE POUR IGNORER LES IMAGES LOURDES ⬇⬇⬇
-    let renderImages = visibleImages;
-    if (window.isHeavyLoaded === false) {
-        renderImages = visibleImages.filter(img => !img.hasAttribute('data-src'));
-    }
-    // ⬆⬆⬆ FIN DE LA LOGIQUE ⬆⬆⬆
-
+    // On affiche les images filtrées
     gallery.innerHTML = '';
-    groupImagesByPrefix(renderImages);
+    groupImagesByPrefix(visibleImages);
     enableZoomDrag();
     updateRelatedActresses();
   };
@@ -690,5 +846,6 @@ function initColorFilter(updateBodyBackground) {
   [active, hue, lumActive, lumSlider, sim].forEach(el => el.addEventListener('input', update));
 }
 
+console.log("Filters > NEW HEAVY IMG BEAHAVIOUR");
 
 console.log("Filter > done");
