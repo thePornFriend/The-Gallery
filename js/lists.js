@@ -4,14 +4,20 @@
 
 // 1. Liste des fichiers .txt à charger par main.js
 window.GALLERY_TXT_FILES = [
-    'video.txt',
-    'VMG/Blacked_2025_2026.txt',
-    'VMG/Blacked_2014_2015_2016.txt',
+// 0-120
+    
     '0.txt', 
     // '001.txt', '002.txt', '003.txt', '004.txt', 
-    // '005.txt', '006.txt', '007.txt', '008.txt', '009.txt', 
+    // '005.txt', '006.txt', 
+    // '007.txt', '008.txt', '009.txt', 
     // '010.txt', '011.txt', '012.txt', '013.txt', '099.txt', 
-    // '100.txt', '105.txt', '110.txt', '120.txt'
+    // '100.txt', '105.txt', '110.txt', '120.txt'    
+    'video.txt',
+
+// VMG/BLACKED
+    'VMG/Blacked_2025_2026.txt', 'VMG/Blacked_2014_2015_2016.txt',
+// VMG/TUSHY
+    'VMG/Tushy_2017_2018.txt', 
 ];
 
 // 2. Règles d'auto-tagging
