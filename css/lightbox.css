@@ -299,3 +299,17 @@
 .scene-thumb-wrapper:hover .scene-thumb-overlay {
     opacity: 1;
 }
+
+/* Rend les noms d'actrices et de studios cliquables */
+.clickable-actress, .clickable-studio {
+    cursor: pointer;
+    color: #fba3dc; /* La couleur de ton thème */
+    text-decoration: underline;
+    transition: color 0.2s, text-shadow 0.2s;
+}
+
+.clickable-actress:hover, .clickable-studio:hover {
+    color: #fff;
+    text-shadow: 0 0 8px rgba(251, 163, 220, 0.8);
+    text-decoration: none;
+}
