@@ -308,4 +308,4 @@ document.addEventListener("DOMContentLoaded", async () => {
   loadGalleryFromTxt();
 });
 
-console.log("main > parsing plus robuste ");
+console.log("main > done ");
