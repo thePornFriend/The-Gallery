@@ -302,25 +302,35 @@ function normalizeTags(tagsString) {
     if (!tagsString) return '';
     
     return tagsString.split(',').map(t => {
-        const tag = t.trim();
+        let tag = t.trim();
+        if (!tag) return '';
+
+        // 1. Vérifier si c'est une abréviation définie dans lists.js
+        if (window.TAG_ABBREVIATIONS) {
+            const lowerTag = tag.toLowerCase();
+            if (window.TAG_ABBREVIATIONS[lowerTag]) {
+                return window.TAG_ABBREVIATIONS[lowerTag];
+            }
+        }
+
         const upper = tag.toUpperCase();
         
-        // Si le tag fait exactement 3 lettres et ne contient que des M et des F
+        // 2. Si le tag fait exactement 3 lettres et ne contient que des M et des F
         if (/^[MF]{3}$/.test(upper)) {
             return `Threesome : ${upper}`;
         }
-        // Si le tag fait exactement 4 lettres et ne contient que des M et des F
+        // 3. Si le tag fait exactement 4 lettres et ne contient que des M et des F
         if (/^[MF]{4}$/.test(upper)) {
             return `Foursome : ${upper}`;
         }
-        // (Optionnel) Si tu as des combinaisons à 5 lettres plus tard
+        // 4. Si tu as des combinaisons à 5 lettres
         if (/^[MF]{5}$/.test(upper)) {
             return `Fivesome : ${upper}`;
         }
         
-        // Si ce n'est pas une combinaison, on garde le tag tel quel
+        // Si ce n'est pas une combinaison ou une abréviation, on garde le tag tel quel
         return tag;
-    }).join(', ');
+    }).filter(Boolean).join(', '); // filter(Boolean) évite les virgules en trop si un tag est vide
 }
 
 function autoPopulateDatasets(images) {
@@ -453,4 +463,4 @@ function hueSimilarity(h1, h2) {
   return 100 * (1 - d / 180);
 }
 
-console.log("utils > done ");
+console.log("utils > TAG_ABBREVIATIONS ");
