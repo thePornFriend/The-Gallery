@@ -22,4 +22,4 @@ function filterForDevelopment(elements) {
     return filtered;
 }
 
-console.log("pre-selection > done");
+console.log("");
