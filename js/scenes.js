@@ -196,4 +196,4 @@ function showScenesForActress(actressName) {
     openScenesModal(`${formattedName} appears in :`, actressImages);
 }
 
-console.log("Scenes > NEW HEAVY IMG BEHAVIOUR");
+console.log("");
