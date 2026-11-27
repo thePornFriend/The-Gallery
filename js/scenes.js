@@ -4,6 +4,7 @@
 
 const MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 
+// Traduit dd/mm/yyyy en "d Month yyyy" et renvoie un timestamp pour le tri
 function parseDateToEnglish(dateStr) {
     if (!dateStr) return { formatted: "Unknown date", timestamp: 0 };
     const match = dateStr.trim().match(/^(\d{1,2})\s*\/\s*(\d{1,2})\s*\/\s*(\d{4})$/);
@@ -20,6 +21,7 @@ function parseDateToEnglish(dateStr) {
     return { formatted, timestamp };
 }
 
+// --- FONCTION GÉNÉRIQUE POUR CONSTRUIRE LA MODALE ---
 function openScenesModal(title, filteredImages) {
     const scenesMap = new Map();
     
@@ -46,6 +48,7 @@ function openScenesModal(title, filteredImages) {
         scene.timestamp = parsed.timestamp;
     });
     
+    // Tri : Du plus récent au plus ancien. Les dates inconnues (0) à la fin.
     scenesArray.sort((a, b) => {
         if (a.timestamp === 0) return 1;
         if (b.timestamp === 0) return -1;
@@ -61,11 +64,13 @@ function openScenesModal(title, filteredImages) {
 
         // ⬇⬇⬇ ÉCOUTEUR DE CLIC POUR RENVOYER VERS LA GALLERY ⬇⬇⬇
         modal.addEventListener('click', (e) => {
+            // Fermer si on clique sur le fond noir
             if (e.target === modal) {
                 closeScenesModal();
                 return;
             }
             
+            // Ouvrir la lightbox gallery si on clique sur une miniature
             const thumb = e.target.closest('.scene-thumb-wrapper');
             if (thumb) {
                 e.stopPropagation();
@@ -102,7 +107,6 @@ function openScenesModal(title, filteredImages) {
         `;
         
         scene.images.forEach(img => {
-            // ⬇⬇⬇ AJOUT DE data-gallery ICI ⬇⬇⬇
             html += `
                 <div class="scene-thumb-wrapper" data-gallery="${img.dataset.gallery}">
                     <img src="${img.src}" class="scene-thumb" loading="lazy">
@@ -132,7 +136,12 @@ function closeScenesModal() {
     }
 }
 
+// ==========================================
+// FONCTIONS SPÉCIFIQUES (Appelées par les filtres)
+// ==========================================
+
 function showScenesForStudio(studioName) {
+    // 1. On récupère le studio et tous ses enfants (hiérarchie)
     let validStudios = [studioName.toLowerCase()];
     if (state.studioHierarchy && state.studioHierarchy.has(studioName)) {
         const getChildren = (nodeId) => {
@@ -145,24 +154,37 @@ function showScenesForStudio(studioName) {
         getChildren(studioName);
     }
 
+    // 2. On filtre les images
     const allMedia = window.backupAllMedia || Array.from(document.querySelectorAll('#gallery img'));
     const studioImages = allMedia.filter(el => {
         if (el.tagName.toLowerCase() !== 'img') return false;
+        // ⬇⬇⬇ CORRECTION : On ignore les images non chargées ⬇⬇⬇
+        if (el.hasAttribute('data-src')) return false; 
+        
         const studios = (el.dataset.studio || '').toLowerCase().split(',').map(s => s.trim());
         return studios.some(s => validStudios.includes(s));
     });
 
+    // 3. Titre : "Scenes from : Nom du studio"
     openScenesModal(`Scenes from : ${studioName}`, studioImages);
 }
 
 function showScenesForActress(actressName) {
+    // 1. On nettoie le nom (retire le "main:" ou "am:" et les parenthèses)
     let displayName = actressName.replace(/^(main|am):/, '').replace(/^\(|\)$/g, '');
+    
+    // 2. On met une majuscule à chaque mot (ex: "nancy ace" -> "Nancy Ace")
     const formattedName = displayName.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ');
+    
     const cleanName = displayName.toLowerCase();
     
+    // 3. On filtre les images
     const allMedia = window.backupAllMedia || Array.from(document.querySelectorAll('#gallery img'));
     const actressImages = allMedia.filter(el => {
         if (el.tagName.toLowerCase() !== 'img') return false;
+        // ⬇⬇⬇ CORRECTION : On ignore les images non chargées ⬇⬇⬇
+        if (el.hasAttribute('data-src')) return false; 
+
         const acts = (el.dataset.actress || '').toLowerCase().split(',').map(n => n.trim());
         return acts.some(a => {
             const cleanA = a.replace(/^\(|\)$/g, ''); 
@@ -170,7 +192,8 @@ function showScenesForActress(actressName) {
         });
     });
 
+    // 4. Titre : "Nom de l'actrice appears in :"
     openScenesModal(`${formattedName} appears in :`, actressImages);
 }
 
-console.log("Scenes > Last try !");
+console.log("Scenes > NEW HEAVY IMG BEHAVIOUR");
