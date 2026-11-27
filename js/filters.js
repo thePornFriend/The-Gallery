@@ -33,7 +33,7 @@ function buildCheckboxGrid(container, counts, displayName = k => k, onLoadHeavy 
               label.classList.add('heavy-only-label');
               label.title = "Cliquez pour charger ces images lourdes";
           } else {
-              label.classList.add('has-heavy');
+              label.classList.add('has-heavy-badge');
           }
           // On ajoute le badge à l'extrême droite
           htmlContent += `<span class="heavy-badge" data-val="${item}">+${hCount}</span>`;
@@ -829,4 +829,4 @@ function initColorFilter(updateBodyBackground) {
 
 console.log("Filter > done");
 
-console.log("Filters > NEW HEAVY IMG BEAHAVIOUR v2");
+console.log("Filters > NEW HEAVY IMG BEAHAVIOUR v3");
