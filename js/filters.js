@@ -827,6 +827,4 @@ function initColorFilter(updateBodyBackground) {
   [active, hue, lumActive, lumSlider, sim].forEach(el => el.addEventListener('input', update));
 }
 
-console.log("Filter > done");
-
-console.log("Filters > NEW HEAVY IMG BEAHAVIOUR v3");
+console.log("Filters > NEW HEAVY IMG BEAHAVIOUR v4");
