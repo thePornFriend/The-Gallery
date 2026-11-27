@@ -42,4 +42,4 @@ window.TAG_ABBREVIATIONS = {
 };
 
 
-console.log("lists >");
+console.log("");
