@@ -82,4 +82,4 @@ window.searchProject = function(textToSearch) {
     }
 };
 
-console.log("Console tools > done");
+console.log("Console tools >");
