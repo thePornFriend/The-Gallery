@@ -61,6 +61,32 @@ function openScenesModal(title, filteredImages) {
         modal.id = 'scenes-modal';
         modal.className = 'scenes-modal';
         document.body.appendChild(modal);
+
+        // ⬇⬇⬇ NOUVEL ÉCOUTEUR DE CLIC ⬇⬇⬇
+        modal.addEventListener('click', (e) => {
+            // Fermer si on clique sur le fond noir
+            if (e.target === modal) {
+                closeScenesModal();
+                return;
+            }
+            
+            // Ouvrir l'image si on clique sur une miniature
+            const thumb = e.target.closest('.scene-thumb-wrapper');
+            if (thumb) {
+                e.stopPropagation();
+                const src = thumb.dataset.src;
+                
+                // On retrouve l'élément <img> original dans la liste globale
+                const targetMedia = window.allMediaData.find(el => el.src === src);
+                
+                if (targetMedia) {
+                    closeScenesModal(); // On ferme la modale des scènes
+                    if (typeof window.triggerLightbox === 'function') {
+                        window.triggerLightbox(targetMedia); // On ouvre la lightbox d'image !
+                    }
+                }
+            }
+        });
     }
 
     let html = `
@@ -171,4 +197,4 @@ function showScenesForActress(actressName) {
     openScenesModal(`${formattedName} appears in :`, actressImages);
 }
 
-console.log("Scenes > done ");
+console.log("Scenes > interactive !!! ");
