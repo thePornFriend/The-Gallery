@@ -509,4 +509,4 @@ function enableZoomDrag() {
   });
 }
 
-console.log("lightbox > last try");
+console.log("");
