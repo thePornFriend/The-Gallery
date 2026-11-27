@@ -61,4 +61,4 @@ document.addEventListener("DOMContentLoaded", () => {
     }, 2500);
 });
 
-console.log("debug-dates > done");
+console.log("");
