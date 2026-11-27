@@ -198,3 +198,46 @@
     color: #fff;
     background: #4CAF50;
 }
+
+/* ==========================================
+   CORRECTIONS FINALES
+   ========================================== */
+
+/* 1. Décaler le bouton "See main" pour ne pas cacher le panneau Heavy */
+.actress-section.more-active .actress-toggle { 
+    right: auto; 
+    left: 160px; /* Pousse le bouton vers la droite pour laisser la place au bouton Load */
+}
+
+/* 2. Labels 100% lourds : Vert complet ! */
+.actress-list label.heavy-only-label,
+.tag-list label.heavy-only-label,
+.prod-global-list label.heavy-only-label,
+.prod-grouped-list label.heavy-only-label {
+    background-color: #4CAF50 !important; /* Fond vert */
+    color: #ffffff !important;            /* Texte blanc */
+    font-weight: 600;
+    cursor: pointer;
+    border: 1px solid #388E3C;
+}
+
+/* Effet au survol des labels 100% lourds (Vert plus foncé) */
+.actress-list label.heavy-only-label:hover,
+.tag-list label.heavy-only-label:hover,
+.prod-global-list label.heavy-only-label:hover,
+.prod-grouped-list label.heavy-only-label:hover {
+    background-color: #388E3C !important; 
+    color: #ffffff !important;
+    transform: translateY(-3px); /* On garde ton effet de soulèvement */
+}
+
+/* 3. Le badge +X doit devenir blanc pour être lisible sur le fond vert */
+.heavy-only-label .heavy-badge {
+    color: #ffffff;
+    background: rgba(255, 255, 255, 0.25);
+}
+
+.heavy-only-label .heavy-badge:hover {
+    background: #ffffff;
+    color: #4CAF50;
+}
