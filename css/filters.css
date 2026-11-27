@@ -17,26 +17,17 @@
 .gallery-label { display: inline-flex; align-items: center; gap: 4px; background: #2323FF; color: #fff; padding: 3px 6px; border-radius: 12px; font-size: 13px; }
 .gallery-label button { background: none; border: none; color: #fff; cursor: pointer; font-size: 14px; line-height: 1; padding: 0; }
 
-/* --- HEADER ACTRESSES (Grille pour éviter les chevauchements) --- */
+/* ACTRESS SECTION (Slider) */
 .actress-section { position: relative; }
-.actress-header { 
-  display: grid; 
-  grid-template-columns: 1fr auto 1fr; /* Gauche, Centre, Droite */
-  align-items: center; 
-  margin-bottom: 0.5em; 
-  min-height: 2em; 
-}
-.actress-header h3 { 
-  margin: 0; 
-}
+.actress-header { position: relative; display: flex; align-items: center; justify-content: center; min-height: 2em; margin-bottom: 0.5em; }
+.actress-header h3 { margin: 0; }
 .actress-toggle {
-  justify-self: end; /* Reste à droite, aligné avec "See more" */
-  background: none; border: none;
+  position: absolute; top: 50%; right: 0; transform: translateY(-50%); background: none; border: none;
   color: rgba(0, 123, 255, 0.6); font-family: 'Poppins', sans-serif; font-size: 0.9em; cursor: pointer;
-  padding: 4px 8px; border-radius: 4px; white-space: nowrap; transition: color 0.2s ease, background 0.2s ease;
+  padding: 4px 8px; border-radius: 4px; white-space: nowrap; transition: left 0.35s ease, right 0.35s ease, color 0.2s ease, background 0.2s ease;
 }
 .actress-toggle:hover { color: #fba3dc; background: rgba(255, 255, 255, 0.5); }
-
+.actress-section.more-active .actress-toggle { right: auto; left: 0; }
 .actress-slider { position: relative; width: 100%; overflow: hidden; }
 .actress-slider > .actress-list-main { position: relative; width: 100%; min-width: 0; box-sizing: border-box; padding-right: 12px; transition: transform 0.4s ease; }
 .actress-slider > .actress-list-more { position: absolute; top: 0; left: 0; width: 100%; min-width: 0; box-sizing: border-box; padding-right: 12px; transform: translateX(100%); transition: transform 0.4s ease; }
@@ -44,16 +35,35 @@
 .actress-section.more-active .actress-list-more { transform: translateX(0); }
 
 .actress-toggle.pulse-hint { color: #fba7d6; background: rgba(255, 255, 255, 0.4); animation: pulseHintRight 1.1s ease-in-out infinite; }
+.actress-section.more-active .actress-toggle.pulse-hint { animation: pulseHintLeft 1.1s ease-in-out infinite; }
 
-/* --- PANNEAU DE CONTRÔLE HEAVY (À gauche) --- */
+@keyframes pulseHintRight {
+  0%, 100% { transform: translateY(-50%) translateX(0); }
+  50% { transform: translateY(-50%) translateX(5px); }
+}
+@keyframes pulseHintLeft {
+  0%, 100% { transform: translateY(-50%) translateX(0); }
+  50% { transform: translateY(-50%) translateX(-5px); }
+}
+
+/* ==========================================
+   AJOUTS : PANNEAU HEAVY ET BADGES (Sans casser le reste)
+   ========================================== */
+
+/* Panneau de contrôle à gauche (Superposé sans casser le flexbox du header) */
 .heavy-controls {
-  justify-self: start;
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
   display: flex;
   align-items: center;
   gap: 6px;
   font-family: 'Poppins', sans-serif;
-  font-size: 0.75em;
+  font-size: 0.7em;
+  z-index: 10;
 }
+
 .heavy-btn {
   background: rgba(0, 123, 255, 0.1);
   color: rgba(0, 123, 255, 0.8);
@@ -73,45 +83,38 @@
 .heavy-switch input:checked + .slider:before { transform: translateX(10px); }
 .heavy-switch-label { color: rgba(0, 123, 255, 0.6); font-weight: 600; }
 
-/* --- BADGES HEAVY ET DÉGRADÉS (Sans modifier la forme d'origine) --- */
-
-/* On s'assure que le label peut accueillir le badge à droite */
-.filter label {
-    position: relative;
-    padding-right: 20px; /* Juste assez pour que le texte ne passe pas sous le badge +X */
+/* Classe ajoutée uniquement aux labels qui ont un badge (par le JS) */
+label.has-heavy-badge {
+  display: flex !important;
+  justify-content: space-between;
+  align-items: center;
+  /* Dégradé de ta couleur d'origine (transparent) vers le vert à l'extrême droite */
+  background-image: linear-gradient(to right, transparent 75%, rgba(76, 175, 80, 0.4) 100%);
 }
 
-/* Label avec dégradé vers le vert à l'extrême droite (images mixtes) */
-label.has-heavy {
-    /* Dégradé de la couleur d'origine (transparent) vers le vert uniquement sur la fin */
-    background-image: linear-gradient(90deg, transparent 75%, rgba(76, 175, 80, 0.4) 100%);
-}
-
-/* Label 100% lourd (vert flashy au survol) */
+/* Label 100% lourd (texte vert flashy au survol) */
 label.heavy-only-label {
-    color: #4CAF50;
-    font-weight: 600;
-    cursor: pointer;
+  color: #4CAF50;
+  font-weight: 600;
+  cursor: pointer;
 }
 label.heavy-only-label:hover {
-    color: #00FF00;
-    text-shadow: 0 0 5px rgba(0, 255, 0, 0.6);
+  color: #00FF00;
+  text-shadow: 0 0 5px rgba(0, 255, 0, 0.6);
 }
 
-/* Le badge +X à l'extrême droite */
+/* Le badge +X */
 .heavy-badge {
-    position: absolute;
-    right: 2px;
-    top: 50%;
-    transform: translateY(-50%);
-    color: #4CAF50;
-    font-weight: bold;
-    font-size: 0.85em;
-    cursor: pointer;
-    padding: 2px 4px;
+  color: #4CAF50;
+  font-weight: bold;
+  font-size: 0.85em;
+  cursor: pointer;
+  padding: 2px 4px;
+  margin-left: auto; /* Pousse le badge tout à droite dans le flex */
+  white-space: nowrap;
 }
 .heavy-badge:hover {
-    color: #fff;
-    background: #4CAF50;
-    border-radius: 3px;
+  color: #fff;
+  background: #4CAF50;
+  border-radius: 3px;
 }
