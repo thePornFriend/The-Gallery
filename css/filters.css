@@ -19,14 +19,27 @@
 
 /* ACTRESS SECTION (Slider) */
 .actress-section { position: relative; }
-.actress-header { position: relative; display: flex; align-items: center; justify-content: center; min-height: 2em; margin-bottom: 0.5em; }
-.actress-header h3 { margin: 0; }
+/* --- HEADER ACTRESSES (Grille pour éviter les chevauchements) --- */
+.actress-header {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    margin-bottom: 0.5em;
+    min-height: 2em;
+}
+.actress-header h3 {
+    margin: 0;
+    text-align: center;
+}
 .actress-toggle {
-  position: absolute; top: 50%; right: 0; transform: translateY(-50%); background: none; border: none;
-  color: rgba(0, 123, 255, 0.6); font-family: 'Poppins', sans-serif; font-size: 0.9em; cursor: pointer;
-  padding: 4px 8px; border-radius: 4px; white-space: nowrap; transition: left 0.35s ease, right 0.35s ease, color 0.2s ease, background 0.2s ease;
+    justify-self: end;
+    background: none; border: none;
+    color: rgba(0, 123, 255, 0.6); font-family: 'Poppins', sans-serif; font-size: 0.8em;
+    cursor: pointer; padding: 4px 8px; border-radius: 4px;
+    transition: color 0.2s, background 0.2s;
 }
 .actress-toggle:hover { color: #fba3dc; background: rgba(255, 255, 255, 0.5); }
+
 .actress-section.more-active .actress-toggle { right: auto; left: 0; }
 .actress-slider { position: relative; width: 100%; overflow: hidden; }
 .actress-slider > .actress-list-main { position: relative; width: 100%; min-width: 0; box-sizing: border-box; padding-right: 12px; transition: transform 0.4s ease; }
@@ -91,102 +104,71 @@
 
 /* --- PANNEAU DE CONTRÔLE HEAVY --- */
 .heavy-controls {
-  position: absolute;
-  left: 0;
-  top: 50%;
-  transform: translateY(-50%);
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-family: 'Poppins', sans-serif;
-  font-size: 0.75em;
-  z-index: 10;
+    justify-self: start;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-family: 'Poppins', sans-serif;
+    font-size: 0.7em;
 }
-
 .heavy-btn {
-  background: rgba(0, 123, 255, 0.1);
-  color: rgba(0, 123, 255, 0.8);
-  border: 1px solid rgba(0, 123, 255, 0.3);
-  padding: 4px 8px;
-  border-radius: 4px;
-  cursor: pointer;
-  font-family: inherit;
-  font-weight: 600;
-  transition: all 0.2s ease;
+    background: rgba(0, 123, 255, 0.1);
+    color: rgba(0, 123, 255, 0.8);
+    border: 1px solid rgba(0, 123, 255, 0.3);
+    padding: 3px 6px; border-radius: 4px;
+    cursor: pointer; font-family: inherit; font-weight: 600;
+    transition: all 0.2s ease;
+}
+.heavy-btn:hover:not(:disabled) { background: rgba(0, 123, 255, 0.2); color: #fba3dc; border-color: #fba3dc; }
+.heavy-btn:disabled { opacity: 0.5; cursor: default; background: #e0e0e0; color: #888; border-color: #ccc; }
+/* Switch */
+.heavy-switch { position: relative; display: inline-block; width: 24px; height: 14px; }
+.heavy-switch input { opacity: 0; width: 0; height: 0; }
+.heavy-switch .slider { position: absolute; cursor: pointer; inset: 0; background-color: #ccc; transition: .3s; border-radius: 14px; }
+.heavy-switch .slider:before { position: absolute; content: ""; height: 10px; width: 10px; left: 2px; bottom: 2px; background-color: white; transition: .3s; border-radius: 50%; }
+.heavy-switch input:checked + .slider { background-color: #4CAF50; }
+.heavy-switch input:checked + .slider:before { transform: translateX(10px); }
+.heavy-switch-label { color: rgba(0, 123, 255, 0.6); font-weight: 600; }
+
+/* --- BADGES HEAVY ET DÉGRADÉS --- */
+/* Label avec dégradé vers le vert (images mixtes) */
+label.has-heavy {
+    position: relative;
+    background: linear-gradient(90deg, transparent 60%, rgba(76, 175, 80, 0.15) 100%);
+    border-radius: 4px;
+    padding-right: 30px !important; /* Place pour le badge */
 }
 
-.heavy-btn:hover:not(:disabled) {
-  background: rgba(0, 123, 255, 0.2);
-  color: #fba3dc;
-  border-color: #fba3dc;
+/* Label 100% lourd (vert flashy) */
+label.heavy-only-label {
+    color: #4CAF50;
+    font-weight: bold;
+    cursor: pointer;
+    position: relative;
+    padding-right: 30px !important;
+}
+label.heavy-only-label:hover {
+    color: #00FF00;
+    text-shadow: 0 0 8px rgba(0, 255, 0, 0.6);
 }
 
-.heavy-btn:disabled {
-  opacity: 0.5;
-  cursor: default;
-  background: #e0e0e0;
-  color: #888;
-  border-color: #ccc;
-}
-
-/* Le Switch (Toggle) */
-.heavy-switch {
-  position: relative;
-  display: inline-block;
-  width: 28px;
-  height: 16px;
-}
-
-.heavy-switch input { 
-  opacity: 0;
-  width: 0;
-  height: 0;
-}
-
-.heavy-switch .slider {
-  position: absolute;
-  cursor: pointer;
-  top: 0; left: 0; right: 0; bottom: 0;
-  background-color: #ccc;
-  transition: .3s;
-  border-radius: 16px;
-}
-
-.heavy-switch .slider:before {
-  position: absolute;
-  content: "";
-  height: 12px;
-  width: 12px;
-  left: 2px;
-  bottom: 2px;
-  background-color: white;
-  transition: .3s;
-  border-radius: 50%;
-}
-
-.heavy-switch input:checked + .slider {
-  background-color: #4CAF50;
-}
-
-.heavy-switch input:checked + .slider:before {
-  transform: translateX(12px);
-}
-
-.heavy-switch-label {
-  color: rgba(0, 123, 255, 0.6);
-  font-weight: 600;
-}
-
-/* Badge "+X" pour les compteurs */
+/* Le badge +X à l'extrême droite */
 .heavy-badge {
-  color: #4CAF50;
-  font-weight: bold;
-  margin-left: 4px;
-  cursor: pointer;
-  text-decoration: underline;
-  padding: 0 2px;
+    position: absolute;
+    right: 2px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #4CAF50;
+    font-weight: bold;
+    font-size: 0.9em;
+    cursor: pointer;
+    padding: 2px 4px;
+    border-radius: 4px;
+    background: rgba(76, 175, 80, 0.1);
+    text-decoration: underline;
 }
 .heavy-badge:hover {
-  color: #2E7D32;
-  text-shadow: 0 0 4px rgba(76, 175, 80, 0.5);
+    color: #fff;
+    background: #4CAF50;
+    text-shadow: 0 0 4px rgba(76, 175, 80, 0.8);
 }
