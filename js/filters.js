@@ -199,7 +199,8 @@ function buildStudioFilterGrid(container, lightCounts, heavyCounts, imgData, onL
         const hCount = aggHeavy.get(value) || 0;
         const display = capitalize(value);
         
-        let html = `<span>${isGroup ? '' : ' '}${display} (${lCount})</span>`;
+        const countSuffix = lCount > 0 ? ` (${lCount})` : '';
+        let html = `<span>${isGroup ? '' : ' '}${display}${countSuffix}</span>`;
         let extraClass = '';
         
         if (showHeavy && hCount > 0) {
@@ -828,4 +829,4 @@ function initColorFilter(updateBodyBackground) {
   [active, hue, lumActive, lumSlider, sim].forEach(el => el.addEventListener('input', update));
 }
 
-console.log("");
+console.log("Filters > HEAVY_DAY 2");
