@@ -50,12 +50,12 @@ window.TAG_ABBREVIATIONS = {
 // 4. Liste des actrices à afficher dans "See main"
 // Toutes les autres actrices iront automatiquement dans "See more"
 window.MAIN_ACTRESSES = [
-    "Adriana Chechik",
+    "Abella Danger","Adriana Chechik","Agatha Vega","Alexis Crystal", 
+    "Angel Youngs","Angela White","Angie Faith", 
     "Brandi Love",
-    "Kira Noir",
+    //"Kianna Dior","Kira Noir",
     "Rae Lil Black",
     "Vanna Bardot",
-    "Kianna Dior"
     // Ajoute ici tes actrices "principales"
 ];
 
