@@ -25,7 +25,7 @@ function buildCheckboxGrid(container, counts, displayName = k => k, onLoadHeavy 
       const lCount = counts.light.get(item) || 0;
       const hCount = counts.heavy.get(item) || 0;
       
-      // Le texte de base sans le +X (on masque le compteur à 0 pour les heavy-only)
+      // On masque le (0) pour les labels 100% lourds
       const countSuffix = lCount > 0 ? ` (${lCount})` : '';
       let htmlContent = `<input type="checkbox" value="${item}"> <span>${display}${countSuffix}</span>`;
       
@@ -199,13 +199,14 @@ function buildStudioFilterGrid(container, lightCounts, heavyCounts, imgData, onL
         const hCount = aggHeavy.get(value) || 0;
         const display = capitalize(value);
         
+        // On masque le (0) pour les labels 100% lourds
         const countSuffix = lCount > 0 ? ` (${lCount})` : '';
         let html = `<span>${isGroup ? '' : ' '}${display}${countSuffix}</span>`;
         let extraClass = '';
         
         if (showHeavy && hCount > 0) {
             if (lCount === 0) extraClass = 'heavy-only-label';
-            else extraClass = 'has-heavy-badge';
+            else extraClass = 'has-heavy-badge'; // CORRIGÉ : on a remis le -badge
             html += `<span class="heavy-badge" data-val="${value}">+${hCount}</span>`;
         }
         
@@ -358,15 +359,13 @@ function createFilterCheckboxes(images) {
       toggleHeavyFilters.onchange = () => createFilterCheckboxes(images);
   }
 
-  const stripParens = n => n.replace(/^\(|\)$/g, '').trim();
-  const isAmateur = n => /^\(.*\)$/.test(n.trim());
+  // --- NOUVELLE LOGIQUE : LISTE BLANCHE (MAIN ACTRESSES) ---
   const stripPrefix = k => k.replace(/^(main|am):/, '');
-  const isAmateurEntry = n => isAmateur(n) || n.trim().toLowerCase() === 'amateur';
-  const normalizeAmName = n => {
-    const stripped = stripParens(n);
-    const lower = stripped.toLowerCase();
-    if (lower === 'amateur' || lower === 'unknown') return 'Unknown';
-    return stripped;
+  
+  const mainActressesList = (window.MAIN_ACTRESSES || []).map(n => n.toLowerCase().trim());
+  const isMainActress = (n) => {
+      const clean = n.trim().toLowerCase();
+      return mainActressesList.includes(clean);
   };
 
   const createCounts = (extractor) => {
@@ -383,8 +382,10 @@ function createFilterCheckboxes(images) {
       return { light, heavy };
   };
 
-  const extractMainActs = (img) => (img.dataset.actress || '').split(',').map(n => n.trim()).filter(n => n && !isAmateurEntry(n)).map(n => 'main:' + n);
-  const extractAmActs = (img) => (img.dataset.actress || '').split(',').map(n => n.trim()).filter(n => n && isAmateurEntry(n)).map(n => 'am:' + normalizeAmName(n));
+  // On sépare les actrices selon la liste MAIN_ACTRESSES
+  const extractMainActs = (img) => (img.dataset.actress || '').split(',').map(n => n.trim()).filter(n => n && isMainActress(n)).map(n => 'main:' + n);
+  const extractAmActs = (img) => (img.dataset.actress || '').split(',').map(n => n.trim()).filter(n => n && !isMainActress(n)).map(n => 'am:' + n);
+  
   const extractTags = (img) => {
       let rawTags = img.dataset.tag || '';
       if (typeof normalizeTags === 'function') rawTags = normalizeTags(rawTags);
@@ -425,36 +426,12 @@ function createFilterCheckboxes(images) {
       }
   };
 
+  // On construit les grilles
   const mainCheckboxes = buildCheckboxGrid(mainList, mainCounts, stripPrefix, loadHeavyForTarget);
   const amateurCheckboxes = buildCheckboxGrid(moreList, amateurCounts, stripPrefix, loadHeavyForTarget);
   const tagCheckboxes = buildCheckboxGrid(tagList, tagCounts, k => k, loadHeavyForTarget);
 
-  const amateurImagesCount = images.filter(d => extractAmActs(d).length > 0).length;
-  let amateurCb = null;
-
-  if (amateurImagesCount > 0) {
-    const columns = mainList.querySelectorAll('.column');
-    const lastCol = columns[columns.length - 1];
-    if (lastCol) {
-      const label = document.createElement('label');
-      label.className = 'amateur-all-label';
-      label.innerHTML = `<input type="checkbox" value="am:__all__"> Amateur (${amateurImagesCount})`;
-      amateurCb = label.firstChild;
-      lastCol.appendChild(label);
-      mainCheckboxes.push(amateurCb);
-
-      if (toggleBtn) {
-        const updatePulse = () => {
-          const isHovered = label.matches(':hover');
-          toggleBtn.classList.toggle('pulse-hint', isHovered || amateurCb.checked);
-        };
-        label.addEventListener('mouseenter', updatePulse);
-        label.addEventListener('mouseleave', updatePulse);
-        amateurCb.addEventListener('change', updatePulse);
-      }
-    }
-  }
-
+  // Plus de bouton "Amateur" fourre-tout, on gère juste le bouton "See more"
   const actressCheckboxes = [...mainCheckboxes, ...amateurCheckboxes];
 
   actressCheckboxes.forEach(cb => {
@@ -467,9 +444,12 @@ function createFilterCheckboxes(images) {
       });
   });
     
+  // Gestion du bouton "See more" (on l'affiche seulement s'il y a des actrices "am")
   if (toggleBtn && actressSec) {
-    if (amateurCounts.light.size === 0 && amateurCounts.heavy.size === 0) toggleBtn.style.display = 'none';
-    else {
+    if (amateurCounts.light.size === 0 && amateurCounts.heavy.size === 0) {
+        toggleBtn.style.display = 'none';
+    } else {
+      toggleBtn.style.display = ''; // On s'assure qu'il est visible
       toggleBtn.onclick = (e) => {
         e.stopPropagation();
         actressSec.classList.toggle('more-active');
@@ -484,8 +464,8 @@ function createFilterCheckboxes(images) {
   // --- LOGIQUE DE FILTRAGE ---
   const normalizeActress = n => {
     const t = n.trim();
-    if (isAmateurEntry(t)) return 'am:' + normalizeAmName(t);
-    return 'main:' + t;
+    if (isMainActress(t)) return 'main:' + t;
+    return 'am:' + t;
   };
 
   const rawToDisplay = new Map(), rawCo = new Map(), displayToRaw = new Map(), displayCo = new Map();
@@ -525,11 +505,10 @@ function createFilterCheckboxes(images) {
   });
 
   const updateRelatedActresses = () => {
-    const selectedSet = new Set(actressCheckboxes.filter(cb => cb.checked && cb.value !== 'am:__all__').map(cb => cb.value));
+    const selectedSet = new Set(actressCheckboxes.filter(cb => cb.checked).map(cb => cb.value));
     const related = new Set();
     selectedSet.forEach(v => { const s = displayCo.get(v); if (s) s.forEach(x => related.add(x)); });
     actressLabelMap.forEach((label, value) => {
-      if (value === 'am:__all__') return;
       label.classList.toggle('related-actress', !selectedSet.has(value) && related.has(value));
     });
   };
@@ -537,8 +516,9 @@ function createFilterCheckboxes(images) {
   const filter = () => {
     const selected = [...new Set(allCheckboxes.filter(cb => cb.checked).map(cb => cb.value))];
     const inclusive = modeSelect.value === 'inclusive';
-    const selectedAll = selected.includes('am:__all__');
-    const selectedRest = selected.filter(v => v !== 'am:__all__');
+    
+    // On n'a plus besoin de selectedAll / selectedRest séparément, tout est dans 'selected'
+    const selectedRest = selected;
 
     const isCoveredByParent = (val) => {
         if (!state.studioHierarchy || !state.studioHierarchy.has(val)) return false;
@@ -566,27 +546,24 @@ function createFilterCheckboxes(images) {
       const studios = extractStudios(img);
       
       let passesCheckboxFilter;
-      if (selected.length === 0) passesCheckboxFilter = true;
-      else if (inclusive) {
-        const matchAll = selectedAll && extractAmActs(img).length > 0;
-        const matchRest = selectedRest.some(v => {
+      if (selected.length === 0) {
+        passesCheckboxFilter = true;
+      } else if (inclusive) {
+        passesCheckboxFilter = selectedRest.some(v => {
             if (acts.includes(v) || tags.includes(v)) return true;
             if (studios.includes(v)) return true;
             if (isGroupMatch(v, studios)) return true;
             return false;
         });
-        passesCheckboxFilter = matchAll || matchRest;
       } else {
         const allVals = [...acts, ...tags, ...studios];
-        const allCovered = allVals.every(v => {
+        passesCheckboxFilter = allVals.every(v => {
             if (selectedRest.includes(v)) return true;
-            if (selectedAll && v.startsWith('am:')) return true;
             if (isCoveredByParent(v)) return true;
             return false;
         });
-        const allReq = !selectedAll || extractAmActs(img).length > 0;
-        passesCheckboxFilter = allReq && allCovered;
       }
+      
       const passesGalleryFilter = state.selectedGalleryValues.size === 0 || state.selectedGalleryValues.has(img.dataset.gallery);
       
       let passesColor = true;
@@ -608,8 +585,6 @@ function createFilterCheckboxes(images) {
     });
 
     const gallery = document.getElementById("gallery");
-    
-    // ⬇⬇⬇ CORRECTION : On exclut totalement les images non chargées ⬇⬇⬇
     const loadedImages = visibleImages.filter(img => !img.hasAttribute('data-src'));
     
     gallery.innerHTML = '';
@@ -828,5 +803,3 @@ function initColorFilter(updateBodyBackground) {
   };
   [active, hue, lumActive, lumSlider, sim].forEach(el => el.addEventListener('input', update));
 }
-
-console.log("Filters > HEAVY_DAY 2 v2");
