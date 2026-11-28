@@ -837,5 +837,71 @@ function initColorFilter(updateBodyBackground) {
   };
   [active, hue, lumActive, lumSlider, sim].forEach(el => el.addEventListener('input', update));
 }
-
-console.log("filters > Amateur ! v3");
+// ==========================================
+// 8. FILTER LIGHTBOX (Peek & Click)
+// ==========================================
+function initFilterLightbox() {
+    // 1. Création des éléments DOM
+    const peekTab = document.createElement('div');
+    peekTab.id = 'filter-peek-tab';
+    peekTab.textContent = 'Filters';
+    
+    const lightbox = document.createElement('div');
+    lightbox.id = 'filter-lightbox';
+    
+    const container = document.createElement('div');
+    container.className = 'filter-container';
+    
+    const closeBtn = document.createElement('button');
+    closeBtn.className = 'filter-close-btn';
+    closeBtn.innerHTML = '&times;';
+    
+    container.appendChild(closeBtn);
+    lightbox.appendChild(container);
+    
+    document.body.appendChild(peekTab);
+    document.body.appendChild(lightbox);
+    
+    const filterElement = document.querySelector('.filter');
+    if (!filterElement) return; 
+    
+    // 2. On sauvegarde l'emplacement d'origine du filtre
+    const originalParent = filterElement.parentNode;
+    const originalNextSibling = filterElement.nextSibling;
+    
+    // 3. Fonctions d'ouverture / fermeture
+    function openFilterModal() {
+        // On déplace le filtre dans la lightbox
+        container.appendChild(filterElement);
+        lightbox.classList.add('visible');
+        document.body.style.overflow = 'hidden';
+    }
+    
+    function closeFilterModal() {
+        // On remet le filtre exactement à sa place
+        if (originalNextSibling) {
+            originalParent.insertBefore(filterElement, originalNextSibling);
+        } else {
+            originalParent.appendChild(filterElement);
+        }
+        lightbox.classList.remove('visible');
+        document.body.style.overflow = '';
+    }
+    
+    // 4. Écouteurs d'événements
+    peekTab.addEventListener('click', openFilterModal);
+    closeBtn.addEventListener('click', closeFilterModal);
+    
+    // Fermer en cliquant sur le fond noir
+    lightbox.addEventListener('click', (e) => {
+        if (e.target === lightbox) closeFilterModal();
+    });
+    
+    // Fermer avec la touche Échap
+    window.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && lightbox.classList.contains('visible')) {
+            closeFilterModal();
+        }
+    });
+}
+console.log("filters > SHORTCUT");
