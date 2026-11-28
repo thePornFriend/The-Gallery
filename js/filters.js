@@ -25,7 +25,6 @@ function buildCheckboxGrid(container, counts, displayName = k => k, onLoadHeavy 
       const lCount = counts.light.get(item) || 0;
       const hCount = counts.heavy.get(item) || 0;
       
-      // On masque le (0) pour les labels 100% lourds
       const countSuffix = lCount > 0 ? ` (${lCount})` : '';
       let htmlContent = `<input type="checkbox" value="${item}"> <span>${display}${countSuffix}</span>`;
       
@@ -36,19 +35,16 @@ function buildCheckboxGrid(container, counts, displayName = k => k, onLoadHeavy 
           } else {
               label.classList.add('has-heavy-badge');
           }
-          // On ajoute le badge à l'extrême droite
           htmlContent += `<span class="heavy-badge" data-val="${item}">+${hCount}</span>`;
       }
 
       label.innerHTML = htmlContent;
       const cb = label.firstChild;
       
-      // Si c'est un label "heavy only", cliquer dessus charge les images
       if (lCount === 0 && showHeavy && hCount > 0 && onLoadHeavy) {
           label.addEventListener('click', (e) => {
               if (e.target !== cb && !e.target.classList.contains('heavy-badge')) {
-                  e.preventDefault();
-                  onLoadHeavy(item);
+                  e.preventDefault(); onLoadHeavy(item);
               }
           });
       }
@@ -62,8 +58,7 @@ function buildCheckboxGrid(container, counts, displayName = k => k, onLoadHeavy 
   if (onLoadHeavy) {
       container.querySelectorAll('.heavy-badge').forEach(badge => {
           badge.addEventListener('click', (e) => {
-              e.preventDefault(); e.stopPropagation(); 
-              onLoadHeavy(badge.dataset.val);
+              e.preventDefault(); e.stopPropagation(); onLoadHeavy(badge.dataset.val);
           });
       });
   }
@@ -101,17 +96,13 @@ function buildStudioFilterGrid(container, lightCounts, heavyCounts, imgData, onL
         let hCount = heavyCounts.get(nodeId) || 0;
         node.children.forEach(c => {
             const childAgg = calcAggregate(c);
-            lCount += childAgg.l;
-            hCount += childAgg.h;
+            lCount += childAgg.l; hCount += childAgg.h;
         });
-        aggLight.set(nodeId, lCount);
-        aggHeavy.set(nodeId, hCount);
+        aggLight.set(nodeId, lCount); aggHeavy.set(nodeId, hCount);
         return { l: lCount, h: hCount };
     }
     
-    Array.from(hierarchy.keys()).forEach(id => {
-        if (!hierarchy.get(id).parent) calcAggregate(id);
-    });
+    Array.from(hierarchy.keys()).forEach(id => { if (!hierarchy.get(id).parent) calcAggregate(id); });
 
     const activeNodes = new Set();
     Array.from(hierarchy.keys()).forEach(id => {
@@ -123,16 +114,12 @@ function buildStudioFilterGrid(container, lightCounts, heavyCounts, imgData, onL
     });
 
     state.studioHierarchy = hierarchy;
-
     const states = new Map();
     activeNodes.forEach(id => states.set(id, { checked: false, indeterminate: false }));
 
     function updateDOM() {
         states.forEach((state, id) => {
-            hierarchy.get(id).checkboxes.forEach(cb => {
-                cb.checked = state.checked;
-                cb.indeterminate = state.indeterminate;
-            });
+            hierarchy.get(id).checkboxes.forEach(cb => { cb.checked = state.checked; cb.indeterminate = state.indeterminate; });
         });
     }
 
@@ -145,13 +132,10 @@ function buildStudioFilterGrid(container, lightCounts, heavyCounts, imgData, onL
     function updateAncestors(id) {
         const parentId = hierarchy.get(id).parent;
         if (!parentId || !activeNodes.has(parentId)) return;
-
         const parentNode = hierarchy.get(parentId);
         const activeChildren = parentNode.children.filter(c => activeNodes.has(c));
         
-        let checkedCount = 0;
-        let indeterminateCount = 0;
-
+        let checkedCount = 0, indeterminateCount = 0;
         activeChildren.forEach(childId => {
             const childState = states.get(childId);
             if (childState.checked) checkedCount++;
@@ -187,8 +171,7 @@ function buildStudioFilterGrid(container, lightCounts, heavyCounts, imgData, onL
     
     function createCheckbox(value) {
         const cb = document.createElement('input');
-        cb.type = 'checkbox';
-        cb.value = value;
+        cb.type = 'checkbox'; cb.value = value;
         hierarchy.get(value).checkboxes.push(cb);
         cb.addEventListener('change', () => handleCheckboxClick(value));
         return cb;
@@ -199,17 +182,15 @@ function buildStudioFilterGrid(container, lightCounts, heavyCounts, imgData, onL
         const hCount = aggHeavy.get(value) || 0;
         const display = capitalize(value);
         
-        // On masque le (0) pour les labels 100% lourds
         const countSuffix = lCount > 0 ? ` (${lCount})` : '';
         let html = `<span>${isGroup ? '' : ' '}${display}${countSuffix}</span>`;
         let extraClass = '';
         
         if (showHeavy && hCount > 0) {
             if (lCount === 0) extraClass = 'heavy-only-label';
-            else extraClass = 'has-heavy-badge'; // CORRIGÉ : on a remis le -badge
+            else extraClass = 'has-heavy-badge';
             html += `<span class="heavy-badge" data-val="${value}">+${hCount}</span>`;
         }
-        
         return { html, extraClass };
     }
 
@@ -322,10 +303,7 @@ function buildStudioFilterGrid(container, lightCounts, heavyCounts, imgData, onL
 
     if (onLoadHeavy) {
         container.querySelectorAll('.heavy-badge').forEach(badge => {
-            badge.addEventListener('click', (e) => {
-                e.preventDefault(); e.stopPropagation();
-                onLoadHeavy(badge.dataset.val);
-            });
+            badge.addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); onLoadHeavy(badge.dataset.val); });
         });
     }
 
@@ -355,22 +333,14 @@ function createFilterCheckboxes(images) {
       if (heavyBtn.disabled) heavyBtn.innerHTML = "All heavy loaded";
   }
 
-  if (toggleHeavyFilters) {
-      toggleHeavyFilters.onchange = () => createFilterCheckboxes(images);
-  }
+  if (toggleHeavyFilters) { toggleHeavyFilters.onchange = () => createFilterCheckboxes(images); }
 
-  // --- NOUVELLE LOGIQUE : LISTE BLANCHE (MAIN ACTRESSES) ---
   const stripPrefix = k => k.replace(/^(main|am):/, '');
-  
   const mainActressesList = (window.MAIN_ACTRESSES || []).map(n => n.toLowerCase().trim());
-  const isMainActress = (n) => {
-      const clean = n.trim().toLowerCase();
-      return mainActressesList.includes(clean);
-  };
+  const isMainActress = (n) => mainActressesList.includes(n.trim().toLowerCase());
 
   const createCounts = (extractor) => {
-      const light = new Map();
-      const heavy = new Map();
+      const light = new Map(), heavy = new Map();
       images.forEach(img => {
           const isHeavy = img.hasAttribute('data-src');
           const values = extractor(img);
@@ -382,10 +352,8 @@ function createFilterCheckboxes(images) {
       return { light, heavy };
   };
 
-  // On sépare les actrices selon la liste MAIN_ACTRESSES
   const extractMainActs = (img) => (img.dataset.actress || '').split(',').map(n => n.trim()).filter(n => n && isMainActress(n)).map(n => 'main:' + n);
   const extractAmActs = (img) => (img.dataset.actress || '').split(',').map(n => n.trim()).filter(n => n && !isMainActress(n)).map(n => 'am:' + n);
-  
   const extractTags = (img) => {
       let rawTags = img.dataset.tag || '';
       if (typeof normalizeTags === 'function') rawTags = normalizeTags(rawTags);
@@ -400,7 +368,6 @@ function createFilterCheckboxes(images) {
 
   const loadHeavyForTarget = (val) => {
       const cleanVal = val.replace(/^(main|am):/, '').toLowerCase();
-      
       const toLoad = window.heavyMediaData.filter(img => {
           const acts = (img.dataset.actress || '').toLowerCase();
           if (acts.includes(cleanVal)) return true;
@@ -416,48 +383,38 @@ function createFilterCheckboxes(images) {
       });
 
       if (toLoad.length > 0) {
-          toLoad.forEach(el => {
-              el.src = el.getAttribute('data-src');
-              el.removeAttribute('data-src');
-          });
-          
+          toLoad.forEach(el => { el.src = el.getAttribute('data-src'); el.removeAttribute('data-src'); });
           window.heavyMediaData = window.heavyMediaData.filter(el => el.hasAttribute('data-src'));
           window.refreshFiltersAndGallery();
       }
   };
 
-  // On construit les grilles
   const mainCheckboxes = buildCheckboxGrid(mainList, mainCounts, stripPrefix, loadHeavyForTarget);
-  const amateurCheckboxes = buildCheckboxGrid(moreList, amateurCounts, stripPrefix, loadHeavyForTarget);  
-  // --- RECRÉATION DU BOUTON GLOBAL "TOUTES LES AUTRES" ---
+  const amateurCheckboxes = buildCheckboxGrid(moreList, amateurCounts, stripPrefix, loadHeavyForTarget);
+  const tagCheckboxes = buildCheckboxGrid(tagList, tagCounts, k => k, loadHeavyForTarget);
+
+  // Le bouton "Toutes les autres" (anciennement Amateur)
   const otherImagesCount = images.filter(d => extractAmActs(d).length > 0).length;
   if (otherImagesCount > 0) {
     const columns = mainList.querySelectorAll('.column');
     const lastCol = columns[columns.length - 1];
     if (lastCol) {
       const label = document.createElement('label');
-      label.className = 'amateur-all-label'; // On garde ta classe CSS d'origine
-      // On affiche le nombre total d'images qui contiennent au moins une actrice "See more"
+      label.className = 'amateur-all-label';
       label.innerHTML = `<input type="checkbox" value="am:__all__"> Toutes les autres (${otherImagesCount})`;
       const otherCb = label.firstChild;
       lastCol.appendChild(label);
-      mainCheckboxes.push(otherCb); // On l'ajoute à la liste globale
+      mainCheckboxes.push(otherCb);
 
-      // Animation "pulse-hint" sur le bouton "See more"
       if (toggleBtn) {
-        const updatePulse = () => {
-          const isHovered = label.matches(':hover');
-          toggleBtn.classList.toggle('pulse-hint', isHovered || otherCb.checked);
-        };
+        const updatePulse = () => { toggleBtn.classList.toggle('pulse-hint', label.matches(':hover') || otherCb.checked); };
         label.addEventListener('mouseenter', updatePulse);
         label.addEventListener('mouseleave', updatePulse);
         otherCb.addEventListener('change', updatePulse);
       }
     }
   }
-  const tagCheckboxes = buildCheckboxGrid(tagList, tagCounts, k => k, loadHeavyForTarget);
 
-  // Plus de bouton "Amateur" fourre-tout, on gère juste le bouton "See more"
   const actressCheckboxes = [...mainCheckboxes, ...amateurCheckboxes];
 
   actressCheckboxes.forEach(cb => {
@@ -470,12 +427,10 @@ function createFilterCheckboxes(images) {
       });
   });
     
-  // Gestion du bouton "See more" (on l'affiche seulement s'il y a des actrices "am")
   if (toggleBtn && actressSec) {
-    if (amateurCounts.light.size === 0 && amateurCounts.heavy.size === 0) {
-        toggleBtn.style.display = 'none';
-    } else {
-      toggleBtn.style.display = ''; // On s'assure qu'il est visible
+    if (amateurCounts.light.size === 0 && amateurCounts.heavy.size === 0) toggleBtn.style.display = 'none';
+    else {
+      toggleBtn.style.display = '';
       toggleBtn.onclick = (e) => {
         e.stopPropagation();
         actressSec.classList.toggle('more-active');
@@ -487,7 +442,7 @@ function createFilterCheckboxes(images) {
   const studioCheckboxes = prodList ? buildStudioFilterGrid(prodList, studioCounts.light, studioCounts.heavy, images, loadHeavyForTarget) : [];
   const allCheckboxes = [...actressCheckboxes, ...tagCheckboxes, ...studioCheckboxes];
 
-  // --- LOGIQUE DE FILTRAGE ---
+  // --- FILTRAGE ---
   const normalizeActress = n => {
     const t = n.trim();
     if (isMainActress(t)) return 'main:' + t;
@@ -495,46 +450,28 @@ function createFilterCheckboxes(images) {
   };
 
   const rawToDisplay = new Map(), rawCo = new Map(), displayToRaw = new Map(), displayCo = new Map();
-
   images.forEach(img => {
     const raw = (img.dataset.collectionActresses || img.dataset.actress || '').split(',').map(n => n.trim()).filter(Boolean);
     if (!raw.length) return;
-    raw.forEach(n => {
-      rawToDisplay.set(n, normalizeActress(n));
-      if (!rawCo.has(n)) rawCo.set(n, new Set());
-    });
+    raw.forEach(n => { rawToDisplay.set(n, normalizeActress(n)); if (!rawCo.has(n)) rawCo.set(n, new Set()); });
     if (raw.length > 1) raw.forEach(a => raw.forEach(b => { if (a !== b) rawCo.get(a).add(b); }));
   });
-
-  rawToDisplay.forEach((display, raw) => {
-    if (!displayToRaw.has(display)) displayToRaw.set(display, new Set());
-    displayToRaw.get(display).add(raw);
-  });
-
+  rawToDisplay.forEach((display, raw) => { if (!displayToRaw.has(display)) displayToRaw.set(display, new Set()); displayToRaw.get(display).add(raw); });
   displayToRaw.forEach((rawSet, display) => {
     const coSet = new Set();
-    rawSet.forEach(raw => {
-      const s = rawCo.get(raw);
-      if (!s) return;
-      s.forEach(other => {
-        const d = rawToDisplay.get(other);
-        if (d && d !== display) coSet.add(d);
-      });
-    });
+    rawSet.forEach(raw => { const s = rawCo.get(raw); if (s) s.forEach(other => { const d = rawToDisplay.get(other); if (d && d !== display) coSet.add(d); }); });
     displayCo.set(display, coSet);
   });
 
   const actressLabelMap = new Map();
-  actressCheckboxes.forEach(cb => {
-    const label = cb.closest('label');
-    if (label) actressLabelMap.set(cb.value, label);
-  });
+  actressCheckboxes.forEach(cb => { const label = cb.closest('label'); if (label) actressLabelMap.set(cb.value, label); });
 
   const updateRelatedActresses = () => {
-    const selectedSet = new Set(actressCheckboxes.filter(cb => cb.checked).map(cb => cb.value));
+    const selectedSet = new Set(actressCheckboxes.filter(cb => cb.checked && cb.value !== 'am:__all__').map(cb => cb.value));
     const related = new Set();
     selectedSet.forEach(v => { const s = displayCo.get(v); if (s) s.forEach(x => related.add(x)); });
     actressLabelMap.forEach((label, value) => {
+      if (value === 'am:__all__') return;
       label.classList.toggle('related-actress', !selectedSet.has(value) && related.has(value));
     });
   };
@@ -542,18 +479,13 @@ function createFilterCheckboxes(images) {
   const filter = () => {
     const selected = [...new Set(allCheckboxes.filter(cb => cb.checked).map(cb => cb.value))];
     const inclusive = modeSelect.value === 'inclusive';
-    
-    // On sépare la case globale des autres cases
     const selectedAll = selected.includes('am:__all__');
     const selectedRest = selected.filter(v => v !== 'am:__all__');
 
     const isCoveredByParent = (val) => {
         if (!state.studioHierarchy || !state.studioHierarchy.has(val)) return false;
         let parent = state.studioHierarchy.get(val).parent;
-        while (parent) {
-            if (selectedRest.includes(parent)) return true;
-            parent = state.studioHierarchy.get(parent)?.parent;
-        }
+        while (parent) { if (selectedRest.includes(parent)) return true; parent = state.studioHierarchy.get(parent)?.parent; }
         return false;
     };
 
@@ -573,10 +505,8 @@ function createFilterCheckboxes(images) {
       const studios = extractStudios(img);
       
       let passesCheckboxFilter;
-      if (selected.length === 0) {
-        passesCheckboxFilter = true;
-      } else if (inclusive) {
-        // Mode INCLUSIF (OU)
+      if (selected.length === 0) passesCheckboxFilter = true;
+      else if (inclusive) {
         const matchAll = selectedAll && extractAmActs(img).length > 0;
         const matchRest = selectedRest.some(v => {
             if (acts.includes(v) || tags.includes(v)) return true;
@@ -586,14 +516,13 @@ function createFilterCheckboxes(images) {
         });
         passesCheckboxFilter = matchAll || matchRest;
       } else {
-        // Mode EXCLUSIF (ET)
         const allVals = [...acts, ...tags, ...studios];
         const allCovered = allVals.every(v => {
             if (selectedRest.includes(v)) return true;
+            if (selectedAll && v.startsWith('am:')) return true;
             if (isCoveredByParent(v)) return true;
             return false;
         });
-        // Si on a coché "Toutes les autres", l'image DOIT avoir au moins une actrice "See more"
         const allReq = !selectedAll || extractAmActs(img).length > 0;
         passesCheckboxFilter = allReq && allCovered;
       }
@@ -620,7 +549,6 @@ function createFilterCheckboxes(images) {
 
     const gallery = document.getElementById("gallery");
     const loadedImages = visibleImages.filter(img => !img.hasAttribute('data-src'));
-    
     gallery.innerHTML = '';
     groupImagesByPrefix(loadedImages);
     enableZoomDrag();
@@ -628,10 +556,7 @@ function createFilterCheckboxes(images) {
   };
 
   let filterTimer = null;
-  const debouncedFilter = () => {
-    clearTimeout(filterTimer);
-    filterTimer = setTimeout(filter, 0);
-  };
+  const debouncedFilter = () => { clearTimeout(filterTimer); filterTimer = setTimeout(filter, 0); };
 
   allCheckboxes.forEach(cb => cb.addEventListener('change', debouncedFilter));
   modeSelect.addEventListener('change', debouncedFilter);
@@ -650,13 +575,9 @@ function initGallerySearchFilter(images) {
 
   const galleryValues = [...new Set(images.map(img => img.dataset.gallery).filter(Boolean))];
   const compareGallery = (a, b) => {
-    const aNums = a.split('-').map(s => parseInt(s, 10) || 0);
-    const bNums = b.split('-').map(s => parseInt(s, 10) || 0);
+    const aNums = a.split('-').map(s => parseInt(s, 10) || 0), bNums = b.split('-').map(s => parseInt(s, 10) || 0);
     const len = Math.max(aNums.length, bNums.length);
-    for (let i = 0; i < len; i++) {
-      const numA = aNums[i] ?? 0, numB = bNums[i] ?? 0;
-      if (numA !== numB) return numA - numB;
-    }
+    for (let i = 0; i < len; i++) { const numA = aNums[i] ?? 0, numB = bNums[i] ?? 0; if (numA !== numB) return numA - numB; }
     return 0;
   };
   galleryValues.sort(compareGallery);
@@ -668,9 +589,7 @@ function initGallerySearchFilter(images) {
       label.className = 'gallery-label';
       label.innerHTML = `${value} <button type="button" aria-label="Retirer">&times;</button>`;
       label.querySelector('button').addEventListener('click', () => {
-        state.selectedGalleryValues.delete(value);
-        renderLabels();
-        state.triggerFilter();
+        state.selectedGalleryValues.delete(value); renderLabels(); state.triggerFilter();
       });
       labelsBox.appendChild(label);
     });
@@ -683,15 +602,11 @@ function initGallerySearchFilter(images) {
     if (matches.length === 0) { suggestionsBox.style.display = 'none'; return; }
     matches.forEach(value => {
       const item = document.createElement('div');
-      item.className = 'gallery-suggestion-item';
-      item.textContent = value;
+      item.className = 'gallery-suggestion-item'; item.textContent = value;
       item.addEventListener('click', () => {
-        state.selectedGalleryValues.add(value);
-        input.value = '';
-        suggestionsBox.innerHTML = '';
-        suggestionsBox.style.display = 'none';
-        renderLabels();
-        state.triggerFilter();
+        state.selectedGalleryValues.add(value); input.value = '';
+        suggestionsBox.innerHTML = ''; suggestionsBox.style.display = 'none';
+        renderLabels(); state.triggerFilter();
       });
       suggestionsBox.appendChild(item);
     });
@@ -731,13 +646,7 @@ function enableTagBackgroundChange(updateBodyBackground) {
   const neonColors = ['#FF0080', '#FF8C00', '#FFEE00', '#00FF88', '#00E5FF', '#7A00FF', '#FF00C8'];
   let neonInterval = null, neonIndex = 0;
 
-  const applyNeonColor = () => { 
-    state.currentNeonColor = neonColors[neonIndex]; 
-    neonIndex = (neonIndex + 1) % neonColors.length; 
-    document.documentElement.style.setProperty('--neon-color', state.currentNeonColor);
-    updateBodyBackground(); 
-  };
-  
+  const applyNeonColor = () => { state.currentNeonColor = neonColors[neonIndex]; neonIndex = (neonIndex + 1) % neonColors.length; document.documentElement.style.setProperty('--neon-color', state.currentNeonColor); updateBodyBackground(); };
   const startNeon = () => { if (neonInterval) return; applyNeonColor(); neonInterval = setInterval(applyNeonColor, 3000); };
   const stopNeon = () => { if (neonInterval) { clearInterval(neonInterval); neonInterval = null; } neonIndex = 0; document.documentElement.style.setProperty('--neon-color', 'transparent'); };
 
@@ -745,18 +654,9 @@ function enableTagBackgroundChange(updateBodyBackground) {
   const isNeonChecked = () => isChecked(NEON_TAG);
   const isChiaroChecked = () => isChecked(CHIARO_TAG);
 
-  const updateFromTags = () => {
-    state.chiaroscuroActive = isChiaroChecked();
-    if (isNeonChecked()) startNeon(); else stopNeon();
-    updateBodyBackground();
-  };
-
+  const updateFromTags = () => { state.chiaroscuroActive = isChiaroChecked(); if (isNeonChecked()) startNeon(); else stopNeon(); updateBodyBackground(); };
   state.neonController = { isActive: isNeonChecked, update: updateFromTags };
-
-  [...tagCheckboxes].forEach(cb => {
-    const v = cb.value.trim().toLowerCase();
-    if (v === NEON_TAG || v === CHIARO_TAG) cb.addEventListener('change', updateFromTags);
-  });
+  [...tagCheckboxes].forEach(cb => { const v = cb.value.trim().toLowerCase(); if (v === NEON_TAG || v === CHIARO_TAG) cb.addEventListener('change', updateFromTags); });
   updateFromTags();
 }
 
@@ -785,26 +685,12 @@ function initColorFilter(updateBodyBackground) {
   `;
   document.head.appendChild(style);
 
-  const title = document.createElement('h3');
-  title.textContent = 'Colour';
-  const box = document.createElement('div');
-  box.className = 'color-filter-box';
+  const title = document.createElement('h3'); title.textContent = 'Colour';
+  const box = document.createElement('div'); box.className = 'color-filter-box';
   box.innerHTML = `
-    <div class="row">
-      <label class="filter-toggle"><input type="checkbox" id="color-active"> Couleur</label>
-      <input type="range" id="color-hue" min="0" max="360" step="1" value="0" disabled>
-      <span id="color-hue-val">0°</span>
-    </div>
-    <div class="row">
-      <label class="filter-toggle"><input type="checkbox" id="luminance-active"> Luminosité</label>
-      <input type="range" id="luminance-slider" min="0" max="100" step="1" value="50" disabled>
-      <span id="luminance-val">50 %</span>
-    </div>
-    <div class="row">
-      <span>Ressemblance min.</span>
-      <input type="range" id="color-sim" min="50" max="100" step="1" value="90">
-      <span id="color-sim-val">90 %</span>
-    </div>
+    <div class="row"><label class="filter-toggle"><input type="checkbox" id="color-active"> Couleur</label><input type="range" id="color-hue" min="0" max="360" step="1" value="0" disabled><span id="color-hue-val">0°</span></div>
+    <div class="row"><label class="filter-toggle"><input type="checkbox" id="luminance-active"> Luminosité</label><input type="range" id="luminance-slider" min="0" max="100" step="1" value="50" disabled><span id="luminance-val">50 %</span></div>
+    <div class="row"><span>Ressemblance min.</span><input type="range" id="color-sim" min="50" max="100" step="1" value="90"><span id="color-sim-val">90 %</span></div>
   `;
   sections.appendChild(title);
   sections.appendChild(box);
@@ -825,83 +711,65 @@ function initColorFilter(updateBodyBackground) {
 
     hue.disabled = !active.checked;
     lumSlider.disabled = !lumActive.checked;
-
     hueVal.textContent = `${state.colorFilter.hue}°`;
     lumVal.textContent = `${parseInt(lumSlider.value, 10)} %`;
     simVal.textContent = `${state.colorFilter.minSimilarity} %`;
 
     updateBodyBackground();
-
     clearTimeout(timer);
     timer = setTimeout(() => state.triggerFilter(), 150);
   };
   [active, hue, lumActive, lumSlider, sim].forEach(el => el.addEventListener('input', update));
 }
+
 // ==========================================
-// 8. FILTER LIGHTBOX (Peek & Click)
+// 8. GHOST FILTER (Corner Peek & Click)
 // ==========================================
-function initFilterLightbox() {
-    // 1. Création des éléments DOM
-    const peekTab = document.createElement('div');
-    peekTab.id = 'filter-peek-tab';
-    peekTab.textContent = 'Filters';
-    
-    const lightbox = document.createElement('div');
-    lightbox.id = 'filter-lightbox';
-    
-    const container = document.createElement('div');
-    container.className = 'filter-container';
-    
-    const closeBtn = document.createElement('button');
-    closeBtn.className = 'filter-close-btn';
-    closeBtn.innerHTML = '&times;';
-    
-    container.appendChild(closeBtn);
-    lightbox.appendChild(container);
-    
-    document.body.appendChild(peekTab);
-    document.body.appendChild(lightbox);
-    
+function initGhostFilter() {
     const filterElement = document.querySelector('.filter');
-    if (!filterElement) return; 
-    
-    // 2. On sauvegarde l'emplacement d'origine du filtre
-    const originalParent = filterElement.parentNode;
-    const originalNextSibling = filterElement.nextSibling;
-    
-    // 3. Fonctions d'ouverture / fermeture
-    function openFilterModal() {
-        // On déplace le filtre dans la lightbox
-        container.appendChild(filterElement);
-        lightbox.classList.add('visible');
-        document.body.style.overflow = 'hidden';
-    }
-    
-    function closeFilterModal() {
-        // On remet le filtre exactement à sa place
-        if (originalNextSibling) {
-            originalParent.insertBefore(filterElement, originalNextSibling);
-        } else {
-            originalParent.appendChild(filterElement);
-        }
-        lightbox.classList.remove('visible');
+    if (!filterElement) return;
+
+    const overlay = document.createElement('div');
+    overlay.className = 'filter-overlay';
+    document.body.appendChild(overlay);
+
+    const corners = ['tl', 'tr', 'bl', 'br'];
+    corners.forEach(c => {
+        const zone = document.createElement('div');
+        zone.className = `filter-corner-zone corner-${c}`;
+        zone.dataset.corner = c;
+        document.body.appendChild(zone);
+    });
+
+    document.querySelectorAll('.filter-corner-zone').forEach(zone => {
+        zone.addEventListener('mouseenter', () => {
+            if (filterElement.classList.contains('active')) return;
+            filterElement.classList.add(`peek-${zone.dataset.corner}`);
+        });
+        zone.addEventListener('mouseleave', () => {
+            if (filterElement.classList.contains('active')) return;
+            filterElement.classList.remove(`peek-${zone.dataset.corner}`);
+        });
+        
+        zone.addEventListener('click', () => {
+            corners.forEach(c => filterElement.classList.remove(`peek-${c}`));
+            filterElement.classList.add('active');
+            overlay.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        });
+    });
+
+    function closeFilter() {
+        filterElement.classList.remove('active');
+        overlay.classList.remove('active');
         document.body.style.overflow = '';
     }
-    
-    // 4. Écouteurs d'événements
-    peekTab.addEventListener('click', openFilterModal);
-    closeBtn.addEventListener('click', closeFilterModal);
-    
-    // Fermer en cliquant sur le fond noir
-    lightbox.addEventListener('click', (e) => {
-        if (e.target === lightbox) closeFilterModal();
-    });
-    
-    // Fermer avec la touche Échap
+
+    overlay.addEventListener('click', closeFilter);
     window.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape' && lightbox.classList.contains('visible')) {
-            closeFilterModal();
-        }
+        if (e.key === 'Escape' && filterElement.classList.contains('active')) closeFilter();
     });
 }
+
+
 console.log("filters > SHORTCUT");
