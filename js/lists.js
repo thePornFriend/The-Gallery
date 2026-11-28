@@ -43,8 +43,15 @@ window.TAG_ABBREVIATIONS = {
     "beach": "Beaches & Swimming Pools",
     "swim": "Beaches & Swimming Pools",
     "pool": "Beaches & Swimming Pools",
-    "bbw": "BBW / Curvy"
-    // Ajoute tes autres abréviations ici
+    "bbw": "BBW / Curvy",
+    
+    // --- Combinaisons spécifiques ---
+    "fff": "Threesome : Lesbian",
+    "mfm": "Threesome : MFM",
+    
+    "ffff": "Foursome : Lesbian",
+    "mffm": "Foursome : MFFM",
+    "fffm": "Foursome : FFFM"
 };
 
 // 4. Liste des actrices à afficher dans "See main"
@@ -82,4 +89,4 @@ window.MAIN_ACTRESSES = [
     // Ajoute ici tes actrices "principales"
 ];
 
-console.log("lists > NEW ACTRESSES LOGIC v2");
+console.log("lists > NEW ACTRESSES LOGIC v2 + lesbian tags");
