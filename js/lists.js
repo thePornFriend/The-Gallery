@@ -47,5 +47,16 @@ window.TAG_ABBREVIATIONS = {
     // Ajoute tes autres abréviations ici
 };
 
+// 4. Liste des actrices à afficher dans "See main"
+// Toutes les autres actrices iront automatiquement dans "See more"
+window.MAIN_ACTRESSES = [
+    "Adriana Chechik",
+    "Brandi Love",
+    "Kira Noir",
+    "Rae Lil Black",
+    "Vanna Bardot",
+    "Kianna Dior"
+    // Ajoute ici tes actrices "principales"
+];
 
-console.log("");
+console.log("lists > NEW ACTRESSES LOGIC");
