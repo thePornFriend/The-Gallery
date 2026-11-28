@@ -27,7 +27,11 @@
   padding: 4px 8px; border-radius: 4px; white-space: nowrap; transition: left 0.35s ease, right 0.35s ease, color 0.2s ease, background 0.2s ease;
 }
 .actress-toggle:hover { color: #fba3dc; background: rgba(255, 255, 255, 0.5); }
-.actress-section.more-active .actress-toggle { right: auto; left: 0; }
+
+/* NOTE : la règle ".actress-section.more-active .actress-toggle" a été supprimée.
+   L'état final (après tes 3 overrides successifs) revenait à right: 0 / left: auto,
+   soit la position par défaut du bouton. Le supprimer = comportement identique. */
+
 .actress-slider { position: relative; width: 100%; overflow: hidden; }
 .actress-slider > .actress-list-main { position: relative; width: 100%; min-width: 0; box-sizing: border-box; padding-right: 12px; transition: transform 0.4s ease; }
 .actress-slider > .actress-list-more { position: absolute; top: 0; left: 0; width: 100%; min-width: 0; box-sizing: border-box; padding-right: 12px; transform: translateX(100%); transition: transform 0.4s ease; }
@@ -91,10 +95,11 @@
 
 
 /* ==========================================
-   AJOUTS : PANNEAU HEAVY ET BADGES (Sans modifier le design d'origine)
+   PANNEAU HEAVY ET BADGES
+   (consolidé : doublons et règles mortes supprimés)
    ========================================== */
 
-/* Le panneau de contrôle en haut à gauche */
+/* Panneau de contrôle en haut à gauche */
 .heavy-controls {
     position: absolute;
     left: 0;
@@ -132,7 +137,7 @@
     border-color: #ccc;
 }
 
-/* Le Switch (Toggle) */
+/* Switch (Toggle) */
 .heavy-switch { position: relative; display: inline-block; width: 24px; height: 14px; }
 .heavy-switch input { opacity: 0; width: 0; height: 0; }
 .heavy-switch .slider { position: absolute; cursor: pointer; inset: 0; background-color: #ccc; transition: .3s; border-radius: 14px; }
@@ -151,36 +156,43 @@
 .prod-global-list label.heavy-only-label,
 .prod-grouped-list label.heavy-only-label {
     position: relative;
-    padding-right: 32px; /* Espace pour ne pas que le texte passe sous le badge */
+    padding-right: 32px;
 }
 
-/* Dégradé vers le vert pour les images mixtes (à l'extrême droite) */
+/* Dégradé vers le vert pour les images mixtes */
 .actress-list label.has-heavy-badge,
 .tag-list label.has-heavy-badge,
 .prod-global-list label.has-heavy-badge,
 .prod-grouped-list label.has-heavy-badge {
-    /* On utilise background-image pour se superposer à ta couleur d'origine sans l'effacer */
     background-image: linear-gradient(to right, transparent 60%, rgba(76, 175, 80, 0.5) 100%);
 }
 
-/* Label 100% lourd (Texte vert et hover flashy) */
+/* Labels 100% lourds — état final (fond vert, texte blanc) */
 .actress-list label.heavy-only-label,
 .tag-list label.heavy-only-label,
 .prod-global-list label.heavy-only-label,
 .prod-grouped-list label.heavy-only-label {
-    color: #4CAF50 !important;
+    background-color: #4CAF50 !important;
+    color: #ffffff !important;
     font-weight: 600;
     cursor: pointer;
+    border: 1px solid #388E3C;
 }
+
+/* Labels 100% lourds — survol.
+   NOTE : le text-shadow vert provient de l'ancienne règle (non écrasée),
+   il est conservé ici pour préserver le rendu exact. */
 .actress-list label.heavy-only-label:hover,
 .tag-list label.heavy-only-label:hover,
 .prod-global-list label.heavy-only-label:hover,
 .prod-grouped-list label.heavy-only-label:hover {
-    color: #00FF00 !important;
+    background-color: #388E3C !important;
+    color: #ffffff !important;
+    transform: translateY(-3px);
     text-shadow: 0 0 5px rgba(0, 255, 0, 0.6);
 }
 
-/* Le badge +X */
+/* Le badge +X (base) */
 .heavy-badge {
     position: absolute;
     right: 6px;
@@ -199,87 +211,11 @@
     background: #4CAF50;
 }
 
-/* ==========================================
-   CORRECTIONS FINALES
-   ========================================== */
-
-/* 1. Décaler le bouton "See main" pour ne pas cacher le panneau Heavy */
-.actress-section.more-active .actress-toggle { 
-    right: auto; 
-    left: 160px; /* Pousse le bouton vers la droite pour laisser la place au bouton Load */
-}
-
-/* 2. Labels 100% lourds : Vert complet ! */
-.actress-list label.heavy-only-label,
-.tag-list label.heavy-only-label,
-.prod-global-list label.heavy-only-label,
-.prod-grouped-list label.heavy-only-label {
-    background-color: #4CAF50 !important; /* Fond vert */
-    color: #ffffff !important;            /* Texte blanc */
-    font-weight: 600;
-    cursor: pointer;
-    border: 1px solid #388E3C;
-}
-
-/* Effet au survol des labels 100% lourds (Vert plus foncé) */
-.actress-list label.heavy-only-label:hover,
-.tag-list label.heavy-only-label:hover,
-.prod-global-list label.heavy-only-label:hover,
-.prod-grouped-list label.heavy-only-label:hover {
-    background-color: #388E3C !important; 
-    color: #ffffff !important;
-    transform: translateY(-3px); /* On garde ton effet de soulèvement */
-}
-
-/* 3. Le badge +X doit devenir blanc pour être lisible sur le fond vert */
+/* Badge +X dans un label 100% lourd (fond vert) → blanc */
 .heavy-only-label .heavy-badge {
     color: #ffffff;
     background: rgba(255, 255, 255, 0.25);
 }
-
-.heavy-only-label .heavy-badge:hover {
-    background: #ffffff;
-    color: #4CAF50;
-}
-
-/* ==========================================
-   CORRECTIONS FINALES
-   ========================================== */
-
-/* 1. On annule le déplacement du bouton "See main" pour qu'il reste à droite */
-.actress-section.more-active .actress-toggle {
-    right: 0 !important;
-    left: auto !important;
-}
-
-/* 2. Labels 100% lourds : Vert complet ! */
-.actress-list label.heavy-only-label,
-.tag-list label.heavy-only-label,
-.prod-global-list label.heavy-only-label,
-.prod-grouped-list label.heavy-only-label {
-    background-color: #4CAF50 !important; /* Fond vert */
-    color: #ffffff !important;            /* Texte blanc */
-    font-weight: 600;
-    cursor: pointer;
-    border: 1px solid #388E3C;
-}
-
-/* Effet au survol des labels 100% lourds (Vert plus foncé) */
-.actress-list label.heavy-only-label:hover,
-.tag-list label.heavy-only-label:hover,
-.prod-global-list label.heavy-only-label:hover,
-.prod-grouped-list label.heavy-only-label:hover {
-    background-color: #388E3C !important; 
-    color: #ffffff !important;
-    transform: translateY(-3px); /* On garde ton effet de soulèvement */
-}
-
-/* 3. Le badge +X doit devenir blanc pour être lisible sur le fond vert */
-.heavy-only-label .heavy-badge {
-    color: #ffffff;
-    background: rgba(255, 255, 255, 0.25);
-}
-
 .heavy-only-label .heavy-badge:hover {
     background: #ffffff;
     color: #4CAF50;
