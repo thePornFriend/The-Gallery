@@ -14,7 +14,7 @@ window.GALLERY_TXT_FILES = [
     // '100.txt', '105.txt', '110.txt', '120.txt'    
     'video.txt',
 //JJV
-    'data/JJV/Jules Jordan Video_2020_2025', 
+    'JJV/Jules Jordan Video_2020_2025', 
 // VMG/BLACKED
     'VMG/Blacked_2025_2026.txt', 'VMG/Blacked_2014_2015_2016.txt',
 // VMG/TUSHY
@@ -90,4 +90,4 @@ window.MAIN_ACTRESSES = [
     // Ajoute ici tes actrices "principales"
 ];
 
-console.log("lists > JJV");
+console.log("lists > JJV v2");
