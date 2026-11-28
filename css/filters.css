@@ -252,3 +252,115 @@
     color: inherit;
     background: transparent !important;
 }
+
+/* ==========================================
+   FILTER PEEK & LIGHTBOX (PREMIER JET)
+   ========================================== */
+
+/* L'onglet de survol en bas à droite */
+#filter-peek-tab {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    width: 140px;
+    height: 60px;
+    background-color: rgb(255, 240, 245); /* Ta couleur de fond mobile */
+    border: 2px solid rgba(0, 123, 255, 0.3);
+    border-radius: 12px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-family: 'Poppins', sans-serif;
+    font-weight: 600;
+    font-size: 15px;
+    color: #333;
+    cursor: pointer;
+    z-index: 800;
+    
+    /* L'effet dégradé vers le transparent (le fameux "peek") */
+    -webkit-mask-image: linear-gradient(to top left, black 30%, transparent 100%);
+    mask-image: linear-gradient(to top left, black 30%, transparent 100%);
+    
+    /* Légèrement caché par défaut, il ressort au survol */
+    transform: translate(15px, 15px);
+    opacity: 0.6;
+    transition: all 0.3s ease;
+}
+
+#filter-peek-tab:hover {
+    transform: translate(0, 0);
+    opacity: 1;
+    /* On enlève le masque au survol pour voir le bouton en entier */
+    -webkit-mask-image: none;
+    mask-image: none;
+    box-shadow: 0 4px 15px rgba(0, 123, 255, 0.2);
+    border-color: #007bff;
+    color: #007bff;
+}
+
+/* Le conteneur de la lightbox (fond noir semi-transparent) */
+#filter-lightbox {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(4px);
+    z-index: 2500; /* Au-dessus de la galerie, sous les scènes */
+    display: none;
+    justify-content: center;
+    align-items: center;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+#filter-lightbox.visible {
+    display: flex;
+    opacity: 1;
+}
+
+/* La boîte qui contient le filtre */
+#filter-lightbox .filter-container {
+    width: 90vw;
+    max-width: 1000px;
+    max-height: 85vh;
+    overflow-y: auto;
+    background: rgb(255, 240, 245);
+    border-radius: 16px;
+    padding: 20px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    position: relative;
+    scrollbar-width: none; /* Cache la scrollbar comme sur le body */
+}
+#filter-lightbox .filter-container::-webkit-scrollbar {
+    display: none;
+}
+
+/* Le bouton fermer (inspiré de ta modale de scènes) */
+.filter-close-btn {
+    position: absolute;
+    top: 15px;
+    right: 20px;
+    background: none;
+    border: none;
+    font-size: 2rem;
+    color: #666;
+    cursor: pointer;
+    line-height: 1;
+    z-index: 10;
+    transition: color 0.2s ease;
+}
+.filter-close-btn:hover {
+    color: #ff4d4d;
+}
+
+/* On réinitialise les marges du filtre quand il est dans la lightbox */
+#filter-lightbox .filter {
+    margin: 0;
+    width: 100%;
+    box-sizing: border-box;
+    position: static;
+}
+
+/* Pas d'UX mobile pour l'instant, on cache l'onglet sur petit écran */
+@media (max-width: 768px) {
+    #filter-peek-tab { display: none !important; }
+}
