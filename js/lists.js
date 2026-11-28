@@ -50,13 +50,36 @@ window.TAG_ABBREVIATIONS = {
 // 4. Liste des actrices à afficher dans "See main"
 // Toutes les autres actrices iront automatiquement dans "See more"
 window.MAIN_ACTRESSES = [
-    "Abella Danger","Adriana Chechik","Agatha Vega","Alexis Crystal", 
-    "Angel Youngs","Angela White","Angie Faith", 
-    "Brandi Love",
-    //"Kianna Dior","Kira Noir",
-    "Rae Lil Black",
-    "Vanna Bardot",
+    "Abella Danger","Adriana Chechik","Agatha Vega","AJ Applegate","Alex Coal","Alexis Crystal", 
+    "Angel Youngs","Angela White","Angie Faith","Anissa Kate","Aubree Valentine",
+    "Bella Rolland",
+    "Brandi Love","Brdigette B","Britney Amber",
+    "Cadence Lux",
+    "Connie Carter","Cory Chase",
+    "Dani Daniels",
+    "Ellie Nova",
+    "Emma Hix","Eve Sweet",
+    "Gianna Dior",
+    "Hailey Rose",
+    "India Summer",
+    "Jesse Pony","Jia Lissa",
+    "Josephine Jackson","Julie Cash",
+    "Kaisa Nord","Kendra Sunderland","Kianna Dior","Kira Noir",
+    "La sirena 69","Lacy Lennon","lauren phillips","Leah Gotti","Lily Love ","Liya Silver",
+    "Lucy Mochi","Lulu Chu","Luna Star",
+    "Megan Rain","Mia Melano",
+    "Molly Little",
+    "Nancy Ace",
+    "Octavia Red","Olive Glass",
+    "Paige Owens",
+    "Rae Lil Black","Riley Reid",
+    "Romi Rain",
+    "Sara Luuv","Sara Luuv",
+    "Stella Cardo",
+    "Tiffany Tatum",
+    "Tommy King",
+    "Valentina Nappi","Vanna Bardot","Vicky Chase","Vina Sky","Violet Myers","Violet Starr"
     // Ajoute ici tes actrices "principales"
 ];
 
-console.log("lists > NEW ACTRESSES LOGIC");
+console.log("lists > NEW ACTRESSES LOGIC v2");
