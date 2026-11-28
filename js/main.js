@@ -252,4 +252,4 @@ document.addEventListener("DOMContentLoaded", async () => {
   loadGalleryFromTxt();
 });
 
-console.log("main > NEW HEAVY IMG BEAHAVIOUR ");
+console.log("main > SHORTCUT ");
