@@ -152,23 +152,25 @@
    ========================================== */
 
 /* Le panneau de filtre en mode fantôme */
+/* Le panneau de filtre en mode fantôme */
 .filter {
     position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0.98);
-    width: 95vw; max-width: 1400px; max-height: 90vh; overflow-y: auto; 
     
-    /* Espace intérieur pour ne pas coller aux bords */
+    /* ⬇⬇⬇ TAILLE RÉDUITE POUR LAISSER UNE MARGE NOIRE ⬇⬇⬇ */
+    width: 85vw; 
+    max-width: 1200px; 
+    max-height: 80vh; 
+    overflow-y: auto; 
+    
     padding: 4vh 4vw; 
     box-sizing: border-box; 
     
     margin: 0 !important;
-    /* Couleur du body récupérée de base.css */
     background-color: rgb(255, 192, 203); 
-    /* Ombre et arrondis cohérents avec scenes-modal */
     border-radius: 12px; 
     box-shadow: 0 10px 30px rgba(0,0,0,0.5);
     
-    /* Z-index bas quand inactif */
-    z-index: 1000; 
+    z-index: 1800; /* Au-dessus de l'overlay (1700) */
     opacity: 0; 
     pointer-events: none; 
     transition: opacity 0.3s ease, transform 0.3s ease, mask-image 0.3s ease;
