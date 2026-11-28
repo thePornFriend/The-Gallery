@@ -428,7 +428,33 @@ function createFilterCheckboxes(images) {
 
   // On construit les grilles
   const mainCheckboxes = buildCheckboxGrid(mainList, mainCounts, stripPrefix, loadHeavyForTarget);
-  const amateurCheckboxes = buildCheckboxGrid(moreList, amateurCounts, stripPrefix, loadHeavyForTarget);
+  const amateurCheckboxes = buildCheckboxGrid(moreList, amateurCounts, stripPrefix, loadHeavyForTarget);  
+  // --- RECRÉATION DU BOUTON GLOBAL "TOUTES LES AUTRES" ---
+  const otherImagesCount = images.filter(d => extractAmActs(d).length > 0).length;
+  if (otherImagesCount > 0) {
+    const columns = mainList.querySelectorAll('.column');
+    const lastCol = columns[columns.length - 1];
+    if (lastCol) {
+      const label = document.createElement('label');
+      label.className = 'amateur-all-label'; // On garde ta classe CSS d'origine
+      // On affiche le nombre total d'images qui contiennent au moins une actrice "See more"
+      label.innerHTML = `<input type="checkbox" value="am:__all__"> Toutes les autres (${otherImagesCount})`;
+      const otherCb = label.firstChild;
+      lastCol.appendChild(label);
+      mainCheckboxes.push(otherCb); // On l'ajoute à la liste globale
+
+      // Animation "pulse-hint" sur le bouton "See more"
+      if (toggleBtn) {
+        const updatePulse = () => {
+          const isHovered = label.matches(':hover');
+          toggleBtn.classList.toggle('pulse-hint', isHovered || otherCb.checked);
+        };
+        label.addEventListener('mouseenter', updatePulse);
+        label.addEventListener('mouseleave', updatePulse);
+        otherCb.addEventListener('change', updatePulse);
+      }
+    }
+  }
   const tagCheckboxes = buildCheckboxGrid(tagList, tagCounts, k => k, loadHeavyForTarget);
 
   // Plus de bouton "Amateur" fourre-tout, on gère juste le bouton "See more"
@@ -803,3 +829,5 @@ function initColorFilter(updateBodyBackground) {
   };
   [active, hue, lumActive, lumSlider, sim].forEach(el => el.addEventListener('input', update));
 }
+
+console.log("filters > Amateur !");
