@@ -82,9 +82,9 @@ window.MAIN_ACTRESSES = [
     "Rae Lil Black","Riley Reid",
     "Romi Rain",
     "Sara Luuv","Sara Luuv",
-    "Stella Cardo",
+    "Stacy Cruz","Stella Cardo",
     "Tiffany Tatum",
-    "Tommy King",
+    "Tommy King","Tori Black"
     "Valentina Nappi","Vanna Bardot","Vicky Chase","Vina Sky","Violet Myers","Violet Starr"
     // Ajoute ici tes actrices "principales"
 ];
