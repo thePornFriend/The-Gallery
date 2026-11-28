@@ -364,3 +364,105 @@
 @media (max-width: 768px) {
     #filter-peek-tab { display: none !important; }
 }
+
+/* ==========================================
+   GHOST FILTER & CORNER PEEK (PREMIER JET)
+   ========================================== */
+
+/* 1. On sort le filtre du flux et on le centre en mode fantôme */
+.filter {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0.98);
+    width: 95vw;
+    max-width: 1400px;
+    max-height: 90vh;
+    overflow-y: auto;
+    margin: 0 !important; /* On écrase le margin: 2vh */
+    background: rgba(255, 240, 245, 0.98); /* Le rose de ton fond */
+    border-radius: 16px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+    z-index: 2000;
+    
+    /* État fantôme par défaut */
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease, transform 0.3s ease, mask-image 0.3s ease;
+    
+    /* On cache la scrollbar pour faire plus propre */
+    scrollbar-width: none;
+}
+.filter::-webkit-scrollbar { display: none; }
+
+/* 2. Les 4 zones invisibles de 8% dans les coins */
+.filter-corner-zone {
+    position: fixed;
+    width: 8vw;
+    height: 8vh;
+    z-index: 2001; /* Au-dessus du filtre pour capter la souris */
+    cursor: pointer;
+    /* Petit indicateur visuel très subtil pour savoir qu'il y a quelque chose */
+    background: radial-gradient(circle at center, rgba(0, 123, 255, 0.05) 0%, transparent 70%);
+}
+.corner-tl { top: 0; left: 0; }
+.corner-tr { top: 0; right: 0; }
+.corner-bl { bottom: 0; left: 0; }
+.corner-br { bottom: 0; right: 0; }
+
+/* 3. L'effet "Peek" (Révélation au survol) */
+.filter.peek-tl { 
+    opacity: 1; 
+    pointer-events: auto;
+    -webkit-mask-image: radial-gradient(circle at top left, black 20%, transparent 60%);
+    mask-image: radial-gradient(circle at top left, black 20%, transparent 60%);
+}
+.filter.peek-tr { 
+    opacity: 1; 
+    pointer-events: auto;
+    -webkit-mask-image: radial-gradient(circle at top right, black 20%, transparent 60%);
+    mask-image: radial-gradient(circle at top right, black 20%, transparent 60%);
+}
+.filter.peek-bl { 
+    opacity: 1; 
+    pointer-events: auto;
+    -webkit-mask-image: radial-gradient(circle at bottom left, black 20%, transparent 60%);
+    mask-image: radial-gradient(circle at bottom left, black 20%, transparent 60%);
+}
+.filter.peek-br { 
+    opacity: 1; 
+    pointer-events: auto;
+    -webkit-mask-image: radial-gradient(circle at bottom right, black 20%, transparent 60%);
+    mask-image: radial-gradient(circle at bottom right, black 20%, transparent 60%);
+}
+
+/* 4. L'état Actif (Ouvert) */
+.filter.active {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translate(-50%, -50%) scale(1);
+    -webkit-mask-image: none;
+    mask-image: none;
+}
+
+/* L'overlay derrière pour fermer au clic */
+.filter-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(4px);
+    z-index: 1999;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+}
+.filter-overlay.active {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+/* Cache tout ça sur mobile */
+@media (max-width: 768px) {
+    .filter-corner-zone { display: none !important; }
+    .filter { display: none !important; } /* On garde ton bouton mobile actuel */
+}
