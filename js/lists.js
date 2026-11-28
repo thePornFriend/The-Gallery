@@ -13,7 +13,8 @@ window.GALLERY_TXT_FILES = [
     // '010.txt', '011.txt', '012.txt', '013.txt', '099.txt', 
     // '100.txt', '105.txt', '110.txt', '120.txt'    
     'video.txt',
-
+//JJV
+    'data/JJV/Jules Jordan Video_2020_2025'
 // VMG/BLACKED
     'VMG/Blacked_2025_2026.txt', 'VMG/Blacked_2014_2015_2016.txt',
 // VMG/TUSHY
