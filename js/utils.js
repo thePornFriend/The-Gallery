@@ -448,4 +448,4 @@ function hueSimilarity(h1, h2) {
   return 100 * (1 - d / 180);
 }
 
-console.log("utils > FFF & FFFM");
+console.log("");
