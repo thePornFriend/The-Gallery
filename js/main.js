@@ -206,7 +206,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     enableCollapsibleFilters();
     enableTagBackgroundChange(updateBodyBackground);
 
-    initFilterLightbox();
+    initGhostFilter();
   }
 
   // Fonction globale appelée par filters.js quand une image lourde est chargée
