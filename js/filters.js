@@ -11,6 +11,7 @@ function buildCheckboxGrid(container, counts, displayName = k => k, onLoadHeavy 
       return showHeavy ? true : (counts.light.get(k) || 0) > 0;
   }).sort((a, b) => displayName(a).localeCompare(displayName(b), 'fr', { sensitivity: 'base' }));
 
+  // LA LOGIQUE D'ORIGINE : On calcule le nombre par colonne et on crée 5 colonnes
   const perCol = Math.ceil(sorted.length / 5) || 1;
   container.innerHTML = '';
   const checkboxes = [];
@@ -44,7 +45,8 @@ function buildCheckboxGrid(container, counts, displayName = k => k, onLoadHeavy 
       if (lCount === 0 && showHeavy && hCount > 0 && onLoadHeavy) {
           label.addEventListener('click', (e) => {
               if (e.target !== cb && !e.target.classList.contains('heavy-badge')) {
-                  e.preventDefault(); onLoadHeavy(item);
+                  e.preventDefault();
+                  onLoadHeavy(item);
               }
           });
       }
@@ -58,7 +60,8 @@ function buildCheckboxGrid(container, counts, displayName = k => k, onLoadHeavy 
   if (onLoadHeavy) {
       container.querySelectorAll('.heavy-badge').forEach(badge => {
           badge.addEventListener('click', (e) => {
-              e.preventDefault(); e.stopPropagation(); onLoadHeavy(badge.dataset.val);
+              e.preventDefault(); e.stopPropagation(); 
+              onLoadHeavy(badge.dataset.val);
           });
       });
   }
@@ -787,4 +790,4 @@ function initGhostFilter() {
     });
 }
 
-console.log("filters > SHORTCUT remade !");
+console.log("filters > LABELS RESTORED");
