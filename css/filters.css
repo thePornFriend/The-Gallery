@@ -148,77 +148,101 @@
 
 
 /* ==========================================
-   3. GHOST FILTER & CORNER PEEK (CORRIGÉ)
+   3. FILTER MODAL (Structure identique à scenes-modal)
    ========================================== */
 
-/* Le panneau de filtre en mode fantôme */
-/* Le panneau de filtre en mode fantôme */
+/* L'ENVELOPPE : plein écran, noir flouté, flex centré */
+.filter-modal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 1800;
+    justify-content: center;
+    align-items: center;
+    background: transparent;
+    backdrop-filter: none;
+    pointer-events: none;
+    transition: background 0.3s ease, backdrop-filter 0.3s ease;
+}
+
+.filter-modal.visible {
+    display: flex;
+}
+
+/* Quand on est en mode "Peek" (survol des coins) : pas de fond noir */
+.filter-modal.peek-mode {
+    background: transparent;
+    backdrop-filter: none;
+    pointer-events: none;
+}
+
+/* Quand on clique : la marge noire apparaît (comme scenes-modal) */
+.filter-modal.active {
+    background: rgba(0, 0, 0, 0.85);
+    backdrop-filter: blur(4px);
+    pointer-events: auto;
+}
+
+/* LE CONTENU : le filtre lui-même */
 .filter {
-    position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0.98);
-    
-    /* ⬇⬇⬇ TAILLE RÉDUITE POUR LAISSER UNE MARGE NOIRE ⬇⬇⬇ */
-    width: 85vw; 
-    max-width: 1200px; 
-    max-height: 80vh; 
-    overflow-y: auto; 
-    
-    padding: 4vh 4vw; 
-    box-sizing: border-box; 
-    
+    width: 85vw;
+    max-width: 1200px;
+    height: 85vh;
+    overflow-y: auto;
+    background-color: rgb(255, 192, 203); /* couleur du body */
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    padding: 4vh 4vw;
+    box-sizing: border-box;
     margin: 0 !important;
-    background-color: rgb(255, 192, 203); 
-    border-radius: 12px; 
-    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-    
-    z-index: 1800; /* Au-dessus de l'overlay (1700) */
-    opacity: 0; 
-    pointer-events: none; 
-    transition: opacity 0.3s ease, transform 0.3s ease, mask-image 0.3s ease;
     scrollbar-width: none;
+    opacity: 0;
+    transition: opacity 0.3s ease;
 }
 .filter::-webkit-scrollbar { display: none; }
 
+/* Peek : le filtre devient visible selon le coin */
+.filter-modal.peek-mode .filter {
+    opacity: 1;
+}
+.filter-modal.peek-mode.peek-tl .filter {
+    -webkit-mask-image: radial-gradient(circle at top left, black 20%, transparent 60%);
+    mask-image: radial-gradient(circle at top left, black 20%, transparent 60%);
+}
+.filter-modal.peek-mode.peek-tr .filter {
+    -webkit-mask-image: radial-gradient(circle at top right, black 20%, transparent 60%);
+    mask-image: radial-gradient(circle at top right, black 20%, transparent 60%);
+}
+.filter-modal.peek-mode.peek-bl .filter {
+    -webkit-mask-image: radial-gradient(circle at bottom left, black 20%, transparent 60%);
+    mask-image: radial-gradient(circle at bottom left, black 20%, transparent 60%);
+}
+.filter-modal.peek-mode.peek-br .filter {
+    -webkit-mask-image: radial-gradient(circle at bottom right, black 20%, transparent 60%);
+    mask-image: radial-gradient(circle at bottom right, black 20%, transparent 60%);
+}
+
+/* Actif : filtre complètement visible, pas de mask */
+.filter-modal.active .filter {
+    opacity: 1;
+    -webkit-mask-image: none !important;
+    mask-image: none !important;
+}
+
 /* Les 4 zones sensibles de 8% dans les coins */
 .filter-corner-zone {
-    position: fixed; width: 8vw; height: 8vh; z-index: 1100; cursor: pointer;
-    background: radial-gradient(circle at center, rgba(0, 123, 255, 0.05) 0%, transparent 70%);
+    position: fixed;
+    width: 8vw;
+    height: 8vh;
+    z-index: 1900;
+    cursor: pointer;
 }
 .corner-tl { top: 0; left: 0; }
 .corner-tr { top: 0; right: 0; }
 .corner-bl { bottom: 0; left: 0; }
 .corner-br { bottom: 0; right: 0; }
 
-/* Effet Peek (Révélation localisée au survol) */
-.filter.peek-tl { opacity: 1; -webkit-mask-image: radial-gradient(circle at top left, black 20%, transparent 60%); mask-image: radial-gradient(circle at top left, black 20%, transparent 60%); }
-.filter.peek-tr { opacity: 1; -webkit-mask-image: radial-gradient(circle at top right, black 20%, transparent 60%); mask-image: radial-gradient(circle at top right, black 20%, transparent 60%); }
-.filter.peek-bl { opacity: 1; -webkit-mask-image: radial-gradient(circle at bottom left, black 20%, transparent 60%); mask-image: radial-gradient(circle at bottom left, black 20%, transparent 60%); }
-.filter.peek-br { opacity: 1; -webkit-mask-image: radial-gradient(circle at bottom right, black 20%, transparent 60%); mask-image: radial-gradient(circle at bottom right, black 20%, transparent 60%); }
-
-/* État Actif (Ouvert) */
-.filter.active {
-    opacity: 1; pointer-events: auto; transform: translate(-50%, -50%) scale(1); 
-    /* Z-index sous la lightbox (2000) mais au-dessus de la galerie */
-    z-index: 1800; 
-    -webkit-mask-image: none !important; mask-image: none !important;
-}
-
-/* Overlay sombre derrière (identique à scenes-modal) */
-.filter-overlay {
-    position: fixed; inset: 0; 
-    background: rgba(0, 0, 0, 0.85); 
-    backdrop-filter: blur(4px);
-    z-index: 1700; 
-    opacity: 0; 
-    pointer-events: none; 
-    transition: opacity 0.3s ease;
-}
-.filter-overlay.active { 
-    opacity: 1; 
-    pointer-events: auto; 
-}
-
-/* Mobile */
 @media (max-width: 768px) {
     .filter-corner-zone { display: none !important; }
-    .filter { display: none !important; }
+    .filter-modal { display: none !important; }
 }
