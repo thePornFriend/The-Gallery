@@ -543,8 +543,9 @@ function createFilterCheckboxes(images) {
     const selected = [...new Set(allCheckboxes.filter(cb => cb.checked).map(cb => cb.value))];
     const inclusive = modeSelect.value === 'inclusive';
     
-    // On n'a plus besoin de selectedAll / selectedRest séparément, tout est dans 'selected'
-    const selectedRest = selected;
+    // On sépare la case globale des autres cases
+    const selectedAll = selected.includes('am:__all__');
+    const selectedRest = selected.filter(v => v !== 'am:__all__');
 
     const isCoveredByParent = (val) => {
         if (!state.studioHierarchy || !state.studioHierarchy.has(val)) return false;
@@ -830,4 +831,4 @@ function initColorFilter(updateBodyBackground) {
   [active, hue, lumActive, lumSlider, sim].forEach(el => el.addEventListener('input', update));
 }
 
-console.log("filters > Amateur !");
+console.log("filters > Amateur ! v2");
