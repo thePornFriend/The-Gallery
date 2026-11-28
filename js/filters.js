@@ -205,7 +205,7 @@ function buildStudioFilterGrid(container, lightCounts, heavyCounts, imgData, onL
         
         if (showHeavy && hCount > 0) {
             if (lCount === 0) extraClass = 'heavy-only-label';
-            else extraClass = 'has-heavy';
+            else extraClass = 'has-heavy-badge';
             html += `<span class="heavy-badge" data-val="${value}">+${hCount}</span>`;
         }
         
@@ -829,4 +829,4 @@ function initColorFilter(updateBodyBackground) {
   [active, hue, lumActive, lumSlider, sim].forEach(el => el.addEventListener('input', update));
 }
 
-console.log("Filters > HEAVY_DAY 2");
+console.log("Filters > HEAVY_DAY 2 v2");
