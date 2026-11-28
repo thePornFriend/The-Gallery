@@ -202,10 +202,18 @@
 
 /* Overlay sombre derrière (identique à scenes-modal) */
 .filter-overlay {
-    position: fixed; inset: 0; background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(4px);
-    z-index: 1700; opacity: 0; pointer-events: none; transition: opacity 0.3s ease;
+    position: fixed; inset: 0; 
+    background: rgba(0, 0, 0, 0.85); 
+    backdrop-filter: blur(4px);
+    z-index: 1700; 
+    opacity: 0; 
+    pointer-events: none; 
+    transition: opacity 0.3s ease;
 }
-.filter-overlay.active { opacity: 1; pointer-events: auto; }
+.filter-overlay.active { 
+    opacity: 1; 
+    pointer-events: auto; 
+}
 
 /* Mobile */
 @media (max-width: 768px) {
