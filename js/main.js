@@ -252,4 +252,4 @@ document.addEventListener("DOMContentLoaded", async () => {
   loadGalleryFromTxt();
 });
 
-console.log("main > SHORTCUT ");
+console.log("main > FILTERS SHORTCUT v2");
