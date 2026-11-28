@@ -58,7 +58,7 @@ window.TAG_ABBREVIATIONS = {
 // Toutes les autres actrices iront automatiquement dans "See more"
 window.MAIN_ACTRESSES = [
     "Abella Danger","Adriana Chechik","Agatha Vega","AJ Applegate","Alex Coal","Alexis Crystal", 
-    "Angel Youngs","Angela White","Angie Faith","Anissa Kate","Aubree Valentine",
+    "Angel Youngs","Angela White","Angie Faith","Anissa Kate","Ashley Fires","Aubree Valentine",
     "Bella Rolland",
     "Brandi Love","Brdigette B","Britney Amber",
     "Cadence Lux",
@@ -71,8 +71,8 @@ window.MAIN_ACTRESSES = [
     "India Summer",
     "Jesse Pony","Jia Lissa",
     "Josephine Jackson","Julie Cash",
-    "Kaisa Nord","Kendra Sunderland","Kianna Dior","Kira Noir",
-    "La sirena 69","Lacy Lennon","lauren phillips","Leah Gotti","Lily Love ","Liya Silver",
+    "Kaisa Nord","Kelsi Monroe","Kendra Sunderland","Kenzie Reeves","Kianna Dior","Kira Noir",
+    "La sirena 69","Lacy Lennon","Lana Rhoades","lauren phillips","Leah Gotti","Lily Love ","Liya Silver",
     "Lucy Mochi","Lulu Chu","Luna Star",
     "Megan Rain","Mia Melano",
     "Molly Little",
