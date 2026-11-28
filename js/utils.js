@@ -296,7 +296,7 @@ function buildCollections(images) {
   return collections;
 }
 // ==========================================
-// NORMALISATION DES TAGS (Threesome, Foursome, etc.)
+// NORMALISATION DES TAGS (100% basée sur lists.js)
 // ==========================================
 function normalizeTags(tagsString) {
     if (!tagsString) return '';
@@ -305,7 +305,7 @@ function normalizeTags(tagsString) {
         let tag = t.trim();
         if (!tag) return '';
 
-        // 1. Vérifier si c'est une abréviation définie dans lists.js
+        // On vérifie si le tag est dans notre dictionnaire de lists.js
         if (window.TAG_ABBREVIATIONS) {
             const lowerTag = tag.toLowerCase();
             if (window.TAG_ABBREVIATIONS[lowerTag]) {
@@ -313,24 +313,9 @@ function normalizeTags(tagsString) {
             }
         }
 
-        const upper = tag.toUpperCase();
-        
-        // 2. Si le tag fait exactement 3 lettres et ne contient que des M et des F
-        if (/^[MF]{3}$/.test(upper)) {
-            return `Threesome : ${upper}`;
-        }
-        // 3. Si le tag fait exactement 4 lettres et ne contient que des M et des F
-        if (/^[MF]{4}$/.test(upper)) {
-            return `Foursome : ${upper}`;
-        }
-        // 4. Si tu as des combinaisons à 5 lettres
-        if (/^[MF]{5}$/.test(upper)) {
-            return `Fivesome : ${upper}`;
-        }
-        
-        // Si ce n'est pas une combinaison ou une abréviation, on garde le tag tel quel
+        // Si ce n'est pas une abréviation connue, on garde le tag tel quel
         return tag;
-    }).filter(Boolean).join(', '); // filter(Boolean) évite les virgules en trop si un tag est vide
+    }).filter(Boolean).join(', ');
 }
 
 function autoPopulateDatasets(images) {
@@ -463,4 +448,4 @@ function hueSimilarity(h1, h2) {
   return 100 * (1 - d / 180);
 }
 
-console.log("");
+console.log("utils > FFF & FFFM");
