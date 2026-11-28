@@ -1,4 +1,6 @@
-.filter { margin: 2vh; }
+/* ==========================================
+   1. BASE & SECTIONS
+   ========================================== */
 .filter-sections h3 {
   font-family: 'Poppins', sans-serif; text-align: center; color: rgba(0, 123, 255, 0.4);
   margin-bottom: 0.5em; cursor: pointer; user-select: none; transition: color 0.2s ease, transform 0.2s ease;
@@ -51,17 +53,18 @@
 .actress-list::-webkit-scrollbar-thumb, .tag-list::-webkit-scrollbar-thumb, .prod-global-list::-webkit-scrollbar-thumb { background-color: rgba(0, 123, 255, 0.4); border-radius: 4px; border: 1px solid rgba(0, 0, 0, 0.1); }
 .actress-list::-webkit-scrollbar-track, .tag-list::-webkit-scrollbar-track, .prod-global-list::-webkit-scrollbar-track { background: transparent; }
 
-/* STYLE DES PILULES — transition "lente" pour les changements de couleur/état.
-   transform reste rapide (0.25s) pour que le hover réagisse vivement. */
+/* STYLE DES PILULES */
 .actress-list label, .tag-list label, .prod-global-list label, .prod-grouped-list label, .gallery-label {
   display: block; padding: 8px 14px; border-radius: 16px; background-color: rgba(190, 208, 253, 0.392); box-shadow: 0 2px 5px rgba(0, 0, 0, 0.07);
   cursor: pointer; user-select: none; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; font-size: 15px; color: #333;
-  transition: background-color 0.5s ease, box-shadow 0.5s ease, color 0.5s ease,
-              border-color 0.5s ease, padding-right 0.4s ease, transform 0.25s ease;
+  transition: background-color 0.5s ease, box-shadow 0.5s ease, color 0.5s ease, border-color 0.5s ease, padding-right 0.4s ease, transform 0.25s ease;
 }
 .actress-list label:hover, .tag-list label:hover, .prod-global-list label:hover, .prod-grouped-list label:hover, .gallery-label:hover { background-color: #e6f0ff; box-shadow: 0 8px 15px rgba(0, 123, 255, 0.2); transform: translateY(-3px); }
 .actress-list label:focus-within, .tag-list label:focus-within, .prod-global-list label:focus-within, .prod-grouped-list label:focus-within, .gallery-label:focus-within { outline: 2px solid #007bff; outline-offset: 2px; background-color: #d0e3ff; box-shadow: 0 8px 20px rgba(0, 123, 255, 0.3); }
 .actress-list input[type="checkbox"]:checked, .tag-list input[type="checkbox"]:checked, .prod-global-list input[type="checkbox"]:checked, .prod-grouped-list input[type="checkbox"]:checked { background-color: #0056b3; border-color: #004080; box-shadow: 0 0 8px 1px rgba(0, 86, 179, 0.6); }
+
+.actress-list label.related-actress { background-color: rgba(120, 165, 250, 0.72); color: #050505; font-weight: 600; box-shadow: 0 3px 9px rgba(0, 70, 180, 0.28); }
+.actress-list label.related-actress:hover { background-color: #cce0ff; box-shadow: 0 6px 15px rgba(0, 123, 255, 0.35); }
 
 /* STUDIOS */
 .prod-list { display: flex; flex-direction: column; width: 100%; padding: 10px 0; margin-bottom: 3vh; }
@@ -88,53 +91,15 @@
 .filter-mode select:hover { background-color: #e6f0ff; box-shadow: 0 8px 15px rgba(0, 123, 255, 0.2); border-color: #007bff; }
 .filter-mode select:focus { outline: none; box-shadow: 0 8px 20px rgba(0, 123, 255, 0.3); border-color: #0056b3; background-color: #d0e3ff; }
 
-.actress-list label.related-actress { background-color: rgba(120, 165, 250, 0.72); color: #050505; font-weight: 600; box-shadow: 0 3px 9px rgba(0, 70, 180, 0.28); }
-.actress-list label.related-actress:hover { background-color: #cce0ff; box-shadow: 0 6px 15px rgba(0, 123, 255, 0.35); }
-
 
 /* ==========================================
-   PANNEAU HEAVY ET BADGES
+   2. PANNEAU HEAVY & BADGES
    ========================================== */
+.heavy-controls { position: absolute; left: 0; top: 50%; transform: translateY(-50%); display: flex; align-items: center; gap: 6px; font-family: 'Poppins', sans-serif; font-size: 0.75em; z-index: 10; }
+.heavy-btn { background: rgba(0, 123, 255, 0.1); color: rgba(0, 123, 255, 0.8); border: 1px solid rgba(0, 123, 255, 0.3); padding: 3px 6px; border-radius: 4px; cursor: pointer; font-family: inherit; font-weight: 600; transition: all 0.2s ease; }
+.heavy-btn:hover:not(:disabled) { background: rgba(0, 123, 255, 0.2); color: #fba3dc; border-color: #fba3dc; }
+.heavy-btn:disabled { opacity: 0.5; cursor: default; background: #e0e0e0; color: #888; border-color: #ccc; }
 
-/* Panneau de contrôle en haut à gauche */
-.heavy-controls {
-    position: absolute;
-    left: 0;
-    top: 50%;
-    transform: translateY(-50%);
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    font-family: 'Poppins', sans-serif;
-    font-size: 0.75em;
-    z-index: 10;
-}
-
-.heavy-btn {
-    background: rgba(0, 123, 255, 0.1);
-    color: rgba(0, 123, 255, 0.8);
-    border: 1px solid rgba(0, 123, 255, 0.3);
-    padding: 3px 6px;
-    border-radius: 4px;
-    cursor: pointer;
-    font-family: inherit;
-    font-weight: 600;
-    transition: all 0.2s ease;
-}
-.heavy-btn:hover:not(:disabled) {
-    background: rgba(0, 123, 255, 0.2);
-    color: #fba3dc;
-    border-color: #fba3dc;
-}
-.heavy-btn:disabled {
-    opacity: 0.5;
-    cursor: default;
-    background: #e0e0e0;
-    color: #888;
-    border-color: #ccc;
-}
-
-/* Switch (Toggle) */
 .heavy-switch { position: relative; display: inline-block; width: 24px; height: 14px; }
 .heavy-switch input { opacity: 0; width: 0; height: 0; }
 .heavy-switch .slider { position: absolute; cursor: pointer; inset: 0; background-color: #ccc; transition: .3s; border-radius: 14px; }
@@ -143,266 +108,62 @@
 .heavy-switch input:checked + .slider:before { transform: translateX(10px); }
 .heavy-switch-label { color: rgba(0, 123, 255, 0.6); font-weight: 600; }
 
-/* Préparation des pilules pour accueillir le badge à droite.
-   position:relative + padding-right → l'overlay ::after et le badge s'y logent. */
-.actress-list label.has-heavy-badge,
-.tag-list label.has-heavy-badge,
-.prod-global-list label.has-heavy-badge,
-.prod-grouped-list label.has-heavy-badge,
-.actress-list label.heavy-only-label,
-.tag-list label.heavy-only-label,
-.prod-global-list label.heavy-only-label,
-.prod-grouped-list label.heavy-only-label {
+/* Préparation des pilules */
+.actress-list label.has-heavy-badge, .tag-list label.has-heavy-badge, .prod-global-list label.has-heavy-badge, .prod-grouped-list label.has-heavy-badge,
+.actress-list label.heavy-only-label, .tag-list label.heavy-only-label, .prod-global-list label.heavy-only-label, .prod-grouped-list label.heavy-only-label {
     position: relative;
     padding-right: 32px;
-
-    /* Fade-in uniquement pour ces labels (ceux qui apparaissent
-       quand on toggle "afficher heavy"). Le fill "backwards" permet
-       de garder le :hover transform actif une fois l'anim terminée. */
     animation: labelFadeIn 0.5s ease backwards;
 }
+@keyframes labelFadeIn { from { opacity: 0.2; transform: translateY(3px); } to { opacity: 1; transform: translateY(0); } }
 
-@keyframes labelFadeIn {
-    from { opacity: 0.2; transform: translateY(3px); }
-    to   { opacity: 1;   transform: translateY(0); }
-}
-
-/* Dégradé vert (overlay) pour les images mixtes.
-   On l'affiche sur un ::after pour pouvoir animer son opacité :
-   background-image n'est pas animable. */
-.actress-list label.has-heavy-badge::after,
-.tag-list label.has-heavy-badge::after,
-.prod-global-list label.has-heavy-badge::after,
-.prod-grouped-list label.has-heavy-badge::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    border-radius: inherit;
-    pointer-events: none;
+/* Dégradé vert (overlay) */
+.actress-list label.has-heavy-badge::after, .tag-list label.has-heavy-badge::after, .prod-global-list label.has-heavy-badge::after, .prod-grouped-list label.has-heavy-badge::after {
+    content: ''; position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
     background: linear-gradient(to right, transparent 60%, rgba(76, 175, 80, 0.5) 100%);
-    opacity: 0;
-    animation: overlayFadeIn 0.6s ease 0.1s forwards; 
+    opacity: 0; animation: overlayFadeIn 0.6s ease 0.1s forwards;
+}
+@keyframes overlayFadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+/* Labels 100% lourds — REPOS (vert pale) */
+.actress-list label.heavy-only-label, .tag-list label.heavy-only-label, .prod-global-list label.heavy-only-label, .prod-grouped-list label.heavy-only-label {
+    background-color: #a5d6a7 !important; color: #1b5e20 !important; font-weight: 600; cursor: pointer; border: 1px solid #81c784;
+}
+/* Labels 100% lourds — SURVOL (vert saturé) */
+.actress-list label.heavy-only-label:hover, .tag-list label.heavy-only-label:hover, .prod-global-list label.heavy-only-label:hover, .prod-grouped-list label.heavy-only-label:hover {
+    background-color: #4CAF50 !important; color: #ffffff !important; border-color: #388E3C; transform: translateY(-3px); text-shadow: 0 0 5px rgba(0, 255, 0, 0.6);
 }
 
-@keyframes overlayFadeIn {
-    from { opacity: 0; }
-    to   { opacity: 1; }
-}
-
-/* Labels 100% lourds — REPOS : vert pale + texte vert foncé.
-   L'idée : il "paraît inactif" tant qu'on ne le survole pas. */
-.actress-list label.heavy-only-label,
-.tag-list label.heavy-only-label,
-.prod-global-list label.heavy-only-label,
-.prod-grouped-list label.heavy-only-label {
-    background-color: #a5d6a7 !important;
-    color: #1b5e20 !important;
-    font-weight: 600;
-    cursor: pointer;
-    border: 1px solid #81c784;
-}
-
-/* Labels 100% lourds — SURVOL : vert saturé + texte blanc (paraît "actif"). */
-.actress-list label.heavy-only-label:hover,
-.tag-list label.heavy-only-label:hover,
-.prod-global-list label.heavy-only-label:hover,
-.prod-grouped-list label.heavy-only-label:hover {
-    background-color: #4CAF50 !important;
-    color: #ffffff !important;
-    border-color: #388E3C;
-    transform: translateY(-3px);
-    text-shadow: 0 0 5px rgba(0, 255, 0, 0.6);
-}
-
-/* Le badge +X — jamais de fond, à AUCUN état. */
+/* Badge +X */
 .heavy-badge {
-    position: absolute;
-    right: 6px;
-    top: 50%;
-    transform: translateY(-50%);
-    color: #4CAF50;
-    font-weight: bold;
-    font-size: 0.85em;
-    cursor: pointer;
-    padding: 2px 4px;
-    border-radius: 4px;
-    z-index: 2;
-    background: transparent !important;
-    transition: color 0.25s ease;
-    animation: badgeFadeIn 0.55s ease 0.15s backwards;
+    position: absolute; right: 6px; top: 50%; transform: translateY(-50%);
+    color: #4CAF50; font-weight: bold; font-size: 0.85em; cursor: pointer; padding: 2px 4px; border-radius: 4px; z-index: 2;
+    background: transparent !important; transition: color 0.25s ease; animation: badgeFadeIn 0.55s ease 0.15s backwards;
 }
+.heavy-badge:hover { color: #2e7d32; background: transparent !important; }
+@keyframes badgeFadeIn { from { opacity: 0; transform: translateY(-50%) scale(0.5); } to { opacity: 1; transform: translateY(-50%) scale(1); } }
 
-.heavy-badge:hover {
-    color: #2e7d32;
-    background: transparent !important;
-}
+.heavy-only-label .heavy-badge { color: inherit; background: transparent !important; }
+.heavy-only-label .heavy-badge:hover { color: inherit; background: transparent !important; }
 
-@keyframes badgeFadeIn {
-    from { opacity: 0; transform: translateY(-50%) scale(0.5); }
-    to   { opacity: 1; transform: translateY(-50%) scale(1); }
-}
-
-/* Badge dans un label 100% lourd → hérite de la couleur du texte,
-   donc vert foncé au repos, blanc au survol. Toujours sans fond. */
-.heavy-only-label .heavy-badge {
-    color: inherit;
-    background: transparent !important;
-}
-.heavy-only-label .heavy-badge:hover {
-    color: inherit;
-    background: transparent !important;
-}
 
 /* ==========================================
-   FILTER PEEK & LIGHTBOX (PREMIER JET)
+   3. GHOST FILTER & CORNER PEEK
    ========================================== */
 
-/* L'onglet de survol en bas à droite */
-#filter-peek-tab {
-    position: fixed;
-    bottom: 20px;
-    right: 20px;
-    width: 140px;
-    height: 60px;
-    background-color: rgb(255, 240, 245); /* Ta couleur de fond mobile */
-    border: 2px solid rgba(0, 123, 255, 0.3);
-    border-radius: 12px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    font-family: 'Poppins', sans-serif;
-    font-weight: 600;
-    font-size: 15px;
-    color: #333;
-    cursor: pointer;
-    z-index: 800;
-    
-    /* L'effet dégradé vers le transparent (le fameux "peek") */
-    -webkit-mask-image: linear-gradient(to top left, black 30%, transparent 100%);
-    mask-image: linear-gradient(to top left, black 30%, transparent 100%);
-    
-    /* Légèrement caché par défaut, il ressort au survol */
-    transform: translate(15px, 15px);
-    opacity: 0.6;
-    transition: all 0.3s ease;
-}
-
-#filter-peek-tab:hover {
-    transform: translate(0, 0);
-    opacity: 1;
-    /* On enlève le masque au survol pour voir le bouton en entier */
-    -webkit-mask-image: none;
-    mask-image: none;
-    box-shadow: 0 4px 15px rgba(0, 123, 255, 0.2);
-    border-color: #007bff;
-    color: #007bff;
-}
-
-/* Le conteneur de la lightbox (fond noir semi-transparent) */
-#filter-lightbox {
-    position: fixed;
-    inset: 0;
-    background: rgba(0, 0, 0, 0.7);
-    backdrop-filter: blur(4px);
-    z-index: 2500; /* Au-dessus de la galerie, sous les scènes */
-    display: none;
-    justify-content: center;
-    align-items: center;
-    opacity: 0;
-    transition: opacity 0.3s ease;
-}
-
-#filter-lightbox.visible {
-    display: flex;
-    opacity: 1;
-}
-
-/* La boîte qui contient le filtre */
-#filter-lightbox .filter-container {
-    width: 90vw;
-    max-width: 1000px;
-    max-height: 85vh;
-    overflow-y: auto;
-    background: rgb(255, 240, 245);
-    border-radius: 16px;
-    padding: 20px;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-    position: relative;
-    scrollbar-width: none; /* Cache la scrollbar comme sur le body */
-}
-#filter-lightbox .filter-container::-webkit-scrollbar {
-    display: none;
-}
-
-/* Le bouton fermer (inspiré de ta modale de scènes) */
-.filter-close-btn {
-    position: absolute;
-    top: 15px;
-    right: 20px;
-    background: none;
-    border: none;
-    font-size: 2rem;
-    color: #666;
-    cursor: pointer;
-    line-height: 1;
-    z-index: 10;
-    transition: color 0.2s ease;
-}
-.filter-close-btn:hover {
-    color: #ff4d4d;
-}
-
-/* On réinitialise les marges du filtre quand il est dans la lightbox */
-#filter-lightbox .filter {
-    margin: 0;
-    width: 100%;
-    box-sizing: border-box;
-    position: static;
-}
-
-/* Pas d'UX mobile pour l'instant, on cache l'onglet sur petit écran */
-@media (max-width: 768px) {
-    #filter-peek-tab { display: none !important; }
-}
-
-/* ==========================================
-   GHOST FILTER & CORNER PEEK (PREMIER JET)
-   ========================================== */
-
-/* 1. On sort le filtre du flux et on le centre en mode fantôme */
+/* Le panneau de filtre en mode fantôme */
 .filter {
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%) scale(0.98);
-    width: 95vw;
-    max-width: 1400px;
-    max-height: 90vh;
-    overflow-y: auto;
-    margin: 0 !important; /* On écrase le margin: 2vh */
-    background: rgba(255, 240, 245, 0.98); /* Le rose de ton fond */
-    border-radius: 16px;
-    box-shadow: 0 10px 40px rgba(0,0,0,0.3);
-    z-index: 2000;
-    
-    /* État fantôme par défaut */
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.3s ease, transform 0.3s ease, mask-image 0.3s ease;
-    
-    /* On cache la scrollbar pour faire plus propre */
+    position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0.98);
+    width: 95vw; max-width: 1400px; max-height: 90vh; overflow-y: auto; margin: 0 !important;
+    background: rgba(255, 240, 245, 0.98); border-radius: 16px; box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+    z-index: 2000; opacity: 0; pointer-events: none; transition: opacity 0.3s ease, transform 0.3s ease, mask-image 0.3s ease;
     scrollbar-width: none;
 }
 .filter::-webkit-scrollbar { display: none; }
 
-/* 2. Les 4 zones invisibles de 8% dans les coins */
+/* Les 4 zones sensibles de 8% dans les coins */
 .filter-corner-zone {
-    position: fixed;
-    width: 8vw;
-    height: 8vh;
-    z-index: 2001; /* Au-dessus du filtre pour capter la souris */
-    cursor: pointer;
-    /* Petit indicateur visuel très subtil pour savoir qu'il y a quelque chose */
+    position: fixed; width: 8vw; height: 8vh; z-index: 2500; cursor: pointer;
     background: radial-gradient(circle at center, rgba(0, 123, 255, 0.05) 0%, transparent 70%);
 }
 .corner-tl { top: 0; left: 0; }
@@ -410,59 +171,27 @@
 .corner-bl { bottom: 0; left: 0; }
 .corner-br { bottom: 0; right: 0; }
 
-/* 3. L'effet "Peek" (Révélation au survol) */
-.filter.peek-tl { 
-    opacity: 1; 
-    pointer-events: auto;
-    -webkit-mask-image: radial-gradient(circle at top left, black 20%, transparent 60%);
-    mask-image: radial-gradient(circle at top left, black 20%, transparent 60%);
-}
-.filter.peek-tr { 
-    opacity: 1; 
-    pointer-events: auto;
-    -webkit-mask-image: radial-gradient(circle at top right, black 20%, transparent 60%);
-    mask-image: radial-gradient(circle at top right, black 20%, transparent 60%);
-}
-.filter.peek-bl { 
-    opacity: 1; 
-    pointer-events: auto;
-    -webkit-mask-image: radial-gradient(circle at bottom left, black 20%, transparent 60%);
-    mask-image: radial-gradient(circle at bottom left, black 20%, transparent 60%);
-}
-.filter.peek-br { 
-    opacity: 1; 
-    pointer-events: auto;
-    -webkit-mask-image: radial-gradient(circle at bottom right, black 20%, transparent 60%);
-    mask-image: radial-gradient(circle at bottom right, black 20%, transparent 60%);
-}
+/* Effet Peek (Révélation localisée au survol) */
+.filter.peek-tl { opacity: 1; -webkit-mask-image: radial-gradient(circle at top left, black 20%, transparent 60%); mask-image: radial-gradient(circle at top left, black 20%, transparent 60%); }
+.filter.peek-tr { opacity: 1; -webkit-mask-image: radial-gradient(circle at top right, black 20%, transparent 60%); mask-image: radial-gradient(circle at top right, black 20%, transparent 60%); }
+.filter.peek-bl { opacity: 1; -webkit-mask-image: radial-gradient(circle at bottom left, black 20%, transparent 60%); mask-image: radial-gradient(circle at bottom left, black 20%, transparent 60%); }
+.filter.peek-br { opacity: 1; -webkit-mask-image: radial-gradient(circle at bottom right, black 20%, transparent 60%); mask-image: radial-gradient(circle at bottom right, black 20%, transparent 60%); }
 
-/* 4. L'état Actif (Ouvert) */
+/* État Actif (Ouvert) */
 .filter.active {
-    opacity: 1;
-    pointer-events: auto;
-    transform: translate(-50%, -50%) scale(1);
-    -webkit-mask-image: none;
-    mask-image: none;
+    opacity: 1; pointer-events: auto; transform: translate(-50%, -50%) scale(1); z-index: 3000;
+    -webkit-mask-image: none !important; mask-image: none !important;
 }
 
-/* L'overlay derrière pour fermer au clic */
+/* Overlay sombre derrière */
 .filter-overlay {
-    position: fixed;
-    inset: 0;
-    background: rgba(0, 0, 0, 0.6);
-    backdrop-filter: blur(4px);
-    z-index: 1999;
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.3s ease;
+    position: fixed; inset: 0; background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(4px);
+    z-index: 2999; opacity: 0; pointer-events: none; transition: opacity 0.3s ease;
 }
-.filter-overlay.active {
-    opacity: 1;
-    pointer-events: auto;
-}
+.filter-overlay.active { opacity: 1; pointer-events: auto; }
 
-/* Cache tout ça sur mobile */
+/* Mobile */
 @media (max-width: 768px) {
     .filter-corner-zone { display: none !important; }
-    .filter { display: none !important; } /* On garde ton bouton mobile actuel */
+    .filter { display: none !important; }
 }
