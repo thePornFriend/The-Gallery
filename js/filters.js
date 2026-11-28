@@ -576,19 +576,26 @@ function createFilterCheckboxes(images) {
       if (selected.length === 0) {
         passesCheckboxFilter = true;
       } else if (inclusive) {
-        passesCheckboxFilter = selectedRest.some(v => {
+        // Mode INCLUSIF (OU)
+        const matchAll = selectedAll && extractAmActs(img).length > 0;
+        const matchRest = selectedRest.some(v => {
             if (acts.includes(v) || tags.includes(v)) return true;
             if (studios.includes(v)) return true;
             if (isGroupMatch(v, studios)) return true;
             return false;
         });
+        passesCheckboxFilter = matchAll || matchRest;
       } else {
+        // Mode EXCLUSIF (ET)
         const allVals = [...acts, ...tags, ...studios];
-        passesCheckboxFilter = allVals.every(v => {
+        const allCovered = allVals.every(v => {
             if (selectedRest.includes(v)) return true;
             if (isCoveredByParent(v)) return true;
             return false;
         });
+        // Si on a coché "Toutes les autres", l'image DOIT avoir au moins une actrice "See more"
+        const allReq = !selectedAll || extractAmActs(img).length > 0;
+        passesCheckboxFilter = allReq && allCovered;
       }
       
       const passesGalleryFilter = state.selectedGalleryValues.size === 0 || state.selectedGalleryValues.has(img.dataset.gallery);
@@ -831,4 +838,4 @@ function initColorFilter(updateBodyBackground) {
   [active, hue, lumActive, lumSlider, sim].forEach(el => el.addEventListener('input', update));
 }
 
-console.log("filters > Amateur ! v2");
+console.log("filters > Amateur ! v3");
