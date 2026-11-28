@@ -84,7 +84,7 @@ window.MAIN_ACTRESSES = [
     "Sara Luuv","Sara Luuv",
     "Stacy Cruz","Stella Cardo",
     "Tiffany Tatum",
-    "Tommy King","Tori Black"
+    "Tommy King","Tori Black",
     "Valentina Nappi","Vanna Bardot","Vicky Chase","Vina Sky","Violet Myers","Violet Starr"
     // Ajoute ici tes actrices "principales"
 ];
