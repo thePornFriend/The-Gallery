@@ -25,8 +25,9 @@ function buildCheckboxGrid(container, counts, displayName = k => k, onLoadHeavy 
       const lCount = counts.light.get(item) || 0;
       const hCount = counts.heavy.get(item) || 0;
       
-      // Le texte de base sans le +X
-      let htmlContent = `<input type="checkbox" value="${item}"> <span>${display} (${lCount})</span>`;
+      // Le texte de base sans le +X (on masque le compteur à 0 pour les heavy-only)
+      const countSuffix = lCount > 0 ? ` (${lCount})` : '';
+      let htmlContent = `<input type="checkbox" value="${item}"> <span>${display}${countSuffix}</span>`;
       
       if (showHeavy && hCount > 0) {
           if (lCount === 0) {
