@@ -725,51 +725,66 @@ function initColorFilter(updateBodyBackground) {
 // ==========================================
 // 8. GHOST FILTER (Corner Peek & Click)
 // ==========================================
+// ==========================================
+// 8. FILTER MODAL (Structure identique à scenes-modal)
+// ==========================================
 function initGhostFilter() {
+    // Éviter les doubles initialisations
+    if (document.querySelector('.filter-modal')) return;
+
     const filterElement = document.querySelector('.filter');
     if (!filterElement) return;
 
-    const overlay = document.createElement('div');
-    overlay.className = 'filter-overlay';
-    document.body.appendChild(overlay);
+    // 1. Créer l'enveloppe modal (comme scenes-modal)
+    const filterModal = document.createElement('div');
+    filterModal.className = 'filter-modal';
 
+    // 2. Déplacer le .filter dedans
+    filterElement.parentNode.insertBefore(filterModal, filterElement);
+    filterModal.appendChild(filterElement);
+
+    // 3. Créer les 4 zones de coin
     const corners = ['tl', 'tr', 'bl', 'br'];
     corners.forEach(c => {
         const zone = document.createElement('div');
         zone.className = `filter-corner-zone corner-${c}`;
         zone.dataset.corner = c;
         document.body.appendChild(zone);
-    });
 
-    document.querySelectorAll('.filter-corner-zone').forEach(zone => {
+        // Survol → Peek
         zone.addEventListener('mouseenter', () => {
-            if (filterElement.classList.contains('active')) return;
-            filterElement.classList.add(`peek-${zone.dataset.corner}`);
+            if (filterModal.classList.contains('active')) return;
+            filterModal.classList.add('visible', 'peek-mode');
+            filterModal.classList.add(`peek-${c}`);
         });
         zone.addEventListener('mouseleave', () => {
-            if (filterElement.classList.contains('active')) return;
-            filterElement.classList.remove(`peek-${zone.dataset.corner}`);
+            if (filterModal.classList.contains('active')) return;
+            filterModal.classList.remove('visible', 'peek-mode', `peek-${c}`);
         });
-        
+
+        // Clic → Ouverture complète
         zone.addEventListener('click', () => {
-            corners.forEach(c => filterElement.classList.remove(`peek-${c}`));
-            filterElement.classList.add('active');
-            overlay.classList.add('active');
+            filterModal.classList.remove('peek-mode', 'peek-tl', 'peek-tr', 'peek-bl', 'peek-br');
+            filterModal.classList.add('visible', 'active');
             document.body.style.overflow = 'hidden';
         });
     });
 
-    function closeFilter() {
-        filterElement.classList.remove('active');
-        overlay.classList.remove('active');
-        document.body.style.overflow = '';
-    }
+    // 4. Fermeture : clic sur la marge noire (pas sur le .filter lui-même)
+    filterModal.addEventListener('click', (e) => {
+        if (e.target === filterModal) {
+            filterModal.classList.remove('visible', 'active');
+            document.body.style.overflow = '';
+        }
+    });
 
-    overlay.addEventListener('click', closeFilter);
+    // 5. Fermeture avec Échap
     window.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape' && filterElement.classList.contains('active')) closeFilter();
+        if (e.key === 'Escape' && filterModal.classList.contains('active')) {
+            filterModal.classList.remove('visible', 'active');
+            document.body.style.overflow = '';
+        }
     });
 }
 
-
-console.log("filters > SHORTCUT");
+console.log("filters > SHORTCUT remade !");
